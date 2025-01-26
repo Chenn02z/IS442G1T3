@@ -43,11 +43,6 @@ Thumbs.db
 # Sensitive configuration files
 .env
 .env.local
-*.properties
-application.yml
-application-*.yml
-application.properties
-application-*.properties
 
 # Logs and temporary files
 logs/
