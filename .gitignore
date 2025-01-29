@@ -9,6 +9,7 @@
 
 # Compiled class files
 /target/
+/backend/target/
 /out/
 
 # Maven-specific files

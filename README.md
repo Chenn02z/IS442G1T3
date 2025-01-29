@@ -1,5 +1,14 @@
 # IS442 Project
 
+## **Frontend Setup**
+```
+cd frontend
+
+npm i # install packages
+
+npm run dev # run local dev server
+```
+
 ## **Backend Setup Quickstart**
 
 ### **Prerequisites**
