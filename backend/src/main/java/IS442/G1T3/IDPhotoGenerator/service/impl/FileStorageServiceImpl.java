@@ -18,11 +18,12 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     @Override
     public String saveOriginalImage(MultipartFile file, UUID imageId) throws IOException {
-        String saveDir = System.getProperty("user.dir") + "/" + storagePath;
+        String saveDir = System.getProperty("user.dir") + File.separator + storagePath;
         String newFileName = imageId.toString() + "_" + file.getOriginalFilename();
+        String relativeSaveDir = storagePath + File.separator + newFileName;
         String filePath = saveDir + File.separator + newFileName;
         File newFile = new File(filePath);
         file.transferTo(newFile);
-        return filePath;
+        return relativeSaveDir;
     }
 }
