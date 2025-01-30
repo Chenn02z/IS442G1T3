@@ -4,11 +4,13 @@ import java.util.UUID;
 
 public class ImageUploadResponse {
     private UUID imageId;
+    private String savedFilePath;
     private String status;
     private String message;
 
-    public ImageUploadResponse(UUID imageId, String status, String message) {
+    public ImageUploadResponse(UUID imageId, String savedFilePath, String status, String message) {
         this.imageId = imageId;
+        this.savedFilePath = savedFilePath;
         this.status = status;
         this.message = message;
     }
@@ -32,6 +34,14 @@ public class ImageUploadResponse {
 
     public void setImageId(UUID imageId) {
         this.imageId = imageId;
+    }
+
+    public String getSavedFilePath() {
+        return savedFilePath;
+    }
+
+    public void setSavedFilePath(String savedFilePath) {
+        this.savedFilePath = savedFilePath;
     }
 
     public String getMessage() {

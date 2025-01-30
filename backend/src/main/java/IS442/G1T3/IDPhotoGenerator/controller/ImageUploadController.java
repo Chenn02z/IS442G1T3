@@ -9,15 +9,13 @@ import lombok.extern.slf4j.XSlf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
 @Slf4j
+@CrossOrigin(origins = "http://localhost:3000") // Allow frontend requests (local)
 @RestController
 @RequestMapping("/api/images")
 @Validated // do we want to use this?
@@ -44,7 +42,7 @@ public class ImageUploadController {
             validateCustomBackground(backgroundOption, customBackground);
 
             ImageEntity imageEntity = imageUploadServiceImpl.processImage(imageFile, backgroundOption, customBackground);
-            ImageUploadResponse response = new ImageUploadResponse(imageEntity.getImageId(), imageEntity.getStatus(), "Image Uploaded Successfully.");
+            ImageUploadResponse response = new ImageUploadResponse(imageEntity.getImageId(), imageEntity.getSavedFilePath(), imageEntity.getStatus(), "Image Uploaded Successfully.");
             log.info("File uploaded successfully.");
             return new ResponseEntity<>(response, HttpStatus.OK);
 
