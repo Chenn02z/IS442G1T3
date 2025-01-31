@@ -24,6 +24,7 @@
 *.iml
 *.iws
 .idea_modules/
+/backend/.run
 
 # VS Code-specific files
 .vscode/
