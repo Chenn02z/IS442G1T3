@@ -12,6 +12,8 @@
 /backend/target/
 /out/
 
+/backend/images/
+
 # Maven-specific files
 *.mvn/
 .mvn/wrapper/maven-wrapper.jar
