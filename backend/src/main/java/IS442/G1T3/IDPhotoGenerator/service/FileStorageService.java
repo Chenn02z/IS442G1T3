@@ -14,5 +14,5 @@ public interface FileStorageService {
      * @return The file path where the image is stored.
      * @throws IOException If an I/O error occurs during file saving.
      */
-    public String saveOriginalImage(MultipartFile file, UUID imageId) throws IOException;
+    String saveOriginalImage(MultipartFile file, UUID imageId) throws IOException;
 }

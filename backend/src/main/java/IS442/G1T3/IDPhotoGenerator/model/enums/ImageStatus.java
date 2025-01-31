@@ -5,5 +5,5 @@ public enum ImageStatus {
     CROPPED,
     PROCESSING,
     COMPLETED,
-    FAILED
+    UPLOAD_FAILED,
 }

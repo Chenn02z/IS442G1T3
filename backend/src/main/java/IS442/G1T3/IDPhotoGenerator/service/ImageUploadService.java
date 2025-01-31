@@ -17,7 +17,7 @@ public interface ImageUploadService {
      * @return The persisted ImageEntity.
      * @throws IOException If an I/O error occurs during file saving.
      */
-    public ImageEntity processImage(
+    ImageEntity processImage(
             MultipartFile imageFile, String backgroundOption, @Nullable MultipartFile customBackground
     ) throws IOException;
 }

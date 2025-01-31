@@ -5,7 +5,6 @@ import IS442.G1T3.IDPhotoGenerator.model.ImageUploadResponse;
 import IS442.G1T3.IDPhotoGenerator.model.enums.ImageStatus;
 import IS442.G1T3.IDPhotoGenerator.service.impl.ImageUploadServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import lombok.extern.slf4j.XSlf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -21,7 +20,7 @@ import java.io.IOException;
 @Validated // do we want to use this?
 public class ImageUploadController {
 
-    private ImageUploadServiceImpl imageUploadServiceImpl;
+    private final ImageUploadServiceImpl imageUploadServiceImpl;
 
     public ImageUploadController(ImageUploadServiceImpl imageUploadServiceImpl) {
         this.imageUploadServiceImpl = imageUploadServiceImpl;
@@ -34,11 +33,11 @@ public class ImageUploadController {
             @RequestParam MultipartFile imageFile,
             @RequestParam String backgroundOption,
             @RequestParam(required = false) MultipartFile customBackground
-    ) throws IOException {
+    ) {
         // Backend validation; 2nd layer of safety after frontend validation
         try {
             validateImageFile(imageFile);
-            log.info("backgroundOption: " + backgroundOption);
+            log.info("backgroundOption: {}", backgroundOption);
             validateCustomBackground(backgroundOption, customBackground);
 
             ImageEntity imageEntity = imageUploadServiceImpl.processImage(imageFile, backgroundOption, customBackground);
@@ -48,11 +47,11 @@ public class ImageUploadController {
 
         } catch (IllegalArgumentException e) {
             log.error(e.toString());
-            ImageUploadResponse response = new ImageUploadResponse(ImageStatus.FAILED.toString(), e.toString());
+            ImageUploadResponse response = new ImageUploadResponse(ImageStatus.UPLOAD_FAILED.toString(), e.toString());
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         } catch (IOException e) {
             log.error(e.toString());
-            ImageUploadResponse response = new ImageUploadResponse(ImageStatus.FAILED.toString(), e.toString());
+            ImageUploadResponse response = new ImageUploadResponse(ImageStatus.UPLOAD_FAILED.toString(), e.toString());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
