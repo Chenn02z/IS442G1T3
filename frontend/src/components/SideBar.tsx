@@ -6,6 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { CONFIG } from "../../config";
 import CropSidebar from "@/components/CropSideBar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useUpload } from "@/context/UploadContext";
+import { useToast } from "@/hooks/use-toast";
+import { CONFIG } from "../../config";
 
 const SideBar = ({
   setIsCropping,
