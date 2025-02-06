@@ -41,6 +41,7 @@ const UploadImageForm = ({
 
     localStorage.removeItem("cropBoxData");
 
+    // set the uploaded file to curr file as well
     setSelectedFile(file);
     setUploadedFile(file);
 
