@@ -5,9 +5,11 @@ import { UploadCloud } from "lucide-react";
 import { CONFIG } from "../../config";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
+import { useUpload } from "@/context/UploadContext";
 
 const UploadImageForm = () => {
-  const { toast } = useToast()
+  const { toast } = useToast();
+  const { setUploadedFile } = useUpload();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -21,7 +23,10 @@ const UploadImageForm = () => {
       setError("Please select an image.");
       return;
     }
+    // set the uploaded file to curr file as well
     setSelectedFile(file);
+    setUploadedFile(file);
+
     setUploading(true);
     const formData = new FormData();
     formData.append("imageFile", file);
@@ -54,7 +59,7 @@ const UploadImageForm = () => {
     }
   };
   return (
-    <Card className="hover:cursor-pointer hover:bg-secondary hover:border-primary transition-all ease-in-out" >
+    <Card className="hover:cursor-pointer hover:bg-secondary hover:border-primary transition-all ease-in-out">
       <CardContent className="flex flex-col h-full items-center justify-center px-2 py-24  text-xs ">
         <input
           type="file"
