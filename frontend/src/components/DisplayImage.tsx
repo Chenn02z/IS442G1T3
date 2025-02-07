@@ -1,7 +1,6 @@
 import React from "react";
 import Image from "next/image";
 
-// Define props type
 type DisplayImageProps = {
   imageUrl: string | null;
 };
@@ -17,9 +16,11 @@ const DisplayImage: React.FC<DisplayImageProps> = ({ imageUrl }) => {
         height={250}
         width={250}
         className="object-cover rounded-md shadow-md"
+        unoptimized
       />
     </div>
   );
 };
 
 export default DisplayImage;
+
