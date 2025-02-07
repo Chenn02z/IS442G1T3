@@ -16,27 +16,45 @@ const aspectRatios = [
   { label: "3:2", value: "3-2", aspectRatio: 3 / 2, boxClass: "w-12 h-8" },
 ];
 
-const CropSidebar = ({
-  setIsCropping,
-  setSelectedAspectRatio,
-}: {
+interface CropSidebarProps {
   setIsCropping: (cropping: boolean) => void;
   setSelectedAspectRatio: (ratio: number | null) => void;
-}) => {
-  const [selectedRatio, setSelectedRatio] = useState<string>(""); // ❌ Initially nothing is selected
+}
+
+const CropSidebar: React.FC<CropSidebarProps> = ({ setIsCropping, setSelectedAspectRatio }) => {
+  // default to "freeform"
+  const [selectedRatio, setSelectedRatio] = useState<string>("freeform");
+
+  useEffect(() => {
+    // Prefer the stored ratio identifier
+    if (typeof window !== "undefined") {
+      const savedRatio = localStorage.getItem("selectedRatio");
+      if (savedRatio) {
+        setSelectedRatio(savedRatio);
+        const matching = aspectRatios.find((r) => r.value === savedRatio);
+        if (matching) {
+          setSelectedAspectRatio(matching.aspectRatio);
+        }
+      }
+    }
+  }, [setSelectedAspectRatio]);
 
   const handleSidebarOpen = (isOpen: boolean) => {
     if (isOpen) {
-      setIsCropping(true); // ✅ Open crop grid ONLY when sidebar opens
-      setSelectedAspectRatio(null); // ✅ Default to Freeform
-      setSelectedRatio("freeform"); // ✅ Mark Freeform as selected
+      setIsCropping(true);
+      // Optionally, if you want to force freeform when there's cropBoxData, you can do:
+      if (localStorage.getItem("cropBoxData")) {
+        setSelectedRatio("freeform");
+        setSelectedAspectRatio(null);
+        localStorage.setItem("selectedRatio", "freeform");
+      }
     }
   };
 
   return (
     <Sheet onOpenChange={handleSidebarOpen}>
       <SheetTrigger asChild>
-          <Crop className="w-5 h-5" />
+        <Crop className="w-5 h-5" />
       </SheetTrigger>
       <SheetContent side="left" className="w-80 p-4 flex flex-col justify-between">
         <div>
@@ -46,11 +64,13 @@ const CropSidebar = ({
               {aspectRatios.map((ratio) => (
                 <Button
                   key={ratio.value}
-                  variant={selectedRatio === ratio.value ? "default" : "outline"} // ✅ Highlight selected
+                  variant={selectedRatio === ratio.value ? "default" : "outline"}
                   className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
                   onClick={() => {
                     setSelectedRatio(ratio.value);
                     setSelectedAspectRatio(ratio.aspectRatio);
+                    // store the selected ratio as a string
+                    localStorage.setItem("selectedRatio", ratio.value);
                   }}
                 >
                   {ratio.value === "freeform" ? (
