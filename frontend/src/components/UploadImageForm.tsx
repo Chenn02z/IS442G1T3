@@ -60,43 +60,34 @@ const UploadImageForm = () => {
   };
   return (
     <Card className="hover:cursor-pointer hover:bg-secondary hover:border-primary transition-all ease-in-out">
-      <CardContent className="flex flex-col h-full items-center justify-center px-2 py-24  text-xs ">
-        <input
-          type="file"
-          accept="image/jpeg, image/png"
-          className="hidden"
-          id="file-upload"
-          onChange={handleUpload}
-        />
-        <label
-          htmlFor="file-upload"
-          className="cursor-pointer flex flex-col items-center gap-2"
-        >
-          <UploadCloud className="h-10 w-10 text-gray-500" />
-          <p className="text-gray-700 text-sm">
-            {selectedFile ? selectedFile.name : "Click to upload an Image"}
-          </p>
-          <p className="text-muted-foreground text-xs">
-            Supported formats: .jpeg, .png
-          </p>
-        </label>
+      <CardContent className="flex flex-col h-full items-center justify-center px-2 py-24 text-xs">
+        {/* Hide upload input & info if image is uploaded */}
+        {!uploadedImageUrl && (
+          <>
+            <input type="file" accept="image/jpeg, image/png" className="hidden" id="file-upload" onChange={handleUpload} />
+            <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-2">
+              <UploadCloud className="h-10 w-10 text-gray-500" />
+              <p className="text-gray-700 text-sm">{selectedFile ? selectedFile.name : "Click to upload an Image"}</p>
+              <p className="text-muted-foreground text-xs">Supported formats: .jpeg, .png</p>
+            </label>
+          </>
+        )}
 
-        {/* TODO: Change to spinner */}
-        {uploading && "Uploading Image..."}
-
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-
+        {/* Show uploaded image if available */}
         {uploadedImageUrl && (
           <div className="flex flex-col items-center space-y-2">
             <Image
               src={uploadedImageUrl}
               alt="Uploaded preview"
-              height={500}
-              width={500}
+              height={250}
+              width={250}
               className="object-cover rounded-md shadow-md"
             />
           </div>
         )}
+
+        {/* Show error message if upload fails */}
+        {error && <p className="text-red-500 text-sm">{error}</p>}
       </CardContent>
     </Card>
   );
