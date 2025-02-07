@@ -1,59 +1,54 @@
-import React, { useState, useCallback } from "react";
-import Cropper from "react-easy-crop";
-import { Button } from "@/components/ui/button";
+import React, { useRef, useState } from "react";
+import Cropper from "react-cropper";
+import "cropperjs/dist/cropper.css";
 
-const CropImage = ({ imageSrc, imageId, onCropComplete }) => {
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+type CropImageProps = {
+  imageUrl: string;
+  onCropComplete: (croppedImage: string) => void;
+};
 
-  const onCropCompleteHandler = useCallback((_, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+const CropImage: React.FC<CropImageProps> = ({ imageUrl, onCropComplete }) => {
+  const cropperRef = useRef<Cropper>(null);
+  const [cropData, setCropData] = useState<string>("");
 
-  const handleCropSubmit = async () => {
-    if (!croppedAreaPixels) return;
-
-    try {
-      const response = await fetch(`/api/images/crop/${imageId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          x: Math.round(croppedAreaPixels.x),
-          y: Math.round(croppedAreaPixels.y),
-          width: Math.round(croppedAreaPixels.width),
-          height: Math.round(croppedAreaPixels.height),
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to crop image");
-
-      const data = await response.json();
-      onCropComplete(data.imageUrl);
-    } catch (error) {
-      console.error("Error cropping image:", error);
+  const onCrop = () => {
+    const cropper = cropperRef.current?.cropper;
+    if (cropper) {
+      const canvas = cropper.getCroppedCanvas();
+      if (canvas) {
+        const croppedImage = canvas.toDataURL("image/png");
+        setCropData(croppedImage);
+        onCropComplete(croppedImage);
+      }
     }
   };
 
   return (
-    <div className="relative w-full h-[400px] bg-gray-200">
-      {/* Cropper Component */}
+    <div className="w-full flex flex-col items-center">
       <Cropper
-        image={imageSrc}
-        crop={crop}
-        zoom={zoom}
-        aspect={1} // Default aspect ratio (can be dynamically set)
-        onCropChange={setCrop}
-        onZoomChange={setZoom}
-        onCropComplete={onCropCompleteHandler}
+        key={imageUrl} // Forces re-initialization if the imageUrl changes
+        src={imageUrl}
+        style={{ height: 400, width: "100%" }}
+        guides={true}
+        ref={cropperRef}
+        viewMode={1}
       />
-
-      {/* Controls */}
-      <div className="mt-4 flex justify-between">
-        <Button variant="outline" onClick={handleCropSubmit}>Crop Image</Button>
-      </div>
+      <button
+        className="mt-4 px-4 py-2 bg-primary text-white rounded"
+        onClick={onCrop}
+      >
+        Apply Crop
+      </button>
+      {cropData && (
+        <div className="mt-4">
+          <p className="mb-2">Cropped Preview:</p>
+          <img src={cropData} alt="Cropped Preview" className="rounded shadow" />
+        </div>
+      )}
     </div>
   );
 };
 
 export default CropImage;
+
+
