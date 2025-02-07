@@ -8,6 +8,7 @@ const UUID_LOOKUP_KEY = "userUUID";
 
 export default function Home() {
   const [userUUID, setUserUUID] = useState<string>("");
+  const [isCropping, setIsCropping] = useState<boolean>(false);
 
   useEffect(() => {
     let storedUUID = localStorage.getItem("userUUID");
@@ -21,11 +22,13 @@ export default function Home() {
   return (
     <UploadProvider>
       <div className="flex">
-        <SideBar />
-        <div className="ml-14 flex-1 p-3">
+      <SideBar setIsCropping={setIsCropping} />
+        <div className="ml-14 flex-1 p-3"> 
           {/* Main content here */}
-          <div>User UUID: {userUUID}</div>
-          <UploadImageForm />
+          <div>
+            User UUID: {userUUID}
+          </div>
+          <UploadImageForm isCropping={isCropping} setIsCropping={setIsCropping} />
         </div>
       </div>
     </UploadProvider>
