@@ -30,7 +30,7 @@ const CropSidebar = () => {
               {aspectRatios.map((ratio) => (
                 <Button key={ratio.value} variant="outline" className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md">
                   {ratio.value === "freeform" ? (
-                    <Scan className="text-gray-500 w-8 h-8" /> // Resized icon
+                    <Scan className="text-gray-500 w-8 h-8" /> // TODO: resize icon
                   ) : (
                     <div className={`border border-gray-500 ${ratio.boxClass}`} />
                   )}
@@ -40,8 +40,6 @@ const CropSidebar = () => {
             </div>
           </ScrollArea>
         </div>
-
-        {/* Cancel & Done Buttons */}
         <div className="flex justify-between mt-4">
           <SheetClose asChild>
             <Button variant="outline">Cancel</Button>
