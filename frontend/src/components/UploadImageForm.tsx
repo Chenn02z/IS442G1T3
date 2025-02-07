@@ -6,6 +6,7 @@ import { CONFIG } from "../../config";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/context/UploadContext";
+import DisplayImage from "./DisplayImage";
 
 const UploadImageForm = () => {
   const { toast } = useToast();
@@ -74,19 +75,9 @@ const UploadImageForm = () => {
         )}
 
         {/* Show uploaded image if available */}
-        {uploadedImageUrl && (
-          <div className="flex flex-col items-center space-y-2">
-            <Image
-              src={uploadedImageUrl}
-              alt="Uploaded preview"
-              height={250}
-              width={250}
-              className="object-cover rounded-md shadow-md"
-            />
-          </div>
-        )}
+        {/* Use DisplayImage component */}
+        <DisplayImage imageUrl={uploadedImageUrl} />
 
-        {/* Show error message if upload fails */}
         {error && <p className="text-red-500 text-sm">{error}</p>}
       </CardContent>
     </Card>
