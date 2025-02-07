@@ -11,13 +11,24 @@ type CropImageProps = {
 const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComplete }) => {
   const cropperRef = useRef<Cropper>(null);
   const [cropData, setCropData] = useState<string>("");
+  const [cropBoxData, setCropBoxData] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     const cropper = cropperRef.current?.cropper;
     if (cropper) {
-      cropper.setAspectRatio(aspectRatio ?? NaN); // Update aspect ratio dynamically
+      cropper.setAspectRatio(aspectRatio ?? NaN);
+
+      // ✅ Restore last crop box ONLY if Freeform is selected
+      if (aspectRatio === null) {
+        const savedCropBox = localStorage.getItem("cropBoxData");
+        if (savedCropBox) {
+          const parsedCropBox = JSON.parse(savedCropBox);
+          setCropBoxData(parsedCropBox);
+          cropper.setCropBoxData(parsedCropBox);
+        }
+      }
     }
-  }, [aspectRatio]); // Runs when aspectRatio changes
+  }, [aspectRatio]);
 
   const onCrop = () => {
     const cropper = cropperRef.current?.cropper;
@@ -27,6 +38,11 @@ const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComp
         const croppedImage = canvas.toDataURL("image/png");
         setCropData(croppedImage);
         onCropComplete(croppedImage);
+
+        // ✅ Save exact crop box position and size
+        const newCropBoxData = cropper.getCropBoxData();
+        setCropBoxData(newCropBoxData);
+        localStorage.setItem("cropBoxData", JSON.stringify(newCropBoxData));
       }
     }
   };
@@ -34,11 +50,11 @@ const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComp
   return (
     <div className="w-full flex flex-col items-center">
       <Cropper
-        key={imageUrl} // Forces re-initialization if image changes
+        key={imageUrl}
         src={imageUrl}
         style={{ height: 400, width: "100%" }}
         guides={true}
-        aspectRatio={aspectRatio ?? NaN} // Dynamically set aspect ratio
+        aspectRatio={aspectRatio ?? NaN}
         ref={cropperRef}
         viewMode={1}
       />
@@ -59,6 +75,3 @@ const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComp
 };
 
 export default CropImage;
-
-
-
