@@ -16,7 +16,7 @@ const aspectRatios = [
   { label: "3:2", value: "3-2", boxClass: "w-12 h-8" },
 ];
 
-const CropSidebar = () => {
+const CropSidebar = ({ setIsCropping }: { setIsCropping: (cropping: boolean) => void }) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -28,7 +28,12 @@ const CropSidebar = () => {
           <ScrollArea className="h-[400px]">
             <div className="grid grid-cols-3 gap-4">
               {aspectRatios.map((ratio) => (
-                <Button key={ratio.value} variant="outline" className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md">
+                <Button
+                key={ratio.value}
+                variant="outline"
+                className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
+                onClick={ratio.value === "freeform" ? () => setIsCropping(true) : undefined} // TRIGGER CROPPING
+              >
                   {ratio.value === "freeform" ? (
                     <Scan className="text-gray-500 w-8 h-8" /> // TODO: resize icon
                   ) : (

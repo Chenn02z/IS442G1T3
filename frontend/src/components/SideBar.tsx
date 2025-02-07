@@ -4,7 +4,7 @@ import { ThemeModeToggle } from "@/components/ThemeModeToggle";
 import CropSidebar from "@/components/CropSideBar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const SideBar = () => {
+const SideBar = ({ setIsCropping }: { setIsCropping: (cropping: boolean) => void }) => {
   return (
     <div className="fixed flex flex-col space-y-2 w-fit h-full p-2 items-center border-2 border-r-lightgray-500">
       <ThemeModeToggle />
@@ -13,7 +13,7 @@ const SideBar = () => {
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="border border-1 p-1 rounded-md cursor-pointer">
-              <CropSidebar />
+            <CropSidebar setIsCropping={setIsCropping} />
             </div>
           </TooltipTrigger>
           <TooltipContent side="right">
