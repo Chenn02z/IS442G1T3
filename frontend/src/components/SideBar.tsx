@@ -1,10 +1,11 @@
 import React from "react";
-import { Crop } from "lucide-react";
 import { SquareX } from "lucide-react";
 import { ThemeModeToggle } from "@/components/ThemeModeToggle";
 import { useUpload } from "@/context/UploadContext";
 import { useToast } from "@/hooks/use-toast";
 import { CONFIG } from "../../config";
+import CropSidebar from "@/components/CropSideBar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SideBar = () => {
   const { uploadedFile } = useUpload();
@@ -65,9 +66,18 @@ const SideBar = () => {
     <div className="fixed flex flex-col space-y-2 w-fit h-full p-2 items-center border-2 border-r-lightgray-500">
       <ThemeModeToggle />
       <p className="text-xs pt-3 pb-1 font-semibold">Edit:</p>
-      <div className="border border-1 p-1 rounded-md cursor-pointer">
-        <Crop />
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="border border-1 p-1 rounded-md cursor-pointer">
+              <CropSidebar />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Crop Image</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <div className="border border-1 p-1 rounded-md cursor-pointer">
         <SquareX onClick={checkFile} />
       </div>
