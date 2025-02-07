@@ -7,7 +7,13 @@ import { CONFIG } from "../../config";
 import CropSidebar from "@/components/CropSideBar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const SideBar = ({ setIsCropping }: { setIsCropping: (cropping: boolean) => void }) => {
+const SideBar = ({
+  setIsCropping,
+  setSelectedAspectRatio, // ✅ Accept as a prop
+}: {
+  setIsCropping: (cropping: boolean) => void;
+  setSelectedAspectRatio: (ratio: number | null) => void;
+}) => {
   const { uploadedFile } = useUpload();
   const { toast } = useToast();
 
@@ -70,7 +76,7 @@ const SideBar = ({ setIsCropping }: { setIsCropping: (cropping: boolean) => void
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="border border-1 p-1 rounded-md cursor-pointer">
-            <CropSidebar setIsCropping={setIsCropping} />
+            <CropSidebar setIsCropping={setIsCropping} setSelectedAspectRatio={setSelectedAspectRatio} />
             </div>
           </TooltipTrigger>
           <TooltipContent side="right">
