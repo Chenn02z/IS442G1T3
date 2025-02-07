@@ -14,11 +14,11 @@ import CropSidebar from "./CropSideBar";
 const UploadImageForm = ({
   isCropping,
   setIsCropping,
-  selectedAspectRatio, // ✅ Fix: Accept selectedAspectRatio as a prop
+  selectedAspectRatio,
 }: {
   isCropping: boolean;
   setIsCropping: (cropping: boolean) => void;
-  selectedAspectRatio: number | null; // ✅ Fix: Ensure aspect ratio is passed
+  selectedAspectRatio: number | null; //
 }) => {
   const { toast } = useToast();
   const { setUploadedFile } = useUpload();
@@ -27,8 +27,6 @@ const UploadImageForm = ({
   const [uploading, setUploading] = useState<boolean>(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Additional State Hooks
-  // const [isCropping, setIsCropping] = useState<boolean>(false);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
