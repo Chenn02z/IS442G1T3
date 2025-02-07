@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,15 +18,25 @@ const aspectRatios = [
 
 const CropSidebar = ({
   setIsCropping,
-  setSelectedAspectRatio
+  setSelectedAspectRatio,
 }: {
   setIsCropping: (cropping: boolean) => void;
   setSelectedAspectRatio: (ratio: number | null) => void;
 }) => {
+  const [selectedRatio, setSelectedRatio] = useState<string>(""); // ❌ Initially nothing is selected
+
+  const handleSidebarOpen = (isOpen: boolean) => {
+    if (isOpen) {
+      setIsCropping(true); // ✅ Open crop grid ONLY when sidebar opens
+      setSelectedAspectRatio(null); // ✅ Default to Freeform
+      setSelectedRatio("freeform"); // ✅ Mark Freeform as selected
+    }
+  };
+
   return (
-    <Sheet>
+    <Sheet onOpenChange={handleSidebarOpen}>
       <SheetTrigger asChild>
-        <Crop />
+          <Crop className="w-5 h-5" />
       </SheetTrigger>
       <SheetContent side="left" className="w-80 p-4 flex flex-col justify-between">
         <div>
@@ -36,11 +46,11 @@ const CropSidebar = ({
               {aspectRatios.map((ratio) => (
                 <Button
                   key={ratio.value}
-                  variant="outline"
+                  variant={selectedRatio === ratio.value ? "default" : "outline"} // ✅ Highlight selected
                   className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
                   onClick={() => {
+                    setSelectedRatio(ratio.value);
                     setSelectedAspectRatio(ratio.aspectRatio);
-                    if (ratio.value === "freeform") setIsCropping(true); // Only trigger cropping for Freeform
                   }}
                 >
                   {ratio.value === "freeform" ? (
@@ -66,6 +76,3 @@ const CropSidebar = ({
 };
 
 export default CropSidebar;
-
-
-
