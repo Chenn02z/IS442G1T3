@@ -9,8 +9,9 @@ import { useUpload } from "@/context/UploadContext";
 // Import Statements for Display & Crop
 import DisplayImage from "./DisplayImage";
 import CropImage from "./CropImage";
+import CropSidebar from "./CropSideBar";
 
-const UploadImageForm = () => {
+const UploadImageForm = ({ isCropping, setIsCropping }: { isCropping: boolean; setIsCropping: (cropping: boolean) => void }) => {
   const { toast } = useToast();
   const { setUploadedFile } = useUpload();
 
@@ -19,7 +20,7 @@ const UploadImageForm = () => {
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Additional State Hooks
-  const [isCropping, setIsCropping] = useState<boolean>(false);
+  // const [isCropping, setIsCropping] = useState<boolean>(false);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,25 +105,13 @@ const UploadImageForm = () => {
                 imageUrl={uploadedImageUrl}
                 onCropComplete={(croppedImage) => {
                   setCroppedImageUrl(croppedImage);
-                  console.log("✂️ Cropped Image URL:", croppedImage);
                   setIsCropping(false);
                   toast({
                     title: "Image Cropped Successfully!",
                   });
                 }}
               />
-            ) : (
-              <>
-                <DisplayImage
-                  imageUrl={croppedImageUrl ? croppedImageUrl : uploadedImageUrl}
-                />
-                <button
-                  className="mt-4 px-4 py-2 bg-primary text-white rounded"
-                  onClick={() => setIsCropping(true)}
-                >
-                  Crop Image
-                </button>
-              </>
+            ) : ( <DisplayImage imageUrl={croppedImageUrl || uploadedImageUrl} />
             )}
           </>
         )}
