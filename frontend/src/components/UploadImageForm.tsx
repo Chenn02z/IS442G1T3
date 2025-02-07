@@ -10,7 +10,15 @@ import DisplayImage from "./DisplayImage";
 import CropImage from "./CropImage";
 import CropSidebar from "./CropSideBar";
 
-const UploadImageForm = ({ isCropping, setIsCropping }: { isCropping: boolean; setIsCropping: (cropping: boolean) => void }) => {
+const UploadImageForm = ({
+  isCropping,
+  setIsCropping,
+  selectedAspectRatio, // ✅ Fix: Accept selectedAspectRatio as a prop
+}: {
+  isCropping: boolean;
+  setIsCropping: (cropping: boolean) => void;
+  selectedAspectRatio: number | null; // ✅ Fix: Ensure aspect ratio is passed
+}) => {
   const { toast } = useToast();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -98,6 +106,7 @@ const UploadImageForm = ({ isCropping, setIsCropping }: { isCropping: boolean; s
             {isCropping ? (
               <CropImage
                 imageUrl={uploadedImageUrl}
+                aspectRatio={selectedAspectRatio}
                 onCropComplete={(croppedImage) => {
                   setCroppedImageUrl(croppedImage);
                   setIsCropping(false);
