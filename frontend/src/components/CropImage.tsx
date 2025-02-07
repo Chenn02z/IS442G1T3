@@ -1,15 +1,23 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
 
 type CropImageProps = {
   imageUrl: string;
+  aspectRatio: number | null;
   onCropComplete: (croppedImage: string) => void;
 };
 
-const CropImage: React.FC<CropImageProps> = ({ imageUrl, onCropComplete }) => {
+const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComplete }) => {
   const cropperRef = useRef<Cropper>(null);
   const [cropData, setCropData] = useState<string>("");
+
+  useEffect(() => {
+    const cropper = cropperRef.current?.cropper;
+    if (cropper) {
+      cropper.setAspectRatio(aspectRatio ?? NaN); // Update aspect ratio dynamically
+    }
+  }, [aspectRatio]); // Runs when aspectRatio changes
 
   const onCrop = () => {
     const cropper = cropperRef.current?.cropper;
@@ -26,10 +34,11 @@ const CropImage: React.FC<CropImageProps> = ({ imageUrl, onCropComplete }) => {
   return (
     <div className="w-full flex flex-col items-center">
       <Cropper
-        key={imageUrl} // Forces re-initialization if the imageUrl changes
+        key={imageUrl} // Forces re-initialization if image changes
         src={imageUrl}
         style={{ height: 400, width: "100%" }}
         guides={true}
+        aspectRatio={aspectRatio ?? NaN} // Dynamically set aspect ratio
         ref={cropperRef}
         viewMode={1}
       />
@@ -50,5 +59,6 @@ const CropImage: React.FC<CropImageProps> = ({ imageUrl, onCropComplete }) => {
 };
 
 export default CropImage;
+
 
 

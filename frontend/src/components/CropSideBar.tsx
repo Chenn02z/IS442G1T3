@@ -5,22 +5,28 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Crop, Scan } from "lucide-react";
 
 const aspectRatios = [
-  { label: "Freeform", value: "freeform", boxClass: "" },
-  { label: "1:1", value: "1-1", boxClass: "w-10 h-10" },
-  { label: "16:9", value: "16-9", boxClass: "w-14 h-8" },
-  { label: "9:16", value: "9-16", boxClass: "w-8 h-14" },
-  { label: "5:4", value: "5-4", boxClass: "w-12 h-10" },
-  { label: "4:5", value: "4-5", boxClass: "w-10 h-12" },
-  { label: "4:3", value: "4-3", boxClass: "w-12 h-9" },
-  { label: "3:4", value: "3-4", boxClass: "w-9 h-12" },
-  { label: "3:2", value: "3-2", boxClass: "w-12 h-8" },
+  { label: "Freeform", value: "freeform", aspectRatio: null, boxClass: "" },
+  { label: "1:1", value: "1-1", aspectRatio: 1, boxClass: "w-10 h-10" },
+  { label: "16:9", value: "16-9", aspectRatio: 16 / 9, boxClass: "w-14 h-8" },
+  { label: "9:16", value: "9-16", aspectRatio: 9 / 16, boxClass: "w-8 h-14" },
+  { label: "5:4", value: "5-4", aspectRatio: 5 / 4, boxClass: "w-12 h-10" },
+  { label: "4:5", value: "4-5", aspectRatio: 4 / 5, boxClass: "w-10 h-12" },
+  { label: "4:3", value: "4-3", aspectRatio: 4 / 3, boxClass: "w-12 h-9" },
+  { label: "3:4", value: "3-4", aspectRatio: 3 / 4, boxClass: "w-9 h-12" },
+  { label: "3:2", value: "3-2", aspectRatio: 3 / 2, boxClass: "w-12 h-8" },
 ];
 
-const CropSidebar = ({ setIsCropping }: { setIsCropping: (cropping: boolean) => void }) => {
+const CropSidebar = ({
+  setIsCropping,
+  setSelectedAspectRatio
+}: {
+  setIsCropping: (cropping: boolean) => void;
+  setSelectedAspectRatio: (ratio: number | null) => void;
+}) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-          <Crop />
+        <Crop />
       </SheetTrigger>
       <SheetContent side="left" className="w-80 p-4 flex flex-col justify-between">
         <div>
@@ -29,13 +35,16 @@ const CropSidebar = ({ setIsCropping }: { setIsCropping: (cropping: boolean) => 
             <div className="grid grid-cols-3 gap-4">
               {aspectRatios.map((ratio) => (
                 <Button
-                key={ratio.value}
-                variant="outline"
-                className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
-                onClick={ratio.value === "freeform" ? () => setIsCropping(true) : undefined} // TRIGGER CROPPING
-              >
+                  key={ratio.value}
+                  variant="outline"
+                  className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
+                  onClick={() => {
+                    setSelectedAspectRatio(ratio.aspectRatio);
+                    if (ratio.value === "freeform") setIsCropping(true); // Only trigger cropping for Freeform
+                  }}
+                >
                   {ratio.value === "freeform" ? (
-                    <Scan className="text-gray-500 w-8 h-8" /> // TODO: resize icon
+                    <Scan className="text-gray-500 w-8 h-8" />
                   ) : (
                     <div className={`border border-gray-500 ${ratio.boxClass}`} />
                   )}
@@ -57,5 +66,6 @@ const CropSidebar = ({ setIsCropping }: { setIsCropping: (cropping: boolean) => 
 };
 
 export default CropSidebar;
+
 
 
