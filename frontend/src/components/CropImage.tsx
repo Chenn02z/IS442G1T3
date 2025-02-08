@@ -1,16 +1,27 @@
 import React, { useRef, useEffect, useState } from "react";
+
+// Crop-related imports
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
 
+// ========================================================
+// PROPS
+// imageURL: URL of uploaded image
+// aspectRatio: The desired aspect ratio for the crop (or null for freeform)
+// onCropComplete: Callback function, pass cropped image data back
+// isCropping: A flag indicating whether cropping mode is active
+// ========================================================
 type CropImageProps = {
   imageUrl: string;
   aspectRatio: number | null;
   onCropComplete: (croppedImage: string) => void;
+  isCropping: boolean;
 };
 
-const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComplete }) => {
+const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComplete,isCropping }) => {
   const cropperRef = useRef<Cropper>(null);
   const [cropData, setCropData] = useState<string>("");
+  // State to store the crop box dimensions (x, y, width, height)
   const [cropBoxData, setCropBoxData] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
@@ -18,18 +29,20 @@ const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComp
     if (cropper) {
       cropper.setAspectRatio(aspectRatio ?? NaN);
 
-      // ✅ Restore last crop box ONLY if Freeform is selected
-      if (aspectRatio === null) {
+      //retrieve the saved crop box data from localStorage, if user wants to recrop
+      if (aspectRatio === null && isCropping) {
         const savedCropBox = localStorage.getItem("cropBoxData");
         if (savedCropBox) {
           const parsedCropBox = JSON.parse(savedCropBox);
           setCropBoxData(parsedCropBox);
           cropper.setCropBoxData(parsedCropBox);
+          setTimeout(() => cropper.setCropBoxData(parsedCropBox), 100);
         }
       }
     }
-  }, [aspectRatio]);
+  }, [aspectRatio, isCropping] );
 
+  // apply crop
   const onCrop = () => {
     const cropper = cropperRef.current?.cropper;
     if (cropper) {
@@ -39,10 +52,9 @@ const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComp
         setCropData(croppedImage);
         onCropComplete(croppedImage);
 
-        // ✅ Save exact crop box position and size
-        const newCropBoxData = cropper.getCropBoxData();
-        setCropBoxData(newCropBoxData);
-        localStorage.setItem("cropBoxData", JSON.stringify(newCropBoxData));
+        const newCropBoxData = cropper.getCropBoxData(); // Get the current crop box data (dimensions) from the cropper
+        setCropBoxData(newCropBoxData); // Update the state with the new crop box data
+        localStorage.setItem("cropBoxData", JSON.stringify(newCropBoxData)); // Save the crop box data to localStorage
       }
     }
   };

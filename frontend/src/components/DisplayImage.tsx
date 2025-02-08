@@ -17,6 +17,7 @@ const DisplayImage: React.FC<DisplayImageProps> = ({ imageUrl }) => {
         width={250}
         className="object-cover rounded-md shadow-md"
         unoptimized
+        // if not it somehow throws an error when loading image in the frontend
       />
     </div>
   );
