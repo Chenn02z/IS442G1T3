@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Crop, Scan } from "lucide-react";
 
+// for sidebar menu and CSS values for box in button
 const aspectRatios = [
   { label: "Freeform", value: "freeform", aspectRatio: null, boxClass: "" },
   { label: "1:1", value: "1-1", aspectRatio: 1, boxClass: "w-10 h-10" },
@@ -16,18 +17,19 @@ const aspectRatios = [
   { label: "3:2", value: "3-2", aspectRatio: 3 / 2, boxClass: "w-12 h-8" },
 ];
 
+
 interface CropSidebarProps {
+  // setIsCropping: a function to toggle cropping mode.
+  // setSelectedAspectRatio: a function to set the chosen aspect ratio.
   setIsCropping: (cropping: boolean) => void;
   setSelectedAspectRatio: (ratio: number | null) => void;
 }
 
 const CropSidebar: React.FC<CropSidebarProps> = ({ setIsCropping, setSelectedAspectRatio }) => {
-  // default to "freeform"
   const [selectedRatio, setSelectedRatio] = useState<string>("freeform");
 
   useEffect(() => {
-    // Prefer the stored ratio identifier
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined") { // to access localstorage
       const savedRatio = localStorage.getItem("selectedRatio");
       if (savedRatio) {
         setSelectedRatio(savedRatio);
@@ -42,7 +44,6 @@ const CropSidebar: React.FC<CropSidebarProps> = ({ setIsCropping, setSelectedAsp
   const handleSidebarOpen = (isOpen: boolean) => {
     if (isOpen) {
       setIsCropping(true);
-      // Optionally, if you want to force freeform when there's cropBoxData, you can do:
       if (localStorage.getItem("cropBoxData")) {
         setSelectedRatio("freeform");
         setSelectedAspectRatio(null);
@@ -69,7 +70,6 @@ const CropSidebar: React.FC<CropSidebarProps> = ({ setIsCropping, setSelectedAsp
                   onClick={() => {
                     setSelectedRatio(ratio.value);
                     setSelectedAspectRatio(ratio.aspectRatio);
-                    // store the selected ratio as a string
                     localStorage.setItem("selectedRatio", ratio.value);
                   }}
                 >

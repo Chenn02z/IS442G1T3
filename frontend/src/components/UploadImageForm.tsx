@@ -1,5 +1,5 @@
 "use client";
-import { Card, CardContent } from "./ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { UploadCloud } from "lucide-react";
 import { CONFIG } from "../../config";
@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 // Import Statements for Display & Crop
 import DisplayImage from "./DisplayImage";
 import CropImage from "./CropImage";
-import CropSidebar from "./CropSideBar";
 
 const UploadImageForm = ({
   isCropping,
@@ -21,12 +20,16 @@ const UploadImageForm = ({
 }) => {
   const { toast } = useToast();
 
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Added croppedImageUrl state to handle the result of cropping
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
 
+  // Clears previous crop data from localStorage and resets croppedImageUrl when a new file is uploaded
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
     const file = event.target.files?.[0];
@@ -34,8 +37,12 @@ const UploadImageForm = ({
       setError("Please select an image.");
       return;
     }
+
+    localStorage.removeItem("cropBoxData");
+
     setSelectedFile(file);
     setUploading(true);
+    setCroppedImageUrl(null);
     const formData = new FormData();
     formData.append("imageFile", file);
     formData.append("backgroundOption", "white"); // to revisit logic
@@ -71,6 +78,20 @@ const UploadImageForm = ({
     }
   };
 
+// TODO: replace Dummy function for sending x,y,height,width to backend
+const handleDummySave = () => {
+  const cropBoxDataStr = localStorage.getItem("cropBoxData");
+  if (!cropBoxDataStr) {
+    console.log("No crop data found in localStorage.");
+    return;
+  }
+  const cropBoxData = JSON.parse(cropBoxDataStr);
+  const payload = {
+    cropBoxData, 
+  };
+  console.log("Payload that would be sent to the backend:", payload);
+};
+
   return (
     <Card className="hover:cursor-pointer hover:bg-secondary hover:border-primary transition-all ease-in-out">
       <CardContent className="flex flex-col h-full items-center justify-center px-2 py-24 text-xs">
@@ -105,6 +126,7 @@ const UploadImageForm = ({
               <CropImage
                 imageUrl={uploadedImageUrl}
                 aspectRatio={selectedAspectRatio}
+                isCropping={isCropping}
                 onCropComplete={(croppedImage) => {
                   setCroppedImageUrl(croppedImage);
                   setIsCropping(false);
@@ -114,6 +136,15 @@ const UploadImageForm = ({
                 }}
               />
             ) : ( <DisplayImage imageUrl={croppedImageUrl || uploadedImageUrl} />
+            )}
+            {/* dummy button to check function */}
+            {!isCropping && (
+              <button
+                onClick={handleDummySave}
+                className="mt-4 px-4 py-2 bg-primary text-white rounded"
+              >
+                Save Changes
+              </button>
             )}
           </>
         )}
