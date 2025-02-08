@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:3000") // Allow frontend requests (local)
 @RequestMapping("/api/background-removal")
 public class BackgroundRemovalController {
 

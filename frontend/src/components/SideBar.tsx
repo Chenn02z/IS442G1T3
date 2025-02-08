@@ -30,21 +30,30 @@ const SideBar = ({
 
     // Prepare the file to be sent to the backend
     const formData = new FormData();
-    formData.append("imageFile", uploadedFile);
+    formData.append("image", uploadedFile);
+    formData.append("backgroundOption", "white"); // to revisit logic
 
     try {
-      const response = await fetch(
-        CONFIG.API_BASE_URL + "/api/mock/remove-background",
+      // const response = await fetch(CONFIG.API_BASE_URL + "/api/images/upload", {
+      //   method: "POST",
+      //   body: formData,
+      // });
+      const response = await fetch(CONFIG.API_BASE_URL + "/api/background-removal/remove",
         {
           method: "POST",
           body: formData,
+          // mode: "cors",  // Enables CORS requests
+          // headers: {
+          //   "Accept": "application/json",  // Ensure the response is JSON
+          //   "Access-Control-Allow-Origin": "*",  // Allow any domain (use a specific one in production)
+          // }
         }
       );
       if (!response.ok) {
         throw new Error("Failed to send image for background removal");
       }
       toast({
-        title: "Image successfully sent to the backend",
+        title: "New Image successfully saved to deskstop",
       });
     } catch (error: any) {
       console.error(error);
@@ -86,7 +95,7 @@ const SideBar = ({
         </Tooltip>
       </TooltipProvider>
       <div className="border border-1 p-1 rounded-md cursor-pointer">
-        <SquareX onClick={checkFile} />
+        <SquareX onClick={handleBackgroundRemoval} />
       </div>
     </div>
   );
