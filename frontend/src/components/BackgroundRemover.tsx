@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import {
   DropdownMenu,
@@ -13,12 +13,27 @@ import { SquareX } from "lucide-react";
 import { useUpload } from "@/context/UploadContext";
 import { useToast } from "@/hooks/use-toast";
 import { CONFIG } from "../../config";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export const BackgroundRemover = () => {
   const { uploadedFile } = useUpload();
   const { toast } = useToast();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPoints, setSelectedPoints] = useState<Array<{x: number, y: number}>>([]);
+  const imageRef = useRef<HTMLImageElement>(null);
 
-  // actual handler function
+  const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (!imageRef.current) return;
+
+    const rect = imageRef.current.getBoundingClientRect();
+    const x = Math.round(e.clientX - rect.left);
+    const y = Math.round(e.clientY - rect.top);
+    
+    // Add the new point to our selected points
+    setSelectedPoints(prev => [...prev, { x, y }]);
+    console.log(`Selected point: x=${x}, y=${y}`);
+  };
+
   const handleBackgroundRemoval = async (type: string) => {
     if (!uploadedFile) {
       toast({
@@ -28,82 +43,45 @@ export const BackgroundRemover = () => {
       return;
     }
 
+    if (type === "manual") {
+      setIsModalOpen(true);
+      setSelectedPoints([]); // Reset points when opening modal
+      return;
+    }
+
     // Prepare the file to be sent to the backend
     const formData = new FormData();
     formData.append("image", uploadedFile);
-    if (type == "auto") {
-      formData.append("backgroundOption", "white"); // to revisit logic
-      try {
-        // const response = await fetch(CONFIG.API_BASE_URL + "/api/images/upload", {
-        //   method: "POST",
-        //   body: formData,
-        // });
-        const response = await fetch(
-          CONFIG.API_BASE_URL + "/api/background-removal/remove",
-          {
-            method: "POST",
-            body: formData,
-            // mode: "cors",  // Enables CORS requests
-            // headers: {
-            //   "Accept": "application/json",  // Ensure the response is JSON
-            //   "Access-Control-Allow-Origin": "*",  // Allow any domain (use a specific one in production)
-            // }
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Failed to send image for background removal");
+    formData.append("backgroundOption", "white"); // to revisit logic
+
+    try {
+      const response = await fetch(
+        CONFIG.API_BASE_URL + "/api/background-removal/remove",
+        {
+          method: "POST",
+          body: formData,
         }
-        toast({
-          title: "New Image successfully saved to deskstop",
-        });
-      } catch (error: any) {
-        console.error(error);
-        toast({
-          title: "Error sending image",
-          description: error.message,
-        });
+      );
+      if (!response.ok) {
+        throw new Error("Failed to send image for background removal");
       }
-    } else {
-      formData.append("backgroundOption", "white"); // to revisit logic
-      try {
-        // const response = await fetch(CONFIG.API_BASE_URL + "/api/images/upload", {
-        //   method: "POST",
-        //   body: formData,
-        // });
-        const response = await fetch(
-          CONFIG.API_BASE_URL + "/api/background-removal/floodfill",
-          {
-            method: "POST",
-            body: formData,
-            // mode: "cors",  // Enables CORS requests
-            // headers: {
-            //   "Accept": "application/json",  // Ensure the response is JSON
-            //   "Access-Control-Allow-Origin": "*",  // Allow any domain (use a specific one in production)
-            // }
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Failed to send image for background removal");
-        }
-        toast({
-          title: "New Image successfully saved to deskstop",
-        });
-      } catch (error: any) {
-        console.error(error);
-        toast({
-          title: "Error sending image",
-          description: error.message,
-        });
-      }
+      toast({
+        title: "New Image successfully saved to desktop",
+      });
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: "Error sending image",
+        description: error.message,
+      });
     }
-    // formData.append("backgroundOption", "white"); // to revisit logic
-
-    // depending on the option selected, change formData or change endpoint?
-
-    
   };
 
-  // tester function to check if file can be seen from the sidebar
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedPoints([]); // Clear points when closing
+  };
+
   const checkFile = () => {
     if (!uploadedFile) {
       toast({
@@ -121,20 +99,69 @@ export const BackgroundRemover = () => {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <div className="border border-1 p-1 rounded-md cursor-pointer">
-          <SquareX />
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => handleBackgroundRemoval("auto")}>
-          Auto
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleBackgroundRemoval("manual")}>
-          Manual
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="border border-1 p-1 rounded-md cursor-pointer">
+            <SquareX />
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleBackgroundRemoval("auto")}>
+            Auto
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleBackgroundRemoval("manual")}>
+            Manual
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog modal={true} open={isModalOpen} onOpenChange={handleCloseModal}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-auto">
+          <div className="flex flex-col gap-4">
+            <div className="relative w-full">
+              {uploadedFile && (
+                <img
+                  ref={imageRef}
+                  src={URL.createObjectURL(uploadedFile)}
+                  alt="Upload preview"
+                  className="w-full cursor-crosshair"
+                  onClick={handleImageClick}
+                />
+              )}
+              {/* Render dots for selected points */}
+              {selectedPoints.map((point, index) => (
+                <div
+                  key={index}
+                  className="absolute w-2 h-2 bg-red-500 rounded-full transform -translate-x-1 -translate-y-1"
+                  style={{
+                    left: `${point.x}px`,
+                    top: `${point.y}px`,
+                  }}
+                />
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <button 
+                className="w-full px-4 py-2 bg-secondary text-black rounded hover:bg-primary"
+                onClick={() => setSelectedPoints([])}
+              >
+                Clear Points
+              </button>
+              <button 
+                className="w-full px-4 py-2 bg-primary text-white rounded hover:bg-secondary"
+                onClick={() => {
+                  console.log('Selected points:', selectedPoints);
+                  // Here you can send the points to your backend
+                }}
+              >
+                Process Points
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
