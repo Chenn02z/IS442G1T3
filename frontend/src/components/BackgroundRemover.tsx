@@ -19,7 +19,9 @@ export const BackgroundRemover = () => {
   const { uploadedFile } = useUpload();
   const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPoints, setSelectedPoints] = useState<Array<{x: number, y: number}>>([]);
+  const [selectedPoints, setSelectedPoints] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
   const imageRef = useRef<HTMLImageElement>(null);
 
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
@@ -28,9 +30,9 @@ export const BackgroundRemover = () => {
     const rect = imageRef.current.getBoundingClientRect();
     const x = Math.round(e.clientX - rect.left);
     const y = Math.round(e.clientY - rect.top);
-    
+
     // Add the new point to our selected points
-    setSelectedPoints(prev => [...prev, { x, y }]);
+    setSelectedPoints((prev) => [...prev, { x, y }]);
     console.log(`Selected point: x=${x}, y=${y}`);
   };
 
@@ -47,31 +49,83 @@ export const BackgroundRemover = () => {
       setIsModalOpen(true);
       setSelectedPoints([]); // Reset points when opening modal
       return;
+    } else {
+      try {
+        // Prepare the file to be sent to the backend
+        const formData = new FormData();
+        formData.append("image", uploadedFile);
+        formData.append("backgroundOption", "white"); // to revisit logic
+        const response = await fetch(
+          CONFIG.API_BASE_URL + "/api/background-removal/remove",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to send image for background removal");
+        }
+        toast({
+          title: "New Image successfully saved to desktop",
+        });
+      } catch (error: any) {
+        console.error(error);
+        toast({
+          title: "Error sending image",
+          description: error.message,
+        });
+      }
+    }
+  };
+
+  const floodFill = async () => {
+    if (!uploadedFile) {
+      toast({
+        title: "No uploaded file",
+        description: "Please upload a file first.",
+      });
+      return;
     }
 
-    // Prepare the file to be sent to the backend
     const formData = new FormData();
-    formData.append("image", uploadedFile);
-    formData.append("backgroundOption", "white"); // to revisit logic
+    formData.append("file", uploadedFile);
+    formData.append("tolerance", "30");
+    formData.append("points", JSON.stringify(selectedPoints));
 
     try {
       const response = await fetch(
-        CONFIG.API_BASE_URL + "/api/background-removal/remove",
+        `${CONFIG.API_BASE_URL}/api/background-remover/floodfill`,
         {
           method: "POST",
           body: formData,
         }
       );
+
       if (!response.ok) {
-        throw new Error("Failed to send image for background removal");
+        throw new Error("Failed to process image");
       }
+
+      // Create a blob URL from the response
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      // Update the image display or download the result
+      // For example:
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "processed-image.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
       toast({
-        title: "New Image successfully saved to desktop",
+        title: "Image processed successfully",
       });
     } catch (error: any) {
       console.error(error);
       toast({
-        title: "Error sending image",
+        title: "Error processing image",
         description: error.message,
       });
     }
@@ -141,19 +195,19 @@ export const BackgroundRemover = () => {
                 />
               ))}
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4 w-full">
-              <button 
+              <button
                 className="w-full px-4 py-2 bg-secondary text-black rounded hover:bg-primary"
                 onClick={() => setSelectedPoints([])}
               >
                 Clear Points
               </button>
-              <button 
+              <button
                 className="w-full px-4 py-2 bg-primary text-white rounded hover:bg-secondary"
                 onClick={() => {
-                  console.log('Selected points:', selectedPoints);
                   // Here you can send the points to your backend
+                  floodFill();
                 }}
               >
                 Process Points

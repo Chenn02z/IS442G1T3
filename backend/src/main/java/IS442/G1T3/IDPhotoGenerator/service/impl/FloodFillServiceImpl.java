@@ -1,79 +1,84 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
-import IS442.G1T3.IDPhotoGenerator.model.FloodFillRequest;
-import IS442.G1T3.IDPhotoGenerator.model.FloodFillResponse;
 import IS442.G1T3.IDPhotoGenerator.service.FloodFillService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.Queue;
 
 @Service
+@Slf4j
 public class FloodFillServiceImpl implements FloodFillService {
 
     @Override
-    public FloodFillResponse processImage(FloodFillRequest request) {
-        int width = request.getWidth();
-        int height = request.getHeight();
-        int[] imageData = request.getImageData();
-        int startX = request.getStartX();
-        int startY = request.getStartY();
-        int tolerance = request.getTolerance();
+    public byte[] removeBackground(MultipartFile file, int seedX, int seedY, int tolerance) throws IOException {
+        BufferedImage originalImage = ImageIO.read(file.getInputStream());
+        BufferedImage processedImage = floodFill(originalImage, seedX, seedY, tolerance);
 
-        boolean[][] visited = new boolean[height][width];
-        int targetColor = getPixel(imageData, startX, startY, width);
+        // Create a new BufferedImage with transparency support
+        BufferedImage transparentImage = new BufferedImage(
+                processedImage.getWidth(),
+                processedImage.getHeight(),
+                BufferedImage.TYPE_INT_ARGB
+        );
 
-        // Perform flood fill
-        floodFill(imageData, startX, startY, targetColor, width, height, tolerance, visited);
+        // Copy the processed image to the transparent image
+        Graphics2D g2d = transparentImage.createGraphics();
+        g2d.drawImage(processedImage, 0, 0, null);
+        g2d.dispose();
 
-        // Create transparent background
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                if (!visited[y][x]) {
-                    setPixelTransparent(imageData, x, y, width);
+        // Convert to byte array
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(transparentImage, "png", baos);
+        return baos.toByteArray();
+    }
+
+    private BufferedImage floodFill(BufferedImage image, int seedX, int seedY, int tolerance) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        int targetColor = image.getRGB(seedX, seedY);
+        boolean[][] visited = new boolean[width][height];
+
+        Queue<Point> queue = new LinkedList<>();
+        queue.add(new Point(seedX, seedY));
+
+        while (!queue.isEmpty()) {
+            Point p = queue.remove();
+            if (isValidPoint(p.x, p.y, width, height) && !visited[p.x][p.y]) {
+                if (isColorSimilar(image.getRGB(p.x, p.y), targetColor, tolerance)) {
+                    image.setRGB(p.x, p.y, 0x00FFFFFF); // Set to transparent
+                    visited[p.x][p.y] = true;
+
+                    // Add adjacent points
+                    queue.add(new Point(p.x + 1, p.y));
+                    queue.add(new Point(p.x - 1, p.y));
+                    queue.add(new Point(p.x, p.y + 1));
+                    queue.add(new Point(p.x, p.y - 1));
                 }
             }
         }
-
-        return new FloodFillResponse(imageData);
+        return image;
     }
 
-    private void floodFill(int[] imageData, int x, int y, int targetColor, int width, int height,
-                           int tolerance, boolean[][] visited) {
-        if (x < 0 || x >= width || y < 0 || y >= height || visited[y][x]) {
-            return;
-        }
-
-        int currentColor = getPixel(imageData, x, y, width);
-        if (!isColorSimilar(currentColor, targetColor, tolerance)) {
-            return;
-        }
-
-        visited[y][x] = true;
-
-        // Recursive flood fill in 4 directions
-        floodFill(imageData, x + 1, y, targetColor, width, height, tolerance, visited);
-        floodFill(imageData, x - 1, y, targetColor, width, height, tolerance, visited);
-        floodFill(imageData, x, y + 1, targetColor, width, height, tolerance, visited);
-        floodFill(imageData, x, y - 1, targetColor, width, height, tolerance, visited);
-    }
-
-    private int getPixel(int[] imageData, int x, int y, int width) {
-        int index = (y * width + x) * 4;
-        return (imageData[index] << 24) | (imageData[index + 1] << 16) |
-                (imageData[index + 2] << 8) | imageData[index + 3];
-    }
-
-    private void setPixelTransparent(int[] imageData, int x, int y, int width) {
-        int index = (y * width + x) * 4;
-        imageData[index + 3] = 0; // Set alpha to 0
+    private boolean isValidPoint(int x, int y, int width, int height) {
+        return x >= 0 && x < width && y >= 0 && y < height;
     }
 
     private boolean isColorSimilar(int color1, int color2, int tolerance) {
-        int r1 = (color1 >> 24) & 0xFF;
-        int g1 = (color1 >> 16) & 0xFF;
-        int b1 = (color1 >> 8) & 0xFF;
+        int r1 = (color1 >> 16) & 0xff;
+        int g1 = (color1 >> 8) & 0xff;
+        int b1 = color1 & 0xff;
 
-        int r2 = (color2 >> 24) & 0xFF;
-        int g2 = (color2 >> 16) & 0xFF;
-        int b2 = (color2 >> 8) & 0xFF;
+        int r2 = (color2 >> 16) & 0xff;
+        int g2 = (color2 >> 8) & 0xff;
+        int b2 = color2 & 0xff;
 
         return Math.abs(r1 - r2) <= tolerance &&
                 Math.abs(g1 - g2) <= tolerance &&
