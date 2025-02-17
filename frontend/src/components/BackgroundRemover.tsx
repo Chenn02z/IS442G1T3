@@ -26,7 +26,8 @@ import {
 import { Button } from "@/components/ui/button";
 
 export const BackgroundRemover = () => {
-  const { uploadedFile } = useUpload();
+  const { uploadedFile, setUploadedFile } = useUpload();
+  const [workingFile, setWorkingFile] = useState<File | null>(null);
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPoints, setSelectedPoints] = useState<
@@ -35,28 +36,59 @@ export const BackgroundRemover = () => {
   const [step, setStep] = useState<"select" | "manual">("select");
   const imageRef = useRef<HTMLImageElement>(null);
 
+  // Initialize workingFile when dialog opens
+  useEffect(() => {
+    if (isDialogOpen && uploadedFile) {
+      setWorkingFile(uploadedFile);
+    }
+  }, [isDialogOpen, uploadedFile]);
+
   // Debug logging
   useEffect(() => {
     console.log("Dialog state:", isDialogOpen);
     console.log("Current step:", step);
     console.log("Selected points:", selectedPoints);
-  }, [isDialogOpen, step, selectedPoints]);
+    console.log("Working file:", workingFile);
+  }, [isDialogOpen, step, selectedPoints, workingFile]);
 
+  // const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
+  //   if (!imageRef.current) return;
+
+  //   const rect = imageRef.current.getBoundingClientRect();
+  //   const x = Math.round(e.clientX - rect.left);
+  //   const y = Math.round(e.clientY - rect.top);
+
+  //   // Add the new point to our selected points
+  //   setSelectedPoints((prev) => [...prev, { x, y }]);
+  //   console.log(`Selected point: x=${x}, y=${y}`);
+  // };
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
     if (!imageRef.current) return;
 
     const rect = imageRef.current.getBoundingClientRect();
-    const x = Math.round(e.clientX - rect.left);
-    const y = Math.round(e.clientY - rect.top);
+    const image = imageRef.current;
 
-    // Add the new point to our selected points
-    setSelectedPoints((prev) => [...prev, { x, y }]);
-    console.log(`Selected point: x=${x}, y=${y}`);
+    // Calculate the scaling factors
+    const scaleX = image.naturalWidth / rect.width;
+    const scaleY = image.naturalHeight / rect.height;
+
+    // Get click coordinates relative to the displayed image
+    const displayX = e.clientX - rect.left;
+    const displayY = e.clientY - rect.top;
+
+    // Convert to actual image coordinates
+    const actualX = Math.round(displayX * scaleX);
+    const actualY = Math.round(displayY * scaleY);
+
+    setSelectedPoints((prev) => [...prev, { x: actualX, y: actualY }]);
+    console.log(
+      `Selected point: display(x=${displayX}, y=${displayY}), actual(x=${actualX}, y=${actualY})`
+    );
   };
 
   const handleBackgroundRemoval = async (type: string) => {
     console.log("Handling background removal:", type);
-    if (!uploadedFile) {
+    if (!workingFile) {
       toast({
         title: "No uploaded file",
         description: "Please upload a file first.",
@@ -69,7 +101,7 @@ export const BackgroundRemover = () => {
     } else {
       try {
         const formData = new FormData();
-        formData.append("image", uploadedFile);
+        formData.append("image", workingFile);
         formData.append("backgroundOption", "white");
         const response = await fetch(
           CONFIG.API_BASE_URL + "/api/background-removal/remove",
@@ -81,14 +113,26 @@ export const BackgroundRemover = () => {
         if (!response.ok) {
           throw new Error("Failed to send image for background removal");
         }
+
+        // Get the processed image as a blob
+        const processedImageBlob = await response.blob();
+
+        // Create a new File object from the blob
+        const processedFile = new File([processedImageBlob], workingFile.name, {
+          type: workingFile.type,
+        });
+
+        // Update the working file
+        setWorkingFile(processedFile);
+
         toast({
-          title: "New Image successfully saved to desktop",
+          title: "Background removed successfully",
         });
         setIsDialogOpen(false);
       } catch (error: any) {
         console.error(error);
         toast({
-          title: "Error sending image",
+          title: "Error processing image",
           description: error.message,
         });
       }
@@ -96,7 +140,7 @@ export const BackgroundRemover = () => {
   };
 
   const floodFill = async () => {
-    if (!uploadedFile) {
+    if (!workingFile) {
       toast({
         title: "No uploaded file",
         description: "Please upload a file first.",
@@ -105,13 +149,14 @@ export const BackgroundRemover = () => {
     }
 
     const formData = new FormData();
-    formData.append("file", uploadedFile);
+    formData.append("file", workingFile);
     formData.append("tolerance", "30");
-    formData.append("points", JSON.stringify(selectedPoints));
+    console.log(JSON.stringify(selectedPoints));
+    formData.append("seedPoints", JSON.stringify(selectedPoints));
 
     try {
       const response = await fetch(
-        `${CONFIG.API_BASE_URL}/api/background-remover/floodfill`,
+        `${CONFIG.API_BASE_URL}/api/images/remove-background`,
         {
           method: "POST",
           body: formData,
@@ -122,23 +167,23 @@ export const BackgroundRemover = () => {
         throw new Error("Failed to process image");
       }
 
-      // Create a blob URL from the response
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      // Get the processed image as a blob
+      const processedImageBlob = await response.blob();
 
-      // Update the image display or download the result
-      // For example:
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "processed-image.png";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Create a new File object from the blob
+      const processedFile = new File([processedImageBlob], workingFile.name, {
+        type: workingFile.type,
+      });
+
+      // Update the working file
+      setWorkingFile(processedFile);
 
       toast({
         title: "Image processed successfully",
       });
+
+      // Clear selected points but keep the dialog open
+      setSelectedPoints([]);
     } catch (error: any) {
       console.error(error);
       toast({
@@ -153,6 +198,18 @@ export const BackgroundRemover = () => {
     setIsDialogOpen(false);
     setSelectedPoints([]);
     setStep("select");
+    setWorkingFile(null);
+  };
+
+  const handleDone = () => {
+    console.log("Done clicked - updating main file");
+    if (workingFile) {
+      setUploadedFile(workingFile);
+      toast({
+        title: "Changes saved successfully",
+      });
+    }
+    handleDialogClose();
   };
 
   return (
@@ -194,7 +251,7 @@ export const BackgroundRemover = () => {
                       >
                         <div className="text-lg font-semibold">Auto</div>
                         <div className="text-sm text-muted-foreground">
-                          Automatically remove background using AI
+                          Automatically remove background using Computer Vision
                         </div>
                       </Button>
                       <Button
@@ -220,10 +277,10 @@ export const BackgroundRemover = () => {
                     </DialogHeader>
                     <div className="flex flex-col gap-4">
                       <div className="relative w-full">
-                        {uploadedFile && (
+                        {workingFile && (
                           <img
                             ref={imageRef}
-                            src={URL.createObjectURL(uploadedFile)}
+                            src={URL.createObjectURL(workingFile)}
                             alt="Upload preview"
                             className="w-full cursor-crosshair"
                             onClick={handleImageClick}
@@ -234,8 +291,16 @@ export const BackgroundRemover = () => {
                             key={index}
                             className="absolute w-2 h-2 bg-red-500 rounded-full transform -translate-x-1 -translate-y-1"
                             style={{
-                              left: `${point.x}px`,
-                              top: `${point.y}px`,
+                              left: `${
+                                (point.x /
+                                  (imageRef.current?.naturalWidth ?? 1)) *
+                                100
+                              }%`,
+                              top: `${
+                                (point.y /
+                                  (imageRef.current?.naturalHeight ?? 1)) *
+                                100
+                              }%`,
                             }}
                           />
                         ))}
@@ -278,6 +343,11 @@ export const BackgroundRemover = () => {
                       Back
                     </Button>
                   )}
+                  <DialogClose asChild>
+                    <Button variant="default" onClick={handleDone}>
+                      Done
+                    </Button>
+                  </DialogClose>
                 </div>
               </DialogContent>
             </Dialog>

@@ -1,6 +1,9 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
 import IS442.G1T3.IDPhotoGenerator.service.FloodFillService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,17 +13,20 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
+import java.util.List;
 
 @Service
 @Slf4j
 public class FloodFillServiceImpl implements FloodFillService {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
-    public byte[] removeBackground(MultipartFile file, int seedX, int seedY, int tolerance) throws IOException {
+    public byte[] removeBackground(MultipartFile file, String seedPointsJson, int tolerance) throws IOException {
+        List<Point> seedPoints = parsePoints(seedPointsJson);
         BufferedImage originalImage = ImageIO.read(file.getInputStream());
-        BufferedImage processedImage = floodFill(originalImage, seedX, seedY, tolerance);
+        BufferedImage processedImage = floodFill(originalImage, seedPoints, tolerance);
 
         // Create a new BufferedImage with transparency support
         BufferedImage transparentImage = new BufferedImage(
@@ -40,27 +46,46 @@ public class FloodFillServiceImpl implements FloodFillService {
         return baos.toByteArray();
     }
 
-    private BufferedImage floodFill(BufferedImage image, int seedX, int seedY, int tolerance) {
+    private List<Point> parsePoints(String seedPointsJson) throws JsonProcessingException {
+        List<Map<String, Integer>> points = objectMapper.readValue(
+            seedPointsJson, 
+            new TypeReference<List<Map<String, Integer>>>() {}
+        );
+        
+        List<Point> seedPoints = new ArrayList<>();
+        for (Map<String, Integer> point : points) {
+            seedPoints.add(new Point(point.get("x"), point.get("y")));
+        }
+        return seedPoints;
+    }
+
+    private BufferedImage floodFill(BufferedImage image, List<Point> seedPoints, int tolerance) {
         int width = image.getWidth();
         int height = image.getHeight();
-        int targetColor = image.getRGB(seedX, seedY);
         boolean[][] visited = new boolean[width][height];
 
-        Queue<Point> queue = new LinkedList<>();
-        queue.add(new Point(seedX, seedY));
+        for (Point seedPoint : seedPoints) {
+            if (!isValidPoint(seedPoint.x, seedPoint.y, width, height)) {
+                continue;
+            }
 
-        while (!queue.isEmpty()) {
-            Point p = queue.remove();
-            if (isValidPoint(p.x, p.y, width, height) && !visited[p.x][p.y]) {
-                if (isColorSimilar(image.getRGB(p.x, p.y), targetColor, tolerance)) {
-                    image.setRGB(p.x, p.y, 0x00FFFFFF); // Set to transparent
-                    visited[p.x][p.y] = true;
+            int targetColor = image.getRGB(seedPoint.x, seedPoint.y);
+            Queue<Point> queue = new LinkedList<>();
+            queue.add(seedPoint);
 
-                    // Add adjacent points
-                    queue.add(new Point(p.x + 1, p.y));
-                    queue.add(new Point(p.x - 1, p.y));
-                    queue.add(new Point(p.x, p.y + 1));
-                    queue.add(new Point(p.x, p.y - 1));
+            while (!queue.isEmpty()) {
+                Point p = queue.remove();
+                if (isValidPoint(p.x, p.y, width, height) && !visited[p.x][p.y]) {
+                    if (isColorSimilar(image.getRGB(p.x, p.y), targetColor, tolerance)) {
+                        image.setRGB(p.x, p.y, 0x00FFFFFF); // Set to transparent
+                        visited[p.x][p.y] = true;
+
+                        // Add adjacent points
+                        queue.add(new Point(p.x + 1, p.y));
+                        queue.add(new Point(p.x - 1, p.y));
+                        queue.add(new Point(p.x, p.y + 1));
+                        queue.add(new Point(p.x, p.y - 1));
+                    }
                 }
             }
         }
