@@ -2,27 +2,45 @@
 
 import { useState, useEffect, useRef } from "react";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
 import { SquareX } from "lucide-react";
 import { useUpload } from "@/context/UploadContext";
 import { useToast } from "@/hooks/use-toast";
 import { CONFIG } from "../../config";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DialogClose,
+  DialogClose as DialogCloseComponent,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export const BackgroundRemover = () => {
   const { uploadedFile } = useUpload();
   const { toast } = useToast();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPoints, setSelectedPoints] = useState<
     Array<{ x: number; y: number }>
   >([]);
+  const [step, setStep] = useState<"select" | "manual">("select");
   const imageRef = useRef<HTMLImageElement>(null);
+
+  // Debug logging
+  useEffect(() => {
+    console.log("Dialog state:", isDialogOpen);
+    console.log("Current step:", step);
+    console.log("Selected points:", selectedPoints);
+  }, [isDialogOpen, step, selectedPoints]);
 
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
     if (!imageRef.current) return;
@@ -37,6 +55,7 @@ export const BackgroundRemover = () => {
   };
 
   const handleBackgroundRemoval = async (type: string) => {
+    console.log("Handling background removal:", type);
     if (!uploadedFile) {
       toast({
         title: "No uploaded file",
@@ -46,15 +65,12 @@ export const BackgroundRemover = () => {
     }
 
     if (type === "manual") {
-      setIsModalOpen(true);
-      setSelectedPoints([]); // Reset points when opening modal
-      return;
+      setStep("manual");
     } else {
       try {
-        // Prepare the file to be sent to the backend
         const formData = new FormData();
         formData.append("image", uploadedFile);
-        formData.append("backgroundOption", "white"); // to revisit logic
+        formData.append("backgroundOption", "white");
         const response = await fetch(
           CONFIG.API_BASE_URL + "/api/background-removal/remove",
           {
@@ -68,6 +84,7 @@ export const BackgroundRemover = () => {
         toast({
           title: "New Image successfully saved to desktop",
         });
+        setIsDialogOpen(false);
       } catch (error: any) {
         console.error(error);
         toast({
@@ -131,91 +148,145 @@ export const BackgroundRemover = () => {
     }
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedPoints([]); // Clear points when closing
-  };
-
-  const checkFile = () => {
-    if (!uploadedFile) {
-      toast({
-        title: "No file",
-        description: "Please upload a file",
-      });
-      return false;
-    } else {
-      toast({
-        title: "File is here",
-        description: "Context api is working",
-      });
-      return true;
-    }
+  const handleDialogClose = () => {
+    console.log("Closing dialog");
+    setIsDialogOpen(false);
+    setSelectedPoints([]);
+    setStep("select");
   };
 
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <div className="border border-1 p-1 rounded-md cursor-pointer">
-            <SquareX />
-          </div>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => handleBackgroundRemoval("auto")}>
-            Auto
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleBackgroundRemoval("manual")}>
-            Manual
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <Dialog modal={true} open={isModalOpen} onOpenChange={handleCloseModal}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-auto">
-          <div className="flex flex-col gap-4">
-            <div className="relative w-full">
-              {uploadedFile && (
-                <img
-                  ref={imageRef}
-                  src={URL.createObjectURL(uploadedFile)}
-                  alt="Upload preview"
-                  className="w-full cursor-crosshair"
-                  onClick={handleImageClick}
-                />
-              )}
-              {/* Render dots for selected points */}
-              {selectedPoints.map((point, index) => (
-                <div
-                  key={index}
-                  className="absolute w-2 h-2 bg-red-500 rounded-full transform -translate-x-1 -translate-y-1"
-                  style={{
-                    left: `${point.x}px`,
-                    top: `${point.y}px`,
-                  }}
-                />
-              ))}
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="relative">
+            <div
+              className="border border-1 p-1 rounded-md cursor-pointer"
+              onClick={() => setIsDialogOpen(true)}
+            >
+              <SquareX className="h-5 w-5" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 w-full">
-              <button
-                className="w-full px-4 py-2 bg-secondary text-black rounded hover:bg-primary"
-                onClick={() => setSelectedPoints([])}
-              >
-                Clear Points
-              </button>
-              <button
-                className="w-full px-4 py-2 bg-primary text-white rounded hover:bg-secondary"
-                onClick={() => {
-                  // Here you can send the points to your backend
-                  floodFill();
-                }}
-              >
-                Process Points
-              </button>
-            </div>
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                console.log("Dialog onOpenChange:", open);
+                if (!open) {
+                  handleDialogClose();
+                }
+                setIsDialogOpen(open);
+              }}
+            >
+              <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-auto z-[100]">
+                {step === "select" ? (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle>Background Removal</DialogTitle>
+                      <DialogDescription>
+                        Choose how you want to remove the background
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-2 gap-4 p-4">
+                      <Button
+                        variant="outline"
+                        className="flex flex-col gap-2 h-auto p-6"
+                        onClick={() => handleBackgroundRemoval("auto")}
+                      >
+                        <div className="text-lg font-semibold">Auto</div>
+                        <div className="text-sm text-muted-foreground">
+                          Automatically remove background using AI
+                        </div>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex flex-col gap-2 h-auto p-6"
+                        onClick={() => handleBackgroundRemoval("manual")}
+                      >
+                        <div className="text-lg font-semibold">Manual</div>
+                        <div className="text-sm text-muted-foreground">
+                          Select points to remove background
+                        </div>
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle>Manual Background Removal</DialogTitle>
+                      <DialogDescription>
+                        Click on the image to select points for background
+                        removal
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-4">
+                      <div className="relative w-full">
+                        {uploadedFile && (
+                          <img
+                            ref={imageRef}
+                            src={URL.createObjectURL(uploadedFile)}
+                            alt="Upload preview"
+                            className="w-full cursor-crosshair"
+                            onClick={handleImageClick}
+                          />
+                        )}
+                        {selectedPoints.map((point, index) => (
+                          <div
+                            key={index}
+                            className="absolute w-2 h-2 bg-red-500 rounded-full transform -translate-x-1 -translate-y-1"
+                            style={{
+                              left: `${point.x}px`,
+                              top: `${point.y}px`,
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 w-full">
+                        <Button
+                          variant="secondary"
+                          onClick={() => setSelectedPoints([])}
+                        >
+                          Clear Points
+                        </Button>
+                        <Button variant="default" onClick={floodFill}>
+                          Process Points
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between mt-4">
+                  <DialogClose asChild>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        console.log("Cancel clicked");
+                        handleDialogClose();
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  {step === "manual" && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        console.log("Back clicked");
+                        setStep("select");
+                      }}
+                    >
+                      Back
+                    </Button>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <p>Remove Background</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
