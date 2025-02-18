@@ -1,13 +1,14 @@
 "use client";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
-import { UploadCloud } from "lucide-react";
+import { UploadCloud } from 'lucide-react';
 import { CONFIG } from "../../config";
 import { useToast } from "@/hooks/use-toast";
 
 // Import Statements for Display & Crop
 import DisplayImage from "./DisplayImage";
 import CropImage from "./CropImage";
+import DownloadButton from "./DownloadButton";
 
 const UploadImageForm = ({
   isCropping,
@@ -16,10 +17,9 @@ const UploadImageForm = ({
 }: {
   isCropping: boolean;
   setIsCropping: (cropping: boolean) => void;
-  selectedAspectRatio: number | null; //
+  selectedAspectRatio: number | null;
 }) => {
   const { toast } = useToast();
-
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -45,10 +45,9 @@ const UploadImageForm = ({
     setCroppedImageUrl(null);
     const formData = new FormData();
     formData.append("imageFile", file);
-    formData.append("backgroundOption", "white"); // to revisit logic
+    formData.append("backgroundOption", "white");
 
     try {
-        // TODO: add typing for response
       const response = await fetch(CONFIG.API_BASE_URL + "/api/images/upload", {
         method: "POST",
         body: formData,
@@ -78,19 +77,19 @@ const UploadImageForm = ({
     }
   };
 
-// TODO: replace Dummy function for sending x,y,height,width to backend
-const handleDummySave = () => {
-  const cropBoxDataStr = localStorage.getItem("cropBoxData");
-  if (!cropBoxDataStr) {
-    console.log("No crop data found in localStorage.");
-    return;
-  }
-  const cropBoxData = JSON.parse(cropBoxDataStr);
-  const payload = {
-    cropBoxData, 
+  // TODO: replace Dummy function for sending x,y,height,width to backend
+  const handleDummySave = () => {
+    const cropBoxDataStr = localStorage.getItem("cropBoxData");
+    if (!cropBoxDataStr) {
+      console.log("No crop data found in localStorage.");
+      return;
+    }
+    const cropBoxData = JSON.parse(cropBoxDataStr);
+    const payload = {
+      cropBoxData, 
+    };
+    console.log("Payload that would be sent to the backend:", payload);
   };
-  console.log("Payload that would be sent to the backend:", payload);
-};
 
   return (
     <Card className="hover:cursor-pointer hover:bg-secondary hover:border-primary transition-all ease-in-out">
@@ -135,16 +134,20 @@ const handleDummySave = () => {
                   });
                 }}
               />
-            ) : ( <DisplayImage imageUrl={croppedImageUrl || uploadedImageUrl} />
+            ) : (
+              <DisplayImage imageUrl={croppedImageUrl || uploadedImageUrl} />
             )}
             {/* dummy button to check function */}
             {!isCropping && (
-              <button
-                onClick={handleDummySave}
-                className="mt-4 px-4 py-2 bg-primary text-white rounded"
-              >
-                Save Changes
-              </button>
+              <div className="flex flex-col items-center mt-4 space-y-2">
+                <button
+                  onClick={handleDummySave}
+                  className="px-4 py-2 bg-primary text-white rounded"
+                >
+                  Save Changes
+                </button>
+                <DownloadButton croppedImageUrl={croppedImageUrl} />
+              </div>
             )}
           </>
         )}
@@ -153,6 +156,5 @@ const handleDummySave = () => {
     </Card>
   );
 };
+
 export default UploadImageForm;
-
-
