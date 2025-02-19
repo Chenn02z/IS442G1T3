@@ -41,66 +41,78 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
 	@Override
 	public ImageEntity cartooniseImage(MultipartFile file, UUID userId) throws Exception {
-		Path uploadPath = Paths.get(uploadDir).resolve("Desktop");
+		// Convert MultipartFile to Mat
+		Mat image = multipartFileToMat(file);
+
+		// Perform background removal
+		Mat result = removeBackgroundUsingGrabCut(image);
+
+		// Save the processed image to the desktop
+		String processedFileName = saveProcessedImageToDesktop(result, file.getOriginalFilename());
+
+		// Save the processed image to the original upload directory
+		String fileName = saveImage(result, userId);
+
+		// Create and save ImageEntity
+		ImageEntity imageEntity = new ImageEntity();
+		imageEntity.setUserId(userId);
+//		imageEntity.setFileName(fileName);
+		imageEntity.setOriginalFileName(file.getOriginalFilename());
+//		imageEntity.setContentType(file.getContentType());
+//		imageEntity.setSize(file.getSize());
+
+		return imageRepository.save(imageEntity);
+	}
+
+	private String saveProcessedImageToDesktop(Mat image, String originalFilename) throws Exception {
+		Path uploadPath = Paths.get(System.getProperty("user.home"), "Desktop");
 		Files.createDirectories(uploadPath);
 
-		String originalFilename = file.getOriginalFilename();
 		String savedFileName = UUID.randomUUID() + ".png";
 		String processedFileName = "bg_removed_" + savedFileName;
 		Path processedPath = uploadPath.resolve(processedFileName);
-		String originalFileExtension = originalFilename.contains(".") ? originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
-		File tempInputFile = File.createTempFile("input_", originalFileExtension);
 
-		try {
-			file.transferTo(tempInputFile);
-			Mat img = Imgcodecs.imread(tempInputFile.getAbsolutePath());
-			if (img.empty()) {
-				throw new RuntimeException("Failed to read image: " + tempInputFile.getAbsolutePath());
-			}
+		Imgcodecs.imwrite(processedPath.toString(), image);
 
-			Mat mask = new Mat(img.size(), CvType.CV_8UC1, Scalar.all(0));
-			Mat bgdModel = new Mat();
-			Mat fgdModel = new Mat();
+		return processedFileName;
+	}
 
-			// Adjust initial rectangle to a central area (50% of image size)
-			int width = img.cols();
-			int height = img.rows();
-			int rectWidth = width / 2;
-			int rectHeight = height / 2;
-			Rect rect = new Rect(width / 4, height / 4, rectWidth, rectHeight);
+	private Mat removeBackgroundUsingGrabCut(Mat image) {
+		Mat mask = new Mat(image.size(), CvType.CV_8UC1, Scalar.all(0));
+		Mat bgModel = new Mat();
+		Mat fgModel = new Mat();
+		Rect rect = new Rect(1, 1, image.width() - 2, image.height() - 2);
 
-			Imgproc.grabCut(img, mask, rect, bgdModel, fgdModel, 3, Imgproc.GC_INIT_WITH_RECT);
+		// GrabCut segmentation
+		Imgproc.grabCut(image, mask, rect, bgModel, fgModel, 5, Imgproc.GC_INIT_WITH_RECT);
 
-			// Create binary mask combining sure and possible foreground
-			Mat mask1 = new Mat();
-			Mat mask3 = new Mat();
-			Core.compare(mask, new Scalar(1), mask1, Core.CMP_EQ); // Sure foreground
-			Core.compare(mask, new Scalar(3), mask3, Core.CMP_EQ); // Possible foreground
-			Mat binaryMask = new Mat();
-			Core.bitwise_or(mask1, mask3, binaryMask);
+		// Create a mask of probably and definitely foreground pixels
+		Mat foregroundMask = new Mat();
+		Core.compare(mask, new Scalar(Imgproc.GC_PR_FGD), foregroundMask, Core.CMP_EQ);
 
-			// Merge BGR channels with binary mask as alpha
-			List<Mat> bgrChannels = new ArrayList<>();
-			Core.split(img, bgrChannels);
-			bgrChannels.add(binaryMask);
-			Mat result = new Mat();
-			Core.merge(bgrChannels, result);
+		// Create the foreground image
+		Mat foreground = new Mat(image.size(), CvType.CV_8UC3, new Scalar(255, 255, 255));
+		image.copyTo(foreground, foregroundMask);
 
-			// Save the result as PNG
-			if (!Imgcodecs.imwrite(processedPath.toString(), result)) {
-				throw new RuntimeException("Failed to save image: " + processedPath);
-			}
+		return foreground;
+	}
 
-			return imageRepository.save(ImageEntity.builder()
-					.imageId(UUID.randomUUID())
-					.userId(userId)
-					.originalFileName(originalFilename)
-					.savedFilePath(processedPath.toString())
-					.status("COMPLETED")
-					.build());
+	private Mat multipartFileToMat(MultipartFile file) throws Exception {
+		byte[] bytes = file.getBytes();
+		String tempFileName = UUID.randomUUID().toString() + ".jpg";
+		Path path = Paths.get(uploadDir, tempFileName);
+		Files.write(path, bytes);
+		Mat image = Imgcodecs.imread(path.toString());
+		Files.delete(path);
+		return image;
+	}
 
-		} finally {
-			tempInputFile.delete();
-		}
+	private String saveImage(Mat image, UUID userId) throws Exception {
+		String fileName = UUID.randomUUID().toString() + ".jpg";
+		Path path = Paths.get(uploadDir, userId.toString(), fileName);
+		Files.createDirectories(path.getParent());
+		Imgcodecs.imwrite(path.toString(), image);
+		return fileName;
 	}
 }
+
