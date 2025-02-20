@@ -1,14 +1,11 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
-<<<<<<< HEAD
 import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
-=======
 import IS442.G1T3.IDPhotoGenerator.dto.CropEditResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.dto.CropResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.model.CropEntity;
 import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
 import IS442.G1T3.IDPhotoGenerator.repository.CropRepository;
->>>>>>> af2d4cd413668956d41b8b91497635a65080f7ed
 import IS442.G1T3.IDPhotoGenerator.repository.ImageRepository;
 import IS442.G1T3.IDPhotoGenerator.service.ImageCropService;
 import lombok.extern.slf4j.Slf4j;
