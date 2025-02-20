@@ -1,5 +1,7 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
+import IS442.G1T3.IDPhotoGenerator.dto.CropEditResponseDTO;
+import IS442.G1T3.IDPhotoGenerator.dto.CropResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.service.ImageCropService;
 import IS442.G1T3.IDPhotoGenerator.service.impl.ImageCropServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -17,46 +19,36 @@ import java.util.UUID;
 
 @Slf4j
 @CrossOrigin(origins = "http://localhost:3000")
-@RestController
-@RequestMapping("/api/images/crop")
-@Validated
+@Validated@RestController
+@RequestMapping("/api/images")
 public class ImageCropController {
 
-    private final ImageCropServiceImpl imageCropServiceImpl;
+    private final ImageCropService imageCropService;
 
-    public ImageCropController(ImageCropServiceImpl imageCropServiceImpl) {
-        this.imageCropServiceImpl = imageCropServiceImpl;
+    public ImageCropController(ImageCropService imageCropService) {
+        this.imageCropService = imageCropService;
     }
-    @PostMapping("/{imageId}")
-    public ResponseEntity<Resource> cropImage(
+
+    // Endpoint 1: When users click the edit button
+    // Returns the original image URL (or file path) along with the current crop parameters (if any)
+    @GetMapping("/{imageId}/edit")
+    public ResponseEntity<CropEditResponseDTO> getImageForEditing(@PathVariable UUID imageId) {
+        CropEditResponseDTO response = imageCropService.getImageForEditing(imageId);
+        return ResponseEntity.ok(response);
+    }
+
+    // Endpoint 2: When users click save after editing
+    // Performs the crop operation and saves/updates the CropEntity in the crops repository.
+    // It returns a response with the new crop parameters and cropped image URL.
+    @PostMapping("/{imageId}/crop")
+    public ResponseEntity<CropResponseDTO> cropImage(
             @PathVariable UUID imageId,
             @RequestParam int x,
             @RequestParam int y,
             @RequestParam int width,
-            @RequestParam int height
-    ) {
-        try {
-            log.info("Processing crop request for imageId: {}", imageId);
-            Resource croppedImageResource = imageCropServiceImpl.processCropRequest(imageId, x, y, width, height);
-
-            // Dynamically detect content type
-            Path croppedFilePath = croppedImageResource.getFile().toPath();
-            String contentType = Files.probeContentType(croppedFilePath);
-            if (contentType == null) {
-                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-            }
-
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + croppedImageResource.getFilename() + "\"")
-                    .body(croppedImageResource);
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid crop request: {}", e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            log.error("Unexpected error while processing crop request: {}", e.toString());
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
+            @RequestParam int height) {
+        CropResponseDTO response = imageCropService.saveCrop(imageId, x, y, width, height);
+        return ResponseEntity.ok(response);
     }
 }
+
