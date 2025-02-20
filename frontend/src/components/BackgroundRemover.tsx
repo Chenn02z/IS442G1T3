@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogClose
 } from "@/components/ui/dialog";
 import {
   Tooltip,
@@ -19,10 +20,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  DialogClose,
-  DialogClose as DialogCloseComponent,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 export const BackgroundRemover = () => {
@@ -45,23 +42,12 @@ export const BackgroundRemover = () => {
 
   // Debug logging
   useEffect(() => {
-    console.log("Dialog state:", isDialogOpen);
-    console.log("Current step:", step);
-    console.log("Selected points:", selectedPoints);
+    // console.log("Dialog state:", isDialogOpen);
+    // console.log("Current step:", step);
+    // console.log("Selected points:", selectedPoints);
     console.log("Working file:", workingFile);
   }, [isDialogOpen, step, selectedPoints, workingFile]);
 
-  // const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
-  //   if (!imageRef.current) return;
-
-  //   const rect = imageRef.current.getBoundingClientRect();
-  //   const x = Math.round(e.clientX - rect.left);
-  //   const y = Math.round(e.clientY - rect.top);
-
-  //   // Add the new point to our selected points
-  //   setSelectedPoints((prev) => [...prev, { x, y }]);
-  //   console.log(`Selected point: x=${x}, y=${y}`);
-  // };
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
     if (!imageRef.current) return;
 
@@ -81,9 +67,9 @@ export const BackgroundRemover = () => {
     const actualY = Math.round(displayY * scaleY);
 
     setSelectedPoints((prev) => [...prev, { x: actualX, y: actualY }]);
-    console.log(
-      `Selected point: display(x=${displayX}, y=${displayY}), actual(x=${actualX}, y=${actualY})`
-    );
+    // console.log(
+    //   `Selected point: display(x=${displayX}, y=${displayY}), actual(x=${actualX}, y=${actualY})`
+    // );
   };
 
   const handleBackgroundRemoval = async (type: string) => {
@@ -104,7 +90,7 @@ export const BackgroundRemover = () => {
         formData.append("image", workingFile);
         formData.append("backgroundOption", "white");
         const response = await fetch(
-          CONFIG.API_BASE_URL + "/api/background-removal/remove",
+          CONFIG.API_BASE_URL + "/api/background-removal/cartoonise",
           {
             method: "POST",
             body: formData,
@@ -122,11 +108,13 @@ export const BackgroundRemover = () => {
           type: workingFile.type,
         });
 
+        console.log("Processed file:", processedFile);
+
         // Update the working file
-        setWorkingFile(processedFile);
+        setUploadedFile(processedFile);
 
         toast({
-          title: "Background removed successfully",
+          title: "Background removed successfully. Image saved to desktop.",
         });
         setIsDialogOpen(false);
       } catch (error: any) {
@@ -180,7 +168,7 @@ export const BackgroundRemover = () => {
 
       toast({
         title: "Image processed successfully",
-      });
+      });     
 
       // Clear selected points but keep the dialog open
       setSelectedPoints([]);
@@ -251,7 +239,7 @@ export const BackgroundRemover = () => {
                       >
                         <div className="text-lg font-semibold">Auto</div>
                         <div className="text-sm text-muted-foreground">
-                          Automatically remove background using Computer Vision
+                          Automatically remove background using OpenCV
                         </div>
                       </Button>
                       <Button

@@ -4,6 +4,8 @@ import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
 import IS442.G1T3.IDPhotoGenerator.service.impl.BackgroundRemovalServiceImpl;
 import IS442.G1T3.IDPhotoGenerator.service.impl.CartooniseServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,14 +38,24 @@ public class BackgroundRemovalController {
     }
 
     @PostMapping("/cartoonise")
-    public ResponseEntity<ImageEntity> cartooniseImage(
+    public ResponseEntity<?> cartooniseImage(
             @RequestParam("image") MultipartFile imageFile,
             @RequestParam(value = "userId", required = false) UUID userId) {
         try {
-            ImageEntity processedImage = cartooniseServiceImpl.cartooniseImage(imageFile, userId);
-            return ResponseEntity.ok(processedImage);
+            // Validate input
+            if (imageFile == null || imageFile.isEmpty()) {
+                return ResponseEntity.badRequest().body("Image file is required");
+            }
+
+            byte[] processedImage = cartooniseServiceImpl.cartooniseImage(imageFile, userId);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_PNG)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, 
+                            "attachment; filename=\"cartoonised_" + imageFile.getOriginalFilename() + "\"")
+                    .body(processedImage);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            log.error("Error processing image: ", e);
+            return ResponseEntity.internalServerError().body("Error processing image: " + e.getMessage());
         }
     }
 }

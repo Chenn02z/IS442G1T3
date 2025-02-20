@@ -40,7 +40,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
 	}
 
 	@Override
-	public ImageEntity cartooniseImage(MultipartFile file, UUID userId) throws Exception {
+	public byte[] cartooniseImage(MultipartFile file, UUID userId) throws Exception {
 		// Convert MultipartFile to Mat
 		Mat image = multipartFileToMat(file);
 
@@ -50,18 +50,15 @@ public class CartooniseServiceImpl implements CartoonisationService {
 		// Save the processed image to the desktop
 		String processedFileName = saveProcessedImageToDesktop(result, file.getOriginalFilename());
 
-		// Save the processed image to the original upload directory
+		// Convert Mat to byte array for response
+		MatOfByte mob = new MatOfByte();
+		Imgcodecs.imencode(".png", result, mob);
+		byte[] imageData = mob.toArray();
+
+		// Save the processed image to the original upload directory (optional)
 		String fileName = saveImage(result, userId);
 
-		// Create and save ImageEntity
-		ImageEntity imageEntity = new ImageEntity();
-		imageEntity.setUserId(userId);
-//		imageEntity.setFileName(fileName);
-		imageEntity.setOriginalFileName(file.getOriginalFilename());
-//		imageEntity.setContentType(file.getContentType());
-//		imageEntity.setSize(file.getSize());
-
-		return imageRepository.save(imageEntity);
+		return imageData;
 	}
 
 	private String saveProcessedImageToDesktop(Mat image, String originalFilename) throws Exception {
@@ -109,7 +106,16 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
 	private String saveImage(Mat image, UUID userId) throws Exception {
 		String fileName = UUID.randomUUID().toString() + ".jpg";
-		Path path = Paths.get(uploadDir, userId.toString(), fileName);
+		Path path;
+		
+		if (userId != null) {
+			// If userId exists, save in user-specific directory
+			path = Paths.get(uploadDir, userId.toString(), fileName);
+		} else {
+			// If userId is null, save in a general directory
+			path = Paths.get(uploadDir, "anonymous", fileName);
+		}
+		
 		Files.createDirectories(path.getParent());
 		Imgcodecs.imwrite(path.toString(), image);
 		return fileName;
