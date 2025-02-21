@@ -1,5 +1,6 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
+import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
 import IS442.G1T3.IDPhotoGenerator.dto.CropEditResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.dto.CropResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.model.CropEntity;

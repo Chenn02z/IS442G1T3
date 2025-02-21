@@ -4,6 +4,7 @@ import { useState } from "react";
 import { UploadCloud } from 'lucide-react';
 import { CONFIG } from "../../config";
 import { useToast } from "@/hooks/use-toast";
+import { useUpload } from "@/context/UploadContext";
 
 // Import Statements for Display & Crop
 import DisplayImage from "./DisplayImage";
@@ -20,6 +21,7 @@ const UploadImageForm = ({
   selectedAspectRatio: number | null;
 }) => {
   const { toast } = useToast();
+  const { setUploadedFile } = useUpload();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -40,7 +42,11 @@ const UploadImageForm = ({
 
     localStorage.removeItem("cropBoxData");
 
+    // set the uploaded file to curr file as well
+
     setSelectedFile(file);
+    setUploadedFile(file);
+
     setUploading(true);
     setCroppedImageUrl(null);
     const formData = new FormData();
@@ -48,6 +54,7 @@ const UploadImageForm = ({
     formData.append("backgroundOption", "white");
 
     try {
+      // TODO: add typing for response
       const response = await fetch(CONFIG.API_BASE_URL + "/api/images/upload", {
         method: "POST",
         body: formData,
@@ -57,7 +64,7 @@ const UploadImageForm = ({
         throw new Error("Failed to upload image.");
       }
 
-      const data = await response.json();
+      const data = await response.json()
 
       const fullImageUrl = CONFIG.API_BASE_URL + "/" + data.savedFilePath;
       const optimizedUrl = `/_next/image?url=${fullImageUrl}&w=640&q=75`;
@@ -156,5 +163,4 @@ const UploadImageForm = ({
     </Card>
   );
 };
-
 export default UploadImageForm;
