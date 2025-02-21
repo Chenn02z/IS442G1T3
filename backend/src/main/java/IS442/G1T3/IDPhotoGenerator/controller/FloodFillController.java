@@ -2,7 +2,6 @@ package IS442.G1T3.IDPhotoGenerator.controller;
 
 import IS442.G1T3.IDPhotoGenerator.service.FloodFillService;
 import lombok.extern.slf4j.Slf4j;
-import java.awt.Point;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -11,10 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/images")
 @Slf4j

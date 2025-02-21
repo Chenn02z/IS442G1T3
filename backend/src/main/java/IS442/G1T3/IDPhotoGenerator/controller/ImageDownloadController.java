@@ -17,7 +17,6 @@ import java.util.List;
 import org.springframework.core.io.InputStreamResource;
 
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000") // Allow frontend requests (local)
 @RestController
 @RequestMapping("/api/images")
 @Validated
