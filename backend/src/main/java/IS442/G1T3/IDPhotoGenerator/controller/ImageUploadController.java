@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -30,16 +31,13 @@ public class ImageUploadController {
     @PostMapping("/upload")
     public ResponseEntity<ImageUploadResponse> upload(
             @RequestParam MultipartFile imageFile,
-            @RequestParam String backgroundOption,
-            @RequestParam(required = false) MultipartFile customBackground
+            @RequestParam UUID userId
     ) {
         // Backend validation; 2nd layer of safety after frontend validation
         try {
             validateImageFile(imageFile);
-            log.info("backgroundOption: {}", backgroundOption);
-            validateCustomBackground(backgroundOption, customBackground);
 
-            ImageEntity imageEntity = imageUploadServiceImpl.processImage(imageFile, backgroundOption, customBackground);
+            ImageEntity imageEntity = imageUploadServiceImpl.processImage(imageFile, userId);
             ImageUploadResponse response = new ImageUploadResponse(imageEntity.getImageId(), imageEntity.getSavedFilePath(), imageEntity.getStatus(), "Image Uploaded Successfully.");
             log.info("File uploaded successfully.");
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -54,17 +52,6 @@ public class ImageUploadController {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-    }
-
-    private void validateCustomBackground(String backgroundOption, MultipartFile customBackground) {
-        if ("CUSTOM".equalsIgnoreCase(backgroundOption)) {
-            if (customBackground == null || customBackground.isEmpty()) {
-                throw new IllegalArgumentException("Custom background image is required for CUSTOM background option.");
-            }
-            if (!isAllowedContentType(customBackground.getContentType())) {
-                throw new IllegalArgumentException("Invalid custom background file type. Allowed types are JPEG, PNG, GIF.");
-            }
-        }
     }
 
     private void validateImageFile(MultipartFile imageFile) {
