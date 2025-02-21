@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@CrossOrigin(origins = "http://localhost:3000") // Allow frontend requests (local)
 @RequestMapping("/api/background-removal")
 public class BackgroundRemovalController {
 

@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000") // Allow frontend requests (local)
 @RestController
 @RequestMapping("/api/images")
 @Validated // do we want to use this?
