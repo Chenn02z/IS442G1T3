@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { v4 as getUUIDv4 } from "uuid";
 import UploadImageForm from "@/components/UploadImageForm";
 import { UploadProvider } from "@/context/UploadContext";
-const UUID_LOOKUP_KEY = "userUUID";
+export const UUID_LOOKUP_KEY = "userUUID_";
 
 export default function Home() {
   const [userUUID, setUserUUID] = useState<string>("");
@@ -12,10 +12,10 @@ export default function Home() {
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<number | null>(null);
 
   useEffect(() => {
-    let storedUUID = localStorage.getItem("userUUID");
+    let storedUUID = localStorage.getItem(UUID_LOOKUP_KEY);
     if (!storedUUID) {
       // New user; assign UUID and save to local storage
-      storedUUID = "user_" + getUUIDv4();
+      storedUUID = getUUIDv4();
       localStorage.setItem(UUID_LOOKUP_KEY, storedUUID);
     }
     setUserUUID(storedUUID);

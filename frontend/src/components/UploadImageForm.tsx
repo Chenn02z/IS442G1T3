@@ -10,6 +10,7 @@ import { useUpload } from "@/context/UploadContext";
 import DisplayImage from "./DisplayImage";
 import CropImage from "./CropImage";
 import DownloadButton from "./DownloadButton";
+import { UUID_LOOKUP_KEY } from "@/app/page";
 
 const UploadImageForm = ({
   isCropping,
@@ -51,7 +52,7 @@ const UploadImageForm = ({
     setCroppedImageUrl(null);
     const formData = new FormData();
     formData.append("imageFile", file);
-    formData.append("backgroundOption", "white");
+    formData.append("userId", localStorage.getItem(UUID_LOOKUP_KEY) ?? "");
 
     try {
       // TODO: add typing for response
