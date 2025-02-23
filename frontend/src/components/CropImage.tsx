@@ -23,7 +23,12 @@ type CropImageProps = {
 const CropImage: React.FC<CropImageProps> = ({ imageId, imageUrl, aspectRatio, onCropComplete, isCropping }) => {
   const cropperRef = useRef<Cropper>(null);
   const [cropData, setCropData] = useState<string>("");
-  const [cropBoxData, setCropBoxData] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [cropBoxData, setCropBoxData] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   useEffect(() => {
     const cropper = cropperRef.current?.cropper;
@@ -42,7 +47,7 @@ const CropImage: React.FC<CropImageProps> = ({ imageId, imageUrl, aspectRatio, o
     }
   }, [aspectRatio, isCropping]);
 
-  // Save crop data to backend
+  // Save crop data to backend dummy function
   const saveCropToBackend = async (cropBox: { left: number; top: number; width: number; height: number }) => {
     if (!imageId || !imageUrl) {
       console.error("Image ID or URL missing, cannot save crop.");
@@ -50,10 +55,11 @@ const CropImage: React.FC<CropImageProps> = ({ imageId, imageUrl, aspectRatio, o
     }
   
     const formData = new FormData();
-    formData.append("x", cropBox.left.toString());
-    formData.append("y", cropBox.top.toString());
-    formData.append("width", cropBox.width.toString());
-    formData.append("height", cropBox.height.toString());
+    formData.append("x", (Math.round(cropBox.left * 100) / 100).toFixed(2));
+    formData.append("y", (Math.round(cropBox.top * 100) / 100).toFixed(2));
+    formData.append("width", (Math.round(cropBox.width * 100) / 100).toFixed(2));
+    formData.append("height", (Math.round(cropBox.height * 100) / 100).toFixed(2));
+    
   
     // Dummy function to log formData contents
     const logFormData = (formData: FormData) => {
