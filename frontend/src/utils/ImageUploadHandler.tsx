@@ -6,7 +6,7 @@ import { useUpload } from "@/context/UploadContext";
 import { useToast } from "@/hooks/use-toast";
 
 export const useImageUploadHandler = () => {
-  const { setUploadedFiles, selectedImageUrl, setSelectedImageUrl, refreshImages,setSelectedImageId,selectedImageId } = useUpload();
+  const { setUploadedFile, selectedImageUrl, setSelectedImageUrl, refreshImages,setSelectedImageId,selectedImageId } = useUpload();
   const { toast } = useToast();
 
   // Fix: Define states properly
@@ -23,7 +23,7 @@ export const useImageUploadHandler = () => {
     }
 
     localStorage.removeItem("cropBoxData");
-    setUploadedFiles(files);
+    setUploadedFile(files[0]);
     setUploading(true);
     setCroppedImageUrl(null);
     const newUploadedUrls: string[] = [];

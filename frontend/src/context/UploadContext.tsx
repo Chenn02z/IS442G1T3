@@ -2,8 +2,8 @@
 import React, { createContext, useState, useContext, useCallback } from "react";
 
 interface UploadContextProps {
-  uploadedFiles: File[];
-  setUploadedFiles: (files: File[]) => void;
+  uploadedFile: File | null;
+  setUploadedFile: (file: File | null) => void;
   selectedImageUrl: string | null;
   setSelectedImageUrl: (url: string | null) => void;
   selectedImageId: string | null;
@@ -18,7 +18,7 @@ interface UploadContextProps {
 const UploadContext = createContext<UploadContextProps | undefined>(undefined);
 
 export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);;
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   return (
     <UploadContext.Provider value={{
-      uploadedFiles, setUploadedFiles,
+      uploadedFile, setUploadedFile,
       selectedImageUrl, setSelectedImageUrl,
       croppedImageUrl, setCroppedImageUrl,
       uploadedImageCount, setUploadedImageCount,
