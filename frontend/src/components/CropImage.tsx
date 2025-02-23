@@ -12,7 +12,7 @@ import "cropperjs/dist/cropper.css";
 // isCropping: A flag indicating whether cropping mode is active
 // ========================================================
 type CropImageProps = {
-  imageUrl: string;
+  imageUrl: string | null;
   aspectRatio: number | null;
   onCropComplete: (croppedImage: string) => void;
   isCropping: boolean;

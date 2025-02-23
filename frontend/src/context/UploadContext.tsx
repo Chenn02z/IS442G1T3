@@ -1,17 +1,34 @@
 // src/context/UploadContext.tsx
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useCallback } from "react";
 
 interface UploadContextProps {
   uploadedFiles: File[];
   setUploadedFiles: (files: File[]) => void;
+  selectedImageUrl: string | null;
+  setSelectedImageUrl: (url: string | null) => void;
+  uploadedImageCount: number;
+  setUploadedImageCount: (count: number) => void;
+  refreshImages: () => void;
 }
 
 const UploadContext = createContext<UploadContextProps | undefined>(undefined);
 
 export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);;
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [uploadedImageCount, setUploadedImageCount] = useState<number>(0);
+
+  const refreshImages = useCallback(() => {
+    setUploadedImageCount((prev) => prev + 1); // Trigger a re-fetch in `PhotoList.tsx`
+  }, []);
+
   return (
-    <UploadContext.Provider value={{ uploadedFiles, setUploadedFiles }}>
+    <UploadContext.Provider value={{
+      uploadedFiles, setUploadedFiles,
+      selectedImageUrl, setSelectedImageUrl,
+      uploadedImageCount, setUploadedImageCount,
+      refreshImages
+    }}>
       {children}
     </UploadContext.Provider>
   );

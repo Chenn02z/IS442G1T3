@@ -22,18 +22,12 @@ const UploadImageForm = ({
   selectedAspectRatio: number | null;
 }) => {
   const { toast } = useToast();
-  const { setUploadedFiles } = useUpload();
-
+  const { setUploadedFiles,selectedImageUrl, setSelectedImageUrl, uploadedImageCount, refreshImages } = useUpload();
   const [uploading, setUploading] = useState<boolean>(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  // const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0); // handle which image is displayed
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null); // handle crop version of image
   const [error, setError] = useState<string | null>(null);
-
-  const handleSelectImage = (index: number) => {
-    setSelectedImageIndex(index);
-  };
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
@@ -45,7 +39,7 @@ const UploadImageForm = ({
 
     localStorage.removeItem("cropBoxData");
     // set the uploaded file to curr file as well
-    setSelectedFiles(files);
+    // setSelectedFiles(files);
     setUploadedFiles(files);
     setUploading(true);
     setCroppedImageUrl(null);
@@ -74,8 +68,11 @@ const UploadImageForm = ({
         newUploadedUrls.push(optimizedUrl);
       }
       setUploadedImageUrls(newUploadedUrls);
-      setSelectedImageIndex(0);
 
+      if (!selectedImageUrl && newUploadedUrls.length > 0) {
+        setSelectedImageUrl(newUploadedUrls[0]);
+      }
+      refreshImages();
       toast({
         title: "Image Uploaded Successfully!",
       });
@@ -108,7 +105,7 @@ const UploadImageForm = ({
     <Card className="hover:cursor-pointer hover:bg-secondary hover:border-primary transition-all ease-in-out">
       <CardContent className="flex flex-col h-full items-center justify-center px-2 py-24 text-xs">
         {/* Before image upload */}
-        {uploadedImageUrls.length === 0 && (
+        {(uploadedImageCount === 0) && (
           <>
             <input
               type="file"
@@ -124,7 +121,7 @@ const UploadImageForm = ({
             >
               <UploadCloud className="h-10 w-10 text-gray-500" />
               <p className="text-gray-700 text-sm">
-                {selectedFiles.length > 0 ? `${selectedFiles.length} files have been uploaded` : "Click to upload an Image"}
+                {uploadedImageUrls.length > 0 ? `${uploadedImageUrls.length} files have been uploaded` : "Click to upload an Image"}
               </p>
               <p className="text-muted-foreground text-xs">
                 Supported formats: .jpeg, .png
@@ -133,11 +130,11 @@ const UploadImageForm = ({
           </>
         )}
         {/* After image upload */}
-        {uploadedImageUrls.length > 0 && (
+        {(selectedImageUrl) && (
           <>
             {isCropping ? (
               <CropImage
-                imageUrl={uploadedImageUrls[selectedImageIndex]}
+                imageUrl={selectedImageUrl}
                 aspectRatio={selectedAspectRatio}
                 isCropping={isCropping}
                 onCropComplete={(croppedImage) => {
@@ -149,7 +146,7 @@ const UploadImageForm = ({
                 }}
               />
             ) : (
-              <DisplayImage imageUrl={croppedImageUrl || uploadedImageUrls[selectedImageIndex]} />
+              <DisplayImage imageUrl={croppedImageUrl || selectedImageUrl} />
             )}
             {/* dummy button to check function */}
             {!isCropping && (

@@ -3,6 +3,7 @@ import SideBar from "@/components/SideBar";
 import { useEffect, useState } from "react";
 import { v4 as getUUIDv4 } from "uuid";
 import UploadImageForm from "@/components/UploadImageForm";
+import PhotoList from "@/components/PhotoList";
 import { UploadProvider } from "@/context/UploadContext";
 export const UUID_LOOKUP_KEY = "userUUID_";
 
@@ -23,7 +24,15 @@ export default function Home() {
   return (
     <UploadProvider>
       <div className="flex">
-      <SideBar setIsCropping={setIsCropping} setSelectedAspectRatio={setSelectedAspectRatio} />
+        {/* Left Sidebar */}
+        <div className="w-14">
+          <SideBar setIsCropping={setIsCropping} setSelectedAspectRatio={setSelectedAspectRatio} />
+        </div>
+
+        {/* Right Sidebar (PhotoList) */}
+        <div className="w-64 border-l">
+          <PhotoList />
+        </div>
         <div className="ml-14 flex-1 p-3"> 
           {/* Main content here */}
           <div>
