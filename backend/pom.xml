@@ -93,6 +93,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-imaging</artifactId>
+			<version>1.0.0-alpha5</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.openpnp</groupId>
 			<artifactId>opencv</artifactId>
 			<version>4.7.0-0</version>
