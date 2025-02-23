@@ -2,13 +2,16 @@ import React, { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Trash2, Image } from "lucide-react";
+import { Trash2, UploadCloud } from "lucide-react";
 import { CONFIG } from "../../config";
 import { UUID_LOOKUP_KEY } from "@/app/page";
 import { useUpload } from "@/context/UploadContext";
+import { useImageUploadHandler } from "@/utils/ImageUploadHandler";
+
 
 const PhotoList = () => {
-  const { setSelectedImageUrl,setUploadedImageCount, uploadedImageCount  } = useUpload();
+  const { handleUpload } = useImageUploadHandler();
+  const { setSelectedImageUrl,setUploadedImageCount, uploadedImageCount,setCroppedImageUrl  } = useUpload();
   const [uploadedImages, setUploadedImages] = useState<{ id: string; url: string }[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +46,7 @@ const PhotoList = () => {
         setUploadedImageCount(formattedImages.length);
 
         if (formattedImages.length > 0) {
-          setSelectedImageUrl(formattedImages[0].url); // Auto-select first image
+          setSelectedImageUrl(formattedImages[0].url);
         }
       } catch (error) {
         setError("Failed to fetch images.");
@@ -54,7 +57,7 @@ const PhotoList = () => {
     };
 
     fetchImages();
-  }, [uploadedImageCount, setSelectedImageUrl, setUploadedImageCount]);
+  }, [uploadedImageCount, setSelectedImageUrl, setUploadedImageCount, setCroppedImageUrl]);
 
   return (
     <div className="w-64 h-screen border-r p-4 flex flex-col">
@@ -82,10 +85,13 @@ const PhotoList = () => {
               <div
                 key={id}
                 className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-200 transition cursor-pointer"
-                onClick={() => setSelectedImageUrl(url)} // Update UploadContext with selected image URL
+                onClick={() => {
+                  setSelectedImageUrl(url);
+                  setCroppedImageUrl(null); // ✅ Reset cropped image when switching photos
+                }}
               >
                 <img src={url} alt={`Image ${id}`} className="w-10 h-10 object-cover rounded-md" />
-                <span className="text-sm truncate flex-1">{url.split('/').pop()}</span> {/* Show only filename */}
+                <span className="text-sm truncate flex-1">{url}</span>
                 <Trash2 className="w-4 h-4 cursor-pointer hover:text-red-700" />
               </div>
             ))
@@ -100,7 +106,24 @@ const PhotoList = () => {
         <>
           <Separator className="my-3" />
           <p className="text-center text-indigo-600 text-sm cursor-pointer hover:underline">
-            Upload New Photos
+          <>
+            <input
+              type="file"
+              accept="image/jpeg, image/png"
+              className="hidden"
+              id="file-upload"
+              multiple
+              onChange={handleUpload}
+            />
+            <label
+              htmlFor="file-upload"
+              className="cursor-pointer flex flex-col items-center gap-2"
+            >
+              <UploadCloud className="h-10 w-10 text-gray-500" />
+              <p className="text-gray-700 text-sm">Click to upload an Image</p>
+              <p className="text-muted-foreground text-xs">Supported formats: .jpeg, .png</p>
+            </label>
+          </>
           </p>
         </>
       )}
