@@ -1,25 +1,16 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
 import IS442.G1T3.IDPhotoGenerator.dto.CropEditResponseDTO;
-import IS442.G1T3.IDPhotoGenerator.dto.CropRequestDTO;
 import IS442.G1T3.IDPhotoGenerator.dto.CropResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.service.ImageCropService;
-import IS442.G1T3.IDPhotoGenerator.service.impl.ImageCropServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.UUID;
 
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000")
 @Validated@RestController
 @RequestMapping("/api/images")
 public class ImageCropController {
@@ -44,17 +35,12 @@ public class ImageCropController {
     @PostMapping("/{imageId}/crop")
     public ResponseEntity<CropResponseDTO> cropImage(
             @PathVariable UUID imageId,
-            @RequestBody CropRequestDTO cropRequest) {
-
-        CropResponseDTO response = imageCropService.saveCrop(
-                imageId,
-                cropRequest.getX(),
-                cropRequest.getY(),
-                cropRequest.getWidth(),
-                cropRequest.getHeight()
-        );
+            @RequestParam int x,
+            @RequestParam int y,
+            @RequestParam int width,
+            @RequestParam int height) {
+        CropResponseDTO response = imageCropService.saveCrop(imageId, x, y, width, height);
         return ResponseEntity.ok(response);
     }
 }
-
 
