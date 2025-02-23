@@ -1,27 +1,28 @@
 import React, { useRef, useEffect, useState } from "react";
-
-// Crop-related imports
+import { CONFIG } from "../../config";
+import { UUID_LOOKUP_KEY } from "@/app/page";
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
 
 // ========================================================
 // PROPS
+// imageId: Unique identifier of the image
 // imageURL: URL of uploaded image
 // aspectRatio: The desired aspect ratio for the crop (or null for freeform)
 // onCropComplete: Callback function, pass cropped image data back
 // isCropping: A flag indicating whether cropping mode is active
 // ========================================================
 type CropImageProps = {
+  imageId: string | null;
   imageUrl: string | null;
   aspectRatio: number | null;
   onCropComplete: (croppedImage: string) => void;
   isCropping: boolean;
 };
 
-const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComplete,isCropping }) => {
+const CropImage: React.FC<CropImageProps> = ({ imageId, imageUrl, aspectRatio, onCropComplete, isCropping }) => {
   const cropperRef = useRef<Cropper>(null);
   const [cropData, setCropData] = useState<string>("");
-  // State to store the crop box dimensions (x, y, width, height)
   const [cropBoxData, setCropBoxData] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
@@ -29,7 +30,6 @@ const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComp
     if (cropper) {
       cropper.setAspectRatio(aspectRatio ?? NaN);
 
-      //retrieve the saved crop box data from localStorage, if user wants to recrop
       if (aspectRatio === null && isCropping) {
         const savedCropBox = localStorage.getItem("cropBoxData");
         if (savedCropBox) {
@@ -40,9 +40,48 @@ const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComp
         }
       }
     }
-  }, [aspectRatio, isCropping] );
+  }, [aspectRatio, isCropping]);
 
-  // apply crop
+  // Save crop data to backend
+  const saveCropToBackend = async (cropBox: { left: number; top: number; width: number; height: number }) => {
+    if (!imageId || !imageUrl) {
+      console.error("Image ID or URL missing, cannot save crop.");
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append("x", cropBox.left.toString());
+    formData.append("y", cropBox.top.toString());
+    formData.append("width", cropBox.width.toString());
+    formData.append("height", cropBox.height.toString());
+  
+    // Dummy function to log formData contents
+    const logFormData = (formData: FormData) => {
+      for (let pair of formData.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
+      }
+    };
+  
+    logFormData(formData); // Logs formData before sending
+  
+    // try {
+    //   const response = await fetch(`${CONFIG.API_BASE_URL}/api/images/${imageId}/crop`, {
+    //     method: "POST",
+    //     body: formData,
+    //   });
+  
+    //   if (!response.ok) {
+    //     throw new Error(`Failed to save crop. Status: ${response.status}`);
+    //   }
+  
+    //   console.log("Crop data saved successfully:", await response.json());
+    // } catch (error) {
+    //   console.error("Error saving crop data:", error);
+    // }
+  };
+  
+
+  // Apply crop
   const onCrop = () => {
     const cropper = cropperRef.current?.cropper;
     if (cropper) {
@@ -52,9 +91,12 @@ const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComp
         setCropData(croppedImage);
         onCropComplete(croppedImage);
 
-        const newCropBoxData = cropper.getCropBoxData(); // Get the current crop box data (dimensions) from the cropper
-        setCropBoxData(newCropBoxData); // Update the state with the new crop box data
-        localStorage.setItem("cropBoxData", JSON.stringify(newCropBoxData)); // Save the crop box data to localStorage
+        const newCropBoxData = cropper.getCropBoxData();
+        setCropBoxData(newCropBoxData);
+        localStorage.setItem("cropBoxData", JSON.stringify(newCropBoxData));
+
+        // Call the API to save the crop data
+        saveCropToBackend(newCropBoxData);
       }
     }
   };
@@ -70,10 +112,7 @@ const CropImage: React.FC<CropImageProps> = ({ imageUrl, aspectRatio, onCropComp
         ref={cropperRef}
         viewMode={1}
       />
-      <button
-        className="mt-4 px-4 py-2 bg-primary text-white rounded"
-        onClick={onCrop}
-      >
+      <button className="mt-4 px-4 py-2 bg-primary text-white rounded" onClick={onCrop}>
         Apply Crop
       </button>
       {cropData && (

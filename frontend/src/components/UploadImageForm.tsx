@@ -16,7 +16,7 @@ const UploadImageForm = ({
   setIsCropping: (cropping: boolean) => void;
   selectedAspectRatio: number | null;
 }) => {
-  const { selectedImageUrl, croppedImageUrl, setCroppedImageUrl, uploadedImageCount } = useUpload();
+  const { selectedImageUrl, croppedImageUrl, setCroppedImageUrl, uploadedImageCount,selectedImageId } = useUpload();
   const { handleUpload } = useImageUploadHandler();
 
   return (
@@ -51,6 +51,7 @@ const UploadImageForm = ({
               <CropImage
                 imageUrl={selectedImageUrl}
                 aspectRatio={selectedAspectRatio}
+                imageId={selectedImageId}
                 isCropping={isCropping}
                 onCropComplete={(croppedImage) => {
                   setCroppedImageUrl(croppedImage);

@@ -11,7 +11,7 @@ import { useImageUploadHandler } from "@/utils/ImageUploadHandler";
 
 const PhotoList = () => {
   const { handleUpload } = useImageUploadHandler();
-  const { setSelectedImageUrl,setUploadedImageCount, uploadedImageCount,setCroppedImageUrl  } = useUpload();
+  const { setSelectedImageUrl,setUploadedImageCount, uploadedImageCount,setCroppedImageUrl,setSelectedImageId  } = useUpload();
   const [uploadedImages, setUploadedImages] = useState<{ id: string; url: string }[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +57,7 @@ const PhotoList = () => {
     };
 
     fetchImages();
-  }, [uploadedImageCount, setSelectedImageUrl, setUploadedImageCount, setCroppedImageUrl]);
+  }, [uploadedImageCount, setSelectedImageUrl, setUploadedImageCount, setCroppedImageUrl, setSelectedImageId]);
 
   return (
     <div className="w-64 h-screen border-r p-4 flex flex-col">
@@ -87,7 +87,10 @@ const PhotoList = () => {
                 className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-200 transition cursor-pointer"
                 onClick={() => {
                   setSelectedImageUrl(url);
-                  setCroppedImageUrl(null); // ✅ Reset cropped image when switching photos
+                  setCroppedImageUrl(null);
+                  setSelectedImageId(id);
+                  console.log(url);
+                  console.log(id);
                 }}
               >
                 <img src={url} alt={`Image ${id}`} className="w-10 h-10 object-cover rounded-md" />
