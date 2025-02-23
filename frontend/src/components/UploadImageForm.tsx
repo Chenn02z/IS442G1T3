@@ -18,6 +18,8 @@ const UploadImageForm = ({
 }) => {
   const { selectedImageUrl, croppedImageUrl, setCroppedImageUrl, uploadedImageCount,selectedImageId } = useUpload();
   const { handleUpload } = useImageUploadHandler();
+  console.log(selectedImageId);
+  console.log(selectedImageUrl);
 
   return (
     <Card className="hover:cursor-pointer hover:bg-secondary hover:border-primary transition-all ease-in-out">

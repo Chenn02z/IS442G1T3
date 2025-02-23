@@ -6,7 +6,7 @@ import { useUpload } from "@/context/UploadContext";
 import { useToast } from "@/hooks/use-toast";
 
 export const useImageUploadHandler = () => {
-  const { setUploadedFiles, selectedImageUrl, setSelectedImageUrl, refreshImages } = useUpload();
+  const { setUploadedFiles, selectedImageUrl, setSelectedImageUrl, refreshImages,setSelectedImageId,selectedImageId } = useUpload();
   const { toast } = useToast();
 
   // Fix: Define states properly
@@ -27,6 +27,7 @@ export const useImageUploadHandler = () => {
     setUploading(true);
     setCroppedImageUrl(null);
     const newUploadedUrls: string[] = [];
+    const newUploadedIds: string[] = [];
 
     try {
       for (const file of files) {
@@ -46,10 +47,15 @@ export const useImageUploadHandler = () => {
         const data = await response.json();
         const fullImageUrl = CONFIG.API_BASE_URL + "/" + data.savedFilePath;
         newUploadedUrls.push(fullImageUrl);
+        newUploadedIds.push(data.imageId);
       }
 
-      if (!selectedImageUrl && newUploadedUrls.length > 0) {
+      console.log("Uploaded URLs:", newUploadedUrls);
+      console.log("Uploaded IDs:", newUploadedIds);
+
+      if (!selectedImageUrl && !selectedImageId && newUploadedUrls.length > 0) {
         setSelectedImageUrl(newUploadedUrls[0]);
+        setSelectedImageId(newUploadedIds[0]);
       }
 
       refreshImages();

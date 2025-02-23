@@ -47,7 +47,9 @@ const PhotoList = () => {
 
         if (formattedImages.length > 0) {
           setSelectedImageUrl(formattedImages[0].url);
+          setSelectedImageId(formattedImages[0].id);
         }
+        
       } catch (error) {
         setError("Failed to fetch images.");
         console.error("Error fetching images:", error);
