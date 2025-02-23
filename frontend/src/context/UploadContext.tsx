@@ -2,18 +2,16 @@
 import React, { createContext, useState, useContext } from "react";
 
 interface UploadContextProps {
-  uploadedFile: File | null;
-  setUploadedFile: (file: File | null) => void;
+  uploadedFiles: File[];
+  setUploadedFiles: (files: File[]) => void;
 }
 
 const UploadContext = createContext<UploadContextProps | undefined>(undefined);
 
-export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);;
   return (
-    <UploadContext.Provider value={{ uploadedFile, setUploadedFile }}>
+    <UploadContext.Provider value={{ uploadedFiles, setUploadedFiles }}>
       {children}
     </UploadContext.Provider>
   );
