@@ -1,16 +1,24 @@
 package IS442.G1T3.IDPhotoGenerator.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Objects;
 import java.util.UUID;
 
+@Getter
+@Setter
 public class CropEditResponseDTO {
+
+    // Getters and Setters
 
     private UUID imageId;
     private String originalImageUrl;
-    private Integer x;       // can be null if no crop exists yet
-    private Integer y;
-    private Integer width;
-    private Integer height;
+
+    private double x;       // can be null if no crop exists yet
+    private double y;
+    private double width;
+    private double height;
 
     // No-argument constructor
     public CropEditResponseDTO() {
@@ -23,55 +31,6 @@ public class CropEditResponseDTO {
         this.x = x;
         this.y = y;
         this.width = width;
-        this.height = height;
-    }
-
-    // Getters and Setters
-    public UUID getImageId() {
-        return imageId;
-    }
-
-    public void setImageId(UUID imageId) {
-        this.imageId = imageId;
-    }
-
-    public String getOriginalImageUrl() {
-        return originalImageUrl;
-    }
-
-    public void setOriginalImageUrl(String originalImageUrl) {
-        this.originalImageUrl = originalImageUrl;
-    }
-
-    public Integer getX() {
-        return x;
-    }
-
-    public void setX(Integer x) {
-        this.x = x;
-    }
-
-    public Integer getY() {
-        return y;
-    }
-
-    public void setY(Integer y) {
-        this.y = y;
-    }
-
-    public Integer getWidth() {
-        return width;
-    }
-
-    public void setWidth(Integer width) {
-        this.width = width;
-    }
-
-    public Integer getHeight() {
-        return height;
-    }
-
-    public void setHeight(Integer height) {
         this.height = height;
     }
 
@@ -92,8 +51,7 @@ public class CropEditResponseDTO {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof CropEditResponseDTO)) return false;
-        CropEditResponseDTO that = (CropEditResponseDTO) o;
+        if (!(o instanceof CropEditResponseDTO that)) return false;
         return Objects.equals(imageId, that.imageId) &&
                 Objects.equals(originalImageUrl, that.originalImageUrl) &&
                 Objects.equals(x, that.x) &&
