@@ -11,12 +11,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.List;
-import org.springframework.core.io.InputStreamResource;
 
 @Slf4j
+@CrossOrigin(origins = "http://localhost:3000") // Allow frontend requests (local)
 @RestController
 @RequestMapping("/api/images")
 @Validated
@@ -44,24 +41,4 @@ public class ImageDownloadController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    @PostMapping("/download/multiple")
-    public ResponseEntity<Resource> downloadSelectedImages(@RequestBody List<UUID> imageIds) {
-        try {
-            log.info("Processing request to download selected images: {}", imageIds);
-
-            // Call the service to zip selected images
-            File zipFile = imageDownloadServiceImpl.zipSelectedImages(imageIds);
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=selected_images.zip")
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(resource);
-        } catch (Exception e) {
-            log.error("Error while processing multi-image download: {}", e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
 }

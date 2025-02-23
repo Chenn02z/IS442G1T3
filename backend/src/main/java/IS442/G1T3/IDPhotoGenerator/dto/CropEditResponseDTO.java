@@ -14,13 +14,10 @@ public class CropEditResponseDTO {
 
     private UUID imageId;
     private String originalImageUrl;
-    @Setter
+
     private double x;       // can be null if no crop exists yet
-    @Setter
     private double y;
-    @Setter
     private double width;
-    @Setter
     private double height;
 
     // No-argument constructor

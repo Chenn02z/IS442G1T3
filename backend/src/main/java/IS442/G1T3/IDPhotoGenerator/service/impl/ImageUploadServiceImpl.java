@@ -5,6 +5,7 @@ import IS442.G1T3.IDPhotoGenerator.model.enums.ImageStatus;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageRepository;
 import IS442.G1T3.IDPhotoGenerator.service.ImageUploadService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,8 +26,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
 
     @Override
     public ImageEntity processImage(
-            MultipartFile imageFile,
-            UUID userId
+            MultipartFile imageFile, String backgroundOption, @Nullable MultipartFile customBackground
     ) throws IOException {
 
         UUID imageId = UUID.randomUUID();
@@ -37,10 +37,9 @@ public class ImageUploadServiceImpl implements ImageUploadService {
         // Create ImageEntity with initial status
         ImageEntity imageEntity = ImageEntity.builder()
                 .imageId(imageId)
-                .userId(userId)
                 .originalFileName(imageFile.getOriginalFilename())
                 .savedFilePath(savedFilePath)
-                .backgroundOption("")
+                .backgroundOption(backgroundOption)
                 .status(ImageStatus.UPLOADED.toString())
                 .build();
 
