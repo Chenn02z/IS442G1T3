@@ -1,6 +1,7 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
 import IS442.G1T3.IDPhotoGenerator.dto.CropEditResponseDTO;
+import IS442.G1T3.IDPhotoGenerator.dto.CropRequestDTO;
 import IS442.G1T3.IDPhotoGenerator.dto.CropResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.service.ImageCropService;
 import lombok.extern.slf4j.Slf4j;
@@ -35,12 +36,17 @@ public class ImageCropController {
     @PostMapping("/{imageId}/crop")
     public ResponseEntity<CropResponseDTO> cropImage(
             @PathVariable UUID imageId,
-            @RequestParam int x,
-            @RequestParam int y,
-            @RequestParam int width,
-            @RequestParam int height) {
-        CropResponseDTO response = imageCropService.saveCrop(imageId, x, y, width, height);
+            @RequestBody CropRequestDTO cropRequest) {
+
+        CropResponseDTO response = imageCropService.saveCrop(
+                imageId,
+                cropRequest.getX(),
+                cropRequest.getY(),
+                cropRequest.getWidth(),
+                cropRequest.getHeight()
+        );
         return ResponseEntity.ok(response);
     }
 }
+
 
