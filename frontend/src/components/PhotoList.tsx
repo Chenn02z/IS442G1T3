@@ -89,8 +89,7 @@ const PhotoList = () => {
                   setSelectedImageUrl(url);
                   setCroppedImageUrl(null);
                   setSelectedImageId(id);
-                  console.log(url);
-                  console.log(id);
+                  localStorage.removeItem("cropBoxData");
                 }}
               >
                 <img src={url} alt={`Image ${id}`} className="w-10 h-10 object-cover rounded-md" />
