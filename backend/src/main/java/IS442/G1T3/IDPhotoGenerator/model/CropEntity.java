@@ -21,16 +21,16 @@ public class CropEntity {
 
 
     @Column(name = "crop_x", nullable = false)
-    private double x;
+    private int x;
 
     @Column(name = "crop_y", nullable = false)
-    private double y;
+    private int y;
 
     @Column(name = "crop_width", nullable = false)
-    private double width;
+    private int width;
 
     @Column(name = "crop_height", nullable = false)
-    private double height;
+    private int height;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
