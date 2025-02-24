@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogClose
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Tooltip,
@@ -23,7 +23,8 @@ import {
 import { Button } from "@/components/ui/button";
 
 export const BackgroundRemover = () => {
-  const { uploadedFile, setUploadedFile } = useUpload();
+  const { uploadedFile, setUploadedFile, selectedImageId, selectedImageUrl } =
+    useUpload();
   const [workingFile, setWorkingFile] = useState<File | null>(null);
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -45,7 +46,10 @@ export const BackgroundRemover = () => {
     // console.log("Dialog state:", isDialogOpen);
     // console.log("Current step:", step);
     // console.log("Selected points:", selectedPoints);
-    console.log("Working file:", workingFile);
+    // console.log("Working file:", workingFile);
+    // console.log(selectedImageId);
+    // console.log(selectedImageUrl);
+    console.log(JSON.stringify(selectedPoints));
   }, [isDialogOpen, step, selectedPoints, workingFile]);
 
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
@@ -86,14 +90,14 @@ export const BackgroundRemover = () => {
       setStep("manual");
     } else {
       try {
-        const formData = new FormData();
-        formData.append("image", workingFile);
-        formData.append("backgroundOption", "white");
+        // const formData = new FormData();
+        // formData.append("image", workingFile);
+        // formData.append("backgroundOption", "white");
         const response = await fetch(
-          CONFIG.API_BASE_URL + "/api/background-removal/cartoonise",
+          CONFIG.API_BASE_URL +
+            `/api/background-removal/${selectedImageId}/cartoonise`,
           {
             method: "POST",
-            body: formData,
           }
         );
         if (!response.ok) {
@@ -137,14 +141,18 @@ export const BackgroundRemover = () => {
     }
 
     const formData = new FormData();
-    formData.append("file", workingFile);
+    // formData.append("file", workingFile);
+    // const bodyData = {
+    //   tolerance: 30,
+    //   seedPoints: JSON.stringify(selectedPoints),
+    // };
     formData.append("tolerance", "30");
-    console.log(JSON.stringify(selectedPoints));
+    // console.log(JSON.stringify(selectedPoints));
     formData.append("seedPoints", JSON.stringify(selectedPoints));
 
     try {
       const response = await fetch(
-        `${CONFIG.API_BASE_URL}/api/images/remove-background`,
+        `${CONFIG.API_BASE_URL}/api/images/${selectedImageId}/remove-background`,
         {
           method: "POST",
           body: formData,
@@ -168,7 +176,7 @@ export const BackgroundRemover = () => {
 
       toast({
         title: "Image processed successfully",
-      });     
+      });
 
       // Clear selected points but keep the dialog open
       setSelectedPoints([]);

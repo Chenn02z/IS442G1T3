@@ -1,31 +1,29 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
 import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
+import IS442.G1T3.IDPhotoGenerator.model.enums.ImageStatus;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageRepository;
-import IS442.G1T3.IDPhotoGenerator.service.BackgroundRemovalService;
 import IS442.G1T3.IDPhotoGenerator.service.CartoonisationService;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class CartooniseServiceImpl implements CartoonisationService {
 
 	private final ImageRepository imageRepository;
 
-	@Value("${app.upload.dir:${user.home}}")
-	private String uploadDir;
+	@Value("${image.storage.path}")
+	private String storagePath;
 
 	static {
 		try {
@@ -40,38 +38,43 @@ public class CartooniseServiceImpl implements CartoonisationService {
 	}
 
 	@Override
-	public byte[] cartooniseImage(MultipartFile file, UUID userId) throws Exception {
-		// Convert MultipartFile to Mat
-		Mat image = multipartFileToMat(file);
+	public ImageEntity cartooniseImage(UUID imageId) throws Exception {
+		// Get original image from repository
+		ImageEntity imageEntity = imageRepository.findById(imageId)
+				.orElseThrow(() -> new RuntimeException("Image not found with id: " + imageId));
 
-		// Perform background removal
+		// Load the original image path
+		Path originalPath = Paths.get(imageEntity.getSavedFilePath());
+		if (!originalPath.isAbsolute()) {
+			originalPath = Paths.get(System.getProperty("user.dir"))
+					.resolve(imageEntity.getSavedFilePath())
+					.normalize();
+		}
+
+		// Read the image using OpenCV
+		Mat image = Imgcodecs.imread(originalPath.toString());
+		if (image.empty()) {
+			throw new RuntimeException("Failed to load image: " + originalPath);
+		}
+
+		// Process the image
 		Mat result = removeBackgroundUsingGrabCut(image);
 
-		// Save the processed image to the desktop
-		String processedFileName = saveProcessedImageToDesktop(result, file.getOriginalFilename());
+		// Save the processed image
+		String processedFileName = "cartoonised_" + imageId + ".png";
+		Path processedPath = originalPath.getParent().resolve(processedFileName);
+		
+		// Ensure parent directory exists
+		processedPath.getParent().toFile().mkdirs();
+		
+		// Save the processed image
+		Imgcodecs.imwrite(processedPath.toString(), result);
 
-		// Convert Mat to byte array for response
-		MatOfByte mob = new MatOfByte();
-		Imgcodecs.imencode(".png", result, mob);
-		byte[] imageData = mob.toArray();
-
-		// Save the processed image to the original upload directory (optional)
-		String fileName = saveImage(result, userId);
-
-		return imageData;
-	}
-
-	private String saveProcessedImageToDesktop(Mat image, String originalFilename) throws Exception {
-		Path uploadPath = Paths.get(System.getProperty("user.home"), "Desktop");
-		Files.createDirectories(uploadPath);
-
-		String savedFileName = UUID.randomUUID() + ".png";
-		String processedFileName = "bg_removed_" + savedFileName;
-		Path processedPath = uploadPath.resolve(processedFileName);
-
-		Imgcodecs.imwrite(processedPath.toString(), image);
-
-		return processedFileName;
+		// Update image entity with new path and status
+		imageEntity.setSavedFilePath(processedPath.toString());
+		imageEntity.setStatus(ImageStatus.COMPLETED.toString());
+		
+		return imageRepository.save(imageEntity);
 	}
 
 	private Mat removeBackgroundUsingGrabCut(Mat image) {
@@ -92,33 +95,6 @@ public class CartooniseServiceImpl implements CartoonisationService {
 		image.copyTo(foreground, foregroundMask);
 
 		return foreground;
-	}
-
-	private Mat multipartFileToMat(MultipartFile file) throws Exception {
-		byte[] bytes = file.getBytes();
-		String tempFileName = UUID.randomUUID().toString() + ".jpg";
-		Path path = Paths.get(uploadDir, tempFileName);
-		Files.write(path, bytes);
-		Mat image = Imgcodecs.imread(path.toString());
-		Files.delete(path);
-		return image;
-	}
-
-	private String saveImage(Mat image, UUID userId) throws Exception {
-		String fileName = UUID.randomUUID().toString() + ".jpg";
-		Path path;
-		
-		if (userId != null) {
-			// If userId exists, save in user-specific directory
-			path = Paths.get(uploadDir, userId.toString(), fileName);
-		} else {
-			// If userId is null, save in a general directory
-			path = Paths.get(uploadDir, "anonymous", fileName);
-		}
-		
-		Files.createDirectories(path.getParent());
-		Imgcodecs.imwrite(path.toString(), image);
-		return fileName;
 	}
 }
 
