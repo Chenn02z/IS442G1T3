@@ -10,9 +10,10 @@ public interface FloodFillService {
      * Processes the flood fill request for an existing image.
      *
      * @param imageId The UUID of the image to process
+     * @param filePath The relative path of the image to process, with respect to the backend server
      * @param seedPointsJson The list of seedpoint coordinates to remove the background from
      * @param tolerance The tolerance of colour difference between surrounding pixels
      * @return ImageEntity containing the processed image details
      */
-    ImageEntity removeBackground(UUID imageId, String seedPointsJson, int tolerance) throws IOException;
+    ImageEntity removeBackground(UUID imageId, String filePath, String seedPointsJson, int tolerance) throws IOException;
 }

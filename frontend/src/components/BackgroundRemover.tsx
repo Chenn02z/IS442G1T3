@@ -23,8 +23,13 @@ import {
 import { Button } from "@/components/ui/button";
 
 export const BackgroundRemover = () => {
-  const { uploadedFile, setUploadedFile, selectedImageId, selectedImageUrl } =
-    useUpload();
+  const {
+    uploadedFile,
+    setUploadedFile,
+    selectedImageId,
+    selectedImageUrl,
+    setSelectedImageUrl,
+  } = useUpload();
   const [workingFile, setWorkingFile] = useState<File | null>(null);
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -43,12 +48,6 @@ export const BackgroundRemover = () => {
 
   // Debug logging
   useEffect(() => {
-    // console.log("Dialog state:", isDialogOpen);
-    // console.log("Current step:", step);
-    // console.log("Selected points:", selectedPoints);
-    // console.log("Working file:", workingFile);
-    // console.log(selectedImageId);
-    // console.log(selectedImageUrl);
     console.log(JSON.stringify(selectedPoints));
   }, [isDialogOpen, step, selectedPoints, workingFile]);
 
@@ -71,14 +70,11 @@ export const BackgroundRemover = () => {
     const actualY = Math.round(displayY * scaleY);
 
     setSelectedPoints((prev) => [...prev, { x: actualX, y: actualY }]);
-    // console.log(
-    //   `Selected point: display(x=${displayX}, y=${displayY}), actual(x=${actualX}, y=${actualY})`
-    // );
   };
 
   const handleBackgroundRemoval = async (type: string) => {
     console.log("Handling background removal:", type);
-    if (!workingFile) {
+    if (!selectedImageUrl) {
       toast({
         title: "No uploaded file",
         description: "Please upload a file first.",
@@ -90,35 +86,27 @@ export const BackgroundRemover = () => {
       setStep("manual");
     } else {
       try {
-        // const formData = new FormData();
-        // formData.append("image", workingFile);
-        // formData.append("backgroundOption", "white");
+        const formData = new FormData();
+        var url = selectedImageUrl.split("8080/")[1];
+        formData.append("filePath", url);
         const response = await fetch(
           CONFIG.API_BASE_URL +
             `/api/background-removal/${selectedImageId}/cartoonise`,
           {
             method: "POST",
+            body: formData,
           }
         );
         if (!response.ok) {
           throw new Error("Failed to send image for background removal");
         }
 
-        // Get the processed image as a blob
-        const processedImageBlob = await response.blob();
-
-        // Create a new File object from the blob
-        const processedFile = new File([processedImageBlob], workingFile.name, {
-          type: workingFile.type,
-        });
-
-        console.log("Processed file:", processedFile);
-
-        // Update the working file
-        setUploadedFile(processedFile);
+        const floodResponse = await response.json();
+        const newImageUrl = floodResponse.savedFilePath;
+        setSelectedImageUrl(`${CONFIG.API_BASE_URL}/${newImageUrl}`);
 
         toast({
-          title: "Background removed successfully. Image saved to desktop.",
+          title: "Background removed successfully.",
         });
         setIsDialogOpen(false);
       } catch (error: any) {
@@ -132,7 +120,7 @@ export const BackgroundRemover = () => {
   };
 
   const floodFill = async () => {
-    if (!workingFile) {
+    if (!selectedImageUrl) {
       toast({
         title: "No uploaded file",
         description: "Please upload a file first.",
@@ -141,13 +129,9 @@ export const BackgroundRemover = () => {
     }
 
     const formData = new FormData();
-    // formData.append("file", workingFile);
-    // const bodyData = {
-    //   tolerance: 30,
-    //   seedPoints: JSON.stringify(selectedPoints),
-    // };
+    var url = selectedImageUrl.split("8080/")[1];
+    formData.append("filePath", url);
     formData.append("tolerance", "30");
-    // console.log(JSON.stringify(selectedPoints));
     formData.append("seedPoints", JSON.stringify(selectedPoints));
 
     try {
@@ -163,17 +147,9 @@ export const BackgroundRemover = () => {
         throw new Error("Failed to process image");
       }
 
-      // Get the processed image as a blob
-      const processedImageBlob = await response.blob();
-
-      // Create a new File object from the blob
-      const processedFile = new File([processedImageBlob], workingFile.name, {
-        type: workingFile.type,
-      });
-
-      // Update the working file
-      setWorkingFile(processedFile);
-
+      const floodResponse = await response.json();
+      const newImageUrl = floodResponse.savedFilePath;
+      setSelectedImageUrl(`${CONFIG.API_BASE_URL}/${newImageUrl}`);
       toast({
         title: "Image processed successfully",
       });
@@ -273,10 +249,10 @@ export const BackgroundRemover = () => {
                     </DialogHeader>
                     <div className="flex flex-col gap-4">
                       <div className="relative w-full">
-                        {workingFile && (
+                        {selectedImageUrl && (
                           <img
                             ref={imageRef}
-                            src={URL.createObjectURL(workingFile)}
+                            src={selectedImageUrl}
                             alt="Upload preview"
                             className="w-full cursor-crosshair"
                             onClick={handleImageClick}

@@ -17,6 +17,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,31 +41,44 @@ public class FloodFillServiceImpl implements FloodFillService {
     }
 
     @Override
-    public ImageEntity removeBackground(UUID imageId, String seedPointsJson, int tolerance) throws IOException {
+    public ImageEntity removeBackground(UUID imageId, String filePath, String seedPointsJson, int tolerance) throws IOException {
         // Get original image from repository
-        ImageEntity imageEntity = imageRepository.findById(imageId)
-                .orElseThrow(() -> new RuntimeException("Image not found with id: " + imageId));
+        ImageEntity imageEntity = imageRepository.findBySavedFilePath(filePath)
+                .orElseThrow(() -> new RuntimeException("Image not found with file path: " + filePath));
 
-        // Load the original image
-        Path originalPath = Paths.get(imageEntity.getSavedFilePath());
-        if (!originalPath.isAbsolute()) {
-            originalPath = Paths.get(System.getProperty("user.dir")).resolve(imageEntity.getSavedFilePath()).normalize();
+        // Increment the process count
+        imageEntity.setProcessCount(imageEntity.getProcessCount() + 1);
+
+        // Get the saved file path
+        String savedFilePath = imageEntity.getSavedFilePath();
+        File originalFile = new File(savedFilePath);
+
+        // Check if the file exists
+        if (!originalFile.exists()) {
+            throw new RuntimeException("Original image file not found on server at: " + savedFilePath);
         }
 
         // Process the image
-        BufferedImage originalImage = ImageIO.read(originalPath.toFile());
+        BufferedImage originalImage = ImageIO.read(originalFile);
         List<Point> seedPoints = parsePoints(seedPointsJson);
         BufferedImage processedImage = floodFill(originalImage, seedPoints, tolerance);
 
+        // Create a unique filename based on the process count
+        String processedFileName = "floodfill_" + imageId + "_v" + imageEntity.getProcessCount() + ".png";
+        String relativePath = storagePath + File.separator + processedFileName;
+        String absoluteProcessedPath = new File("").getAbsolutePath() + File.separator + relativePath;
+
+        // Ensure directory exists
+        new File(absoluteProcessedPath).getParentFile().mkdirs();
+
         // Save the processed image
-        String processedFileName = "floodfill_" + imageId + ".png";
-        Path processedPath = originalPath.getParent().resolve(processedFileName);
-        ImageIO.write(processedImage, "PNG", processedPath.toFile());
+        ImageIO.write(processedImage, "PNG", new File(absoluteProcessedPath));
 
         // Update image entity with new path and status
-        imageEntity.setSavedFilePath(processedPath.toString());
+        imageEntity.setSavedFilePath(relativePath);
         imageEntity.setStatus(ImageStatus.COMPLETED.toString());
-        
+
+        // Save the updated image entity
         return imageRepository.save(imageEntity);
     }
 

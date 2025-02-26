@@ -9,9 +9,10 @@ public interface CartoonisationService {
      * Converts an existing image into a cartoon style image.
      *
      * @param imageId The UUID of the image to cartoonize
+     * @param filePath The relative path of the image to cartoonize, relative to the backend server
      * @return ImageEntity containing the processed image details
      * @throws Exception If any error occurs during processing
      */
-    ImageEntity cartooniseImage(UUID imageId) throws Exception;
+    ImageEntity cartooniseImage(UUID imageId, String filePath) throws Exception;
 }
 

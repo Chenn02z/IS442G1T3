@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
@@ -38,10 +39,10 @@ public class CartooniseServiceImpl implements CartoonisationService {
 	}
 
 	@Override
-	public ImageEntity cartooniseImage(UUID imageId) throws Exception {
+	public ImageEntity cartooniseImage(UUID imageId, String filePath) throws Exception {
 		// Get original image from repository
-		ImageEntity imageEntity = imageRepository.findById(imageId)
-				.orElseThrow(() -> new RuntimeException("Image not found with id: " + imageId));
+		ImageEntity imageEntity = imageRepository.findBySavedFilePath(filePath)
+				.orElseThrow(() -> new RuntimeException("Image not found at: " + filePath));
 
 		// Load the original image path
 		Path originalPath = Paths.get(imageEntity.getSavedFilePath());
@@ -60,20 +61,23 @@ public class CartooniseServiceImpl implements CartoonisationService {
 		// Process the image
 		Mat result = removeBackgroundUsingGrabCut(image);
 
-		// Save the processed image
-		String processedFileName = "cartoonised_" + imageId + ".png";
-		Path processedPath = originalPath.getParent().resolve(processedFileName);
-		
+		// Create a unique filename based on the imageId and process count
+		imageEntity.setProcessCount(imageEntity.getProcessCount() + 1); // Increment process count
+		String processedFileName = "cartoonised_" + imageId + "_v" + imageEntity.getProcessCount() + ".png";
+		String relativePath = storagePath + File.separator + processedFileName;
+		String absoluteProcessedPath = new File("").getAbsolutePath() + File.separator + relativePath;
+
 		// Ensure parent directory exists
-		processedPath.getParent().toFile().mkdirs();
-		
+		new File(absoluteProcessedPath).getParentFile().mkdirs();
+
 		// Save the processed image
-		Imgcodecs.imwrite(processedPath.toString(), result);
+		Imgcodecs.imwrite(absoluteProcessedPath, result);
 
 		// Update image entity with new path and status
-		imageEntity.setSavedFilePath(processedPath.toString());
+		imageEntity.setSavedFilePath(relativePath);
 		imageEntity.setStatus(ImageStatus.COMPLETED.toString());
-		
+
+		// Save the updated image entity
 		return imageRepository.save(imageEntity);
 	}
 

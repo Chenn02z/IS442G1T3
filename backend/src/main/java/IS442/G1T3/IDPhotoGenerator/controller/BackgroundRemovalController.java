@@ -37,9 +37,11 @@ public class BackgroundRemovalController {
     }
 
     @PostMapping("/{imageId}/cartoonise")
-    public ResponseEntity<ImageEntity> cartooniseImage(@PathVariable UUID imageId) {
+    public ResponseEntity<ImageEntity> cartooniseImage(
+            @PathVariable UUID imageId,
+            @RequestParam String filePath) {
         try {
-            ImageEntity processedImage = cartooniseServiceImpl.cartooniseImage(imageId);
+            ImageEntity processedImage = cartooniseServiceImpl.cartooniseImage(imageId, filePath);
             return ResponseEntity.ok(processedImage);
         } catch (Exception e) {
             log.error("Error processing image: ", e);
