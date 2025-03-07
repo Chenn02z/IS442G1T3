@@ -18,6 +18,7 @@ const CropImage: React.FC<CropImageProps> = ({
   onCropComplete,
   isCropping,
 }) => {
+  const {setSelectedImageUrl} = useUpload();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -56,7 +57,6 @@ const CropImage: React.FC<CropImageProps> = ({
     }
   };
 
-  // Listen for changes in aspectRatio or containerSize and update cropBox accordingly
   useEffect(() => {
     if (containerSize.width && containerSize.height) {
       const updatedCrop = calculateDefaultCropBox(containerSize.width, containerSize.height, cropBoxData || undefined);
@@ -64,42 +64,43 @@ const CropImage: React.FC<CropImageProps> = ({
     }
   }, [aspectRatio, containerSize]);
 
-  // Save crop data to backend (API call is still commented out)
+  // Save crop data to backend
   const saveCropToBackend = async (cropBox: { x: number; y: number; width: number; height: number }) => {
     if (!imageId || !imageUrl) {
       console.error("Image ID or URL missing, cannot save crop.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("imageUrl", imageUrl);
-    formData.append("x", cropBox.x.toFixed(2));
-    formData.append("y", cropBox.y.toFixed(2));
-    formData.append("width", cropBox.width.toFixed(2));
-    formData.append("height", cropBox.height.toFixed(2));
-
-    console.log("Crop Data:", { imageUrl, ...cropBox });
-
-    // Uncomment for real API call
-    // try {
-    //   const response = await fetch(`${CONFIG.API_BASE_URL}/api/images/${imageId}/crop`, {
-    //     method: "POST",
-    //     body: formData,
-    //   });
-    //   if (!response.ok) {
-    //     throw new Error(`Failed to save crop. Status: ${response.status}`);
-    //   }
-    //   console.log("Crop data saved successfully:", await response.json());
-    // } catch (error) {
-    //   console.error("Error saving crop data:", error);
-    // }
+    console.log(imageId);
+    try {
+      const response = await fetch(`${CONFIG.API_BASE_URL}/api/images/${imageId}/crop`, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          x: Math.round(cropBox.x),
+          y: Math.round(cropBox.y),
+          width: Math.round(cropBox.width),
+          height: Math.round(cropBox.height),
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to save crop. Status: ${response.status}`);
+      }
+      
+      const cropResponse = await response.text();
+      const newImageUrl = cropResponse.split("backend\\")[1];
+      const fullImageUrl = `${CONFIG.API_BASE_URL}/${newImageUrl}`;
+      console.log("New image URL:", fullImageUrl);
+      setSelectedImageUrl(fullImageUrl);
+    } catch (error) {
+      console.error("Error saving crop data:", error);
+    }
   };
 
-  // Apply crop (send to backend)
   const onCrop = () => {
     if (cropBoxData) {
       localStorage.setItem("cropBoxData", JSON.stringify(cropBoxData));
-      // console.log("Crop Data:", JSON.stringify(cropBoxData));
       onCropComplete(cropBoxData);
       saveCropToBackend(cropBoxData);
     }
