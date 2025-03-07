@@ -59,9 +59,11 @@ public class ImageCropServiceImpl implements ImageCropService {
     }
 
     // Saves a new crop record (or updates an existing one) when the user clicks Save
-    public CropResponseDTO saveCrop(UUID imageId, int x, int y, int width, int height) {
+    // public CropResponseDTO saveCrop(UUID imageId, int x, int y, int width, int height) {
+    public String saveCrop(UUID imageId, int x, int y, int width, int height) {
         // Retrieve the image entity or throw an exception if not found.
         ImageEntity imageEntity = imageRepository.findById(imageId)
+        // ImageEntity imageEntity = imageRepository.findByImageId(imageId)
                 .orElseThrow(() -> new RuntimeException("Image not found with id: " + imageId));
 
         // Get the saved file path from the image entity.
@@ -133,16 +135,21 @@ public class ImageCropServiceImpl implements ImageCropService {
         }
 
         // Build and return the response DTO.
-        CropResponseDTO response = new CropResponseDTO();
-        response.setCropId(cropEntity.getCropId());
-        response.setImageId(imageId);
-        response.setX(x);
-        response.setY(y);
-        response.setWidth(width);
-        response.setHeight(height);
-        response.setCroppedImageUrl(croppedFilePath.toString());
-        return response;
+        // CropResponseDTO response = new CropResponseDTO();
+        // response.setCropId(cropEntity.getCropId());
+        // response.setImageId(imageId);
+        // response.setX(x);
+        // response.setY(y);
+        // response.setWidth(width);
+        // response.setHeight(height);
+        // response.setCroppedImageUrl(croppedFilePath.toString());
+        // return response;
+
+        // Return croppedimageurl
+
+        return croppedFilePath.toString();
     }
 
+    
 }
 
