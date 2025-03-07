@@ -1,8 +1,10 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
 import IS442.G1T3.IDPhotoGenerator.dto.CropEditResponseDTO;
+import IS442.G1T3.IDPhotoGenerator.dto.CropRequestDTO;
 import IS442.G1T3.IDPhotoGenerator.dto.CropResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.service.ImageCropService;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -11,7 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @Slf4j
-@Validated@RestController
+@Validated
+@RestController
 @RequestMapping("/api/images")
 public class ImageCropController {
 
@@ -44,14 +47,16 @@ public class ImageCropController {
     // }
 
     @PostMapping("/{imageId}/crop")
-    public String cropImage(
+    public ResponseEntity<String> cropImage(
             @PathVariable UUID imageId,
-            @RequestParam int x,
-            @RequestParam int y,
-            @RequestParam int width,
-            @RequestParam int height) {
-        String response = imageCropService.saveCrop(imageId, x, y, width, height);
-        return response;
+            @Valid @RequestBody CropRequestDTO cropRequest) {
+        String response = imageCropService.saveCrop(
+                imageId,
+                cropRequest.getX(),
+                cropRequest.getY(),
+                cropRequest.getWidth(),
+                cropRequest.getHeight());
+        return ResponseEntity.ok(response);
     }
 }
 

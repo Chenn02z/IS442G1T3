@@ -35,9 +35,11 @@ public class ImageCropServiceImpl implements ImageCropService {
 
     // Returns the original image and any existing crop parameters
     public CropEditResponseDTO getImageForEditing(UUID imageId) {
-        ImageEntity imageEntity = imageRepository.findById(imageId)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
-
+        ImageEntity imageEntity = imageRepository.findByImageIdWithOriginalFilePath(imageId);
+//                .orElseThrow(() -> new RuntimeException("Image not found"));
+        if (imageEntity == null) {
+            throw new RuntimeException("Image not found with id: " + imageId);
+        }
         // Assume the original image URL/path is stored in a field (e.g., originalFilePath)
         String originalImageUrl = imageEntity.getSavedFilePath();
 
