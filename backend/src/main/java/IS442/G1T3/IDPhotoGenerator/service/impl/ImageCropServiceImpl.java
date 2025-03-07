@@ -1,5 +1,6 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
+import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
 import IS442.G1T3.IDPhotoGenerator.dto.CropEditResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.dto.CropResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.model.CropEntity;
@@ -19,12 +20,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
-
-import org.apache.commons.imaging.Imaging;
-import org.apache.commons.imaging.ImageFormats;
-
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 
 @Slf4j
 @Service
@@ -64,17 +59,19 @@ public class ImageCropServiceImpl implements ImageCropService {
     }
 
     // Saves a new crop record (or updates an existing one) when the user clicks Save
-    @Override
-    public CropResponseDTO saveCrop(UUID imageId, double x, double y, double width, double height) {
+    // public CropResponseDTO saveCrop(UUID imageId, int x, int y, int width, int height) {
+    public String saveCrop(UUID imageId, int x, int y, int width, int height) {
         // Retrieve the image entity or throw an exception if not found.
         ImageEntity imageEntity = imageRepository.findById(imageId)
+        // ImageEntity imageEntity = imageRepository.findByImageId(imageId)
                 .orElseThrow(() -> new RuntimeException("Image not found with id: " + imageId));
 
         // Get the saved file path from the image entity.
         String savedFilePath = imageEntity.getSavedFilePath();
         log.info("Saved file path from DB: {}", savedFilePath);
 
-        // Resolve the original image path.
+        // Determine the original path.
+        // If savedFilePath is not absolute, resolve it relative to the current working directory.
         Path originalPath = Paths.get(savedFilePath);
         if (!originalPath.isAbsolute()) {
             originalPath = Paths.get(System.getProperty("user.dir")).resolve(savedFilePath).normalize();
@@ -86,14 +83,14 @@ public class ImageCropServiceImpl implements ImageCropService {
             throw new RuntimeException("Original image file not found on server at: " + originalPath.toString());
         }
 
-        // Read the original image using Apache Commons Imaging.
+        // Read the original image and validate crop dimensions.
         BufferedImage originalImage;
         try {
-            originalImage = Imaging.getBufferedImage(originalFile);
+            originalImage = ImageIO.read(originalFile);
         } catch (IOException e) {
             throw new RuntimeException("Failed to read the original image file.", e);
         }
-        // Validate crop dimensions.
+
         if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
                 x + width > originalImage.getWidth() || y + height > originalImage.getHeight()) {
             throw new IllegalArgumentException("Invalid crop dimensions.");
@@ -110,57 +107,49 @@ public class ImageCropServiceImpl implements ImageCropService {
             parentDir.mkdirs();
         }
 
-        // Perform cropping using Apache Commons Imaging for sub-pixel precision.
+        // Perform cropping and save the new image.
         try {
-            BufferedImage croppedImage = cropImageWithSubpixelPrecision(originalImage, x, y, width, height);
-            Imaging.writeImage(croppedImage, croppedFile, ImageFormats.PNG);
+            BufferedImage croppedImage = originalImage.getSubimage(x, y, width, height);
+            ImageIO.write(croppedImage, "png", croppedFile);
         } catch (IOException e) {
             throw new RuntimeException("Error during cropping", e);
         }
 
-        // Save or update the crop data in the repository.
+        // Update an existing crop record or create a new one.
         CropEntity cropEntity = cropRepository.findByImage_ImageId(imageId);
-        if (cropEntity == null) {
+        if (cropEntity != null) {
+            cropEntity.setX(x);
+            cropEntity.setY(y);
+            cropEntity.setWidth(width);
+            cropEntity.setHeight(height);
+            cropRepository.save(cropEntity);
+        } else {
             cropEntity = new CropEntity();
             cropEntity.setCropId(UUID.randomUUID());
-            cropEntity.setImage(imageEntity);
+            cropEntity.setX(x);
+            cropEntity.setY(y);
+            cropEntity.setWidth(width);
+            cropEntity.setHeight(height);
+            cropEntity.setImage(imageEntity);  // Set the foreign key reference
+            cropRepository.save(cropEntity);
         }
-        cropEntity.setX(x);
-        cropEntity.setY(y);
-        cropEntity.setWidth(width);
-        cropEntity.setHeight(height);
-        cropRepository.save(cropEntity);
 
         // Build and return the response DTO.
-        CropResponseDTO response = new CropResponseDTO();
-        response.setCropId(cropEntity.getCropId());
-        response.setImageId(imageId);
-        response.setX(x);
-        response.setY(y);
-        response.setWidth(width);
-        response.setHeight(height);
-        response.setCroppedImageUrl(croppedFilePath.toString());
-        return response;
+        // CropResponseDTO response = new CropResponseDTO();
+        // response.setCropId(cropEntity.getCropId());
+        // response.setImageId(imageId);
+        // response.setX(x);
+        // response.setY(y);
+        // response.setWidth(width);
+        // response.setHeight(height);
+        // response.setCroppedImageUrl(croppedFilePath.toString());
+        // return response;
+
+        // Return croppedimageurl
+
+        return croppedFilePath.toString();
     }
 
-    /**
-     * Crops the image with sub-pixel precision using Apache Commons Imaging.
-     */
-    private BufferedImage cropImageWithSubpixelPrecision(BufferedImage image, double x, double y, double width, double height) {
-        BufferedImage croppedImage = new BufferedImage((int) width, (int) height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = croppedImage.createGraphics();
-
-        // Set rendering hints for high-quality sub-pixel rendering
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // Draw the image with sub-pixel precision
-        g.drawImage(image, 0, 0, (int) width, (int) height,
-                (int) x, (int) y, (int) (x + width), (int) (y + height), null);
-        g.dispose();
-
-        return croppedImage;
-    }
+    
 }
 

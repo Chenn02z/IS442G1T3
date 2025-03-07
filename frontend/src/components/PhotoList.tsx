@@ -89,6 +89,7 @@ const PhotoList = () => {
                 className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-200 transition cursor-pointer"
                 onClick={() => {
                   setSelectedImageUrl(url);
+                  console.log(url);
                   setCroppedImageUrl(null);
                   setSelectedImageId(id);
                   localStorage.removeItem("cropBoxData");

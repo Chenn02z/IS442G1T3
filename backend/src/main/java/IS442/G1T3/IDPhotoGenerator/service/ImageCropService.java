@@ -28,5 +28,7 @@ public interface ImageCropService {
      * @param height the height of the crop area
      * @return a CropResponseDTO containing the crop details and cropped image URL/path
      */
-    CropResponseDTO saveCrop(UUID imageId, double x, double y, double width, double height);
+    // CropResponseDTO saveCrop(UUID imageId, int x, int y, int width, int height);
+    String saveCrop(UUID imageId, int x, int y, int width, int height);
+
 }
