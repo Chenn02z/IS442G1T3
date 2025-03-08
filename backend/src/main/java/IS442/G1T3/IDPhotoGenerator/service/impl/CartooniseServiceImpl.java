@@ -41,14 +41,14 @@ public class CartooniseServiceImpl implements CartoonisationService {
 	@Override
 	public ImageEntity cartooniseImage(UUID imageId, String filePath) throws Exception {
 		// Get original image from repository
-		ImageEntity imageEntity = imageRepository.findBySavedFilePath(filePath)
+		ImageEntity originalImage = imageRepository.findBySavedFilePath(filePath)
 				.orElseThrow(() -> new RuntimeException("Image not found at: " + filePath));
 
 		// Load the original image path
-		Path originalPath = Paths.get(imageEntity.getSavedFilePath());
+		Path originalPath = Paths.get(originalImage.getSavedFilePath());
 		if (!originalPath.isAbsolute()) {
 			originalPath = Paths.get(System.getProperty("user.dir"))
-					.resolve(imageEntity.getSavedFilePath())
+					.resolve(originalImage.getSavedFilePath())
 					.normalize();
 		}
 
@@ -61,9 +61,9 @@ public class CartooniseServiceImpl implements CartoonisationService {
 		// Process the image
 		Mat result = removeBackgroundUsingGrabCut(image);
 
-		// Create a unique filename based on the imageId and process count
-		imageEntity.setProcessCount(imageEntity.getProcessCount() + 1); // Increment process count
-		String processedFileName = "cartoonised_" + imageId + "_v" + imageEntity.getProcessCount() + ".png";
+		// Create a unique filename for the new processed image
+		// UUID newImageId = UUID.randomUUID();
+		String processedFileName = "cartoonised_" + imageId + "_v" + originalImage.getProcessCount() +".png";
 		String relativePath = storagePath + File.separator + processedFileName;
 		String absoluteProcessedPath = new File("").getAbsolutePath() + File.separator + relativePath;
 
@@ -73,12 +73,18 @@ public class CartooniseServiceImpl implements CartoonisationService {
 		// Save the processed image
 		Imgcodecs.imwrite(absoluteProcessedPath, result);
 
-		// Update image entity with new path and status
-		imageEntity.setSavedFilePath(relativePath);
-		imageEntity.setStatus(ImageStatus.COMPLETED.toString());
-
-		// Save the updated image entity
-		return imageRepository.save(imageEntity);
+		// Create a new image entity instead of updating the existing one
+		ImageEntity newImageEntity = new ImageEntity();
+		newImageEntity.setImageId(imageId);
+		newImageEntity.setUserId(originalImage.getUserId());
+		newImageEntity.setOriginalFileName(originalImage.getOriginalFileName());
+		newImageEntity.setSavedFilePath(relativePath);
+		newImageEntity.setProcessCount(originalImage.getProcessCount());  // Start with process count 1 for the new image
+		newImageEntity.setStatus(ImageStatus.COMPLETED.toString());
+		newImageEntity.setBackgroundOption(originalImage.getBackgroundOption());
+		
+		// Save the new image entity
+		return imageRepository.save(newImageEntity);
 	}
 
 	private Mat removeBackgroundUsingGrabCut(Mat image) {

@@ -30,27 +30,25 @@ public class FloodFillServiceImpl implements FloodFillService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ImageRepository imageRepository;
-    private final FileStorageService fileStorageService;
 
     @Value("${image.storage.path}")
     private String storagePath;
 
-    public FloodFillServiceImpl(ImageRepository imageRepository, FileStorageService fileStorageService) {
+    public FloodFillServiceImpl(ImageRepository imageRepository) {
         this.imageRepository = imageRepository;
-        this.fileStorageService = fileStorageService;
     }
 
     @Override
     public ImageEntity removeBackground(UUID imageId, String filePath, String seedPointsJson, int tolerance) throws IOException {
         // Get original image from repository
-        ImageEntity imageEntity = imageRepository.findBySavedFilePath(filePath)
+        ImageEntity originalEntity = imageRepository.findBySavedFilePath(filePath)
                 .orElseThrow(() -> new RuntimeException("Image not found with file path: " + filePath));
 
         // Increment the process count
-        imageEntity.setProcessCount(imageEntity.getProcessCount() + 1);
+//        imageEntity.setProcessCount(imageEntity.getProcessCount() + 1);
 
         // Get the saved file path
-        String savedFilePath = imageEntity.getSavedFilePath();
+        String savedFilePath = originalEntity.getSavedFilePath();
         File originalFile = new File(savedFilePath);
 
         // Check if the file exists
@@ -64,7 +62,7 @@ public class FloodFillServiceImpl implements FloodFillService {
         BufferedImage processedImage = floodFill(originalImage, seedPoints, tolerance);
 
         // Create a unique filename based on the process count
-        String processedFileName = "floodfill_" + imageId + "_v" + imageEntity.getProcessCount() + ".png";
+        String processedFileName = "floodfill_" + imageId + "_v" + originalEntity.getProcessCount() + ".png";
         String relativePath = storagePath + File.separator + processedFileName;
         String absoluteProcessedPath = new File("").getAbsolutePath() + File.separator + relativePath;
 
@@ -74,12 +72,17 @@ public class FloodFillServiceImpl implements FloodFillService {
         // Save the processed image
         ImageIO.write(processedImage, "PNG", new File(absoluteProcessedPath));
 
-        // Update image entity with new path and status
-        imageEntity.setSavedFilePath(relativePath);
-        imageEntity.setStatus(ImageStatus.COMPLETED.toString());
+        ImageEntity newImageEntity = new ImageEntity();
+        newImageEntity.setImageId(imageId);
+        newImageEntity.setUserId(originalEntity.getUserId());
+        newImageEntity.setOriginalFileName(originalEntity.getOriginalFileName());
+        newImageEntity.setSavedFilePath(relativePath);
+        newImageEntity.setProcessCount(originalEntity.getProcessCount());  // Start with process count 1 for the new image
+        newImageEntity.setStatus(ImageStatus.COMPLETED.toString());
+        newImageEntity.setBackgroundOption(originalEntity.getBackgroundOption());
 
-        // Save the updated image entity
-        return imageRepository.save(imageEntity);
+        // Save the new image entity
+        return imageRepository.save(newImageEntity);
     }
 
     private List<Point> parsePoints(String seedPointsJson) throws JsonProcessingException {
