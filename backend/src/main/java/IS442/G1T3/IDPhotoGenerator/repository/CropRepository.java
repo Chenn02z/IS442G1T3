@@ -10,7 +10,11 @@ import java.util.UUID;
 public interface CropRepository extends JpaRepository<CropEntity, UUID> {
 
     // Find single crop entity by imageId
-    CropEntity findByImage_ImageId(UUID imageId);
+    // CropEntity findByImageId(UUID imageId);
+
+    // Find crop entity by looking at imageId in image
+   CropEntity findByImageImageId(UUID imageId);
+
 
     // Find original imageId by cropId
 //    @Query("SELECT c.imageId FROM CropEntity c WHERE c.cropId=:cropId")

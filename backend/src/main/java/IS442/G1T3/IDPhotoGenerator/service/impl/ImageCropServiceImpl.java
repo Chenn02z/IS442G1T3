@@ -44,7 +44,7 @@ public class ImageCropServiceImpl implements ImageCropService {
         String originalImageUrl = imageEntity.getSavedFilePath();
 
         // Fetch existing crop data for this image if it exists
-        CropEntity cropEntity = cropRepository.findByImage_ImageId(imageId);
+        CropEntity cropEntity = cropRepository.findByImageImageId(imageId);
 
         CropEditResponseDTO dto = new CropEditResponseDTO();
         dto.setImageId(imageId);
@@ -118,7 +118,7 @@ public class ImageCropServiceImpl implements ImageCropService {
         }
 
         // Update an existing crop record or create a new one.
-        CropEntity cropEntity = cropRepository.findByImage_ImageId(imageId);
+        CropEntity cropEntity = cropRepository.findByImageImageId(imageId);
         if (cropEntity != null) {
             cropEntity.setX(x);
             cropEntity.setY(y);
@@ -135,6 +135,9 @@ public class ImageCropServiceImpl implements ImageCropService {
             cropEntity.setImage(imageEntity);  // Set the foreign key reference
             cropRepository.save(cropEntity);
         }
+
+        // TO DO: Update saved_file_path row in Images repo
+        // e.g. imageRepo.save(imageEntity)
 
         // Build and return the response DTO.
         // CropResponseDTO response = new CropResponseDTO();
