@@ -18,7 +18,7 @@ const CropImage: React.FC<CropImageProps> = ({
   onCropComplete,
   isCropping,
 }) => {
-  const {setSelectedImageUrl} = useUpload();
+  const {setSelectedImageUrl, setUploadedImageCount, uploadedImageCount} = useUpload();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -93,6 +93,7 @@ const CropImage: React.FC<CropImageProps> = ({
       const fullImageUrl = `${CONFIG.API_BASE_URL}/${newImageUrl}`;
       console.log("New image URL:", fullImageUrl);
       setSelectedImageUrl(fullImageUrl);
+      // setUploadedImageCount(uploadedImageCount + 1);
     } catch (error) {
       console.error("Error saving crop data:", error);
     }
@@ -100,7 +101,7 @@ const CropImage: React.FC<CropImageProps> = ({
 
   const onCrop = () => {
     if (cropBoxData) {
-      localStorage.setItem("cropBoxData", JSON.stringify(cropBoxData));
+      // localStorage.setItem("cropBoxData", JSON.stringify(cropBoxData));
       onCropComplete(cropBoxData);
       saveCropToBackend(cropBoxData);
     }
