@@ -18,7 +18,7 @@ const CropImage: React.FC<CropImageProps> = ({
   onCropComplete,
   isCropping,
 }) => {
-  const {setSelectedImageUrl, setUploadedImageCount, uploadedImageCount} = useUpload();
+  const {setSelectedImageUrl} = useUpload();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -71,7 +71,10 @@ const CropImage: React.FC<CropImageProps> = ({
       return;
     }
 
-    console.log(imageId);
+    console.log(cropBox.x);
+    console.log(cropBox.y);
+    console.log(cropBox.width);
+    console.log(cropBox.height);
     try {
       const response = await fetch(`${CONFIG.API_BASE_URL}/api/images/${imageId}/crop`, {
         method: "POST",
