@@ -29,6 +29,7 @@ export const BackgroundRemover = () => {
     selectedImageId,
     selectedImageUrl,
     setSelectedImageUrl,
+    refreshImages,
   } = useUpload();
   const [workingFile, setWorkingFile] = useState<File | null>(null);
   const { toast } = useToast();
@@ -104,6 +105,7 @@ export const BackgroundRemover = () => {
         const floodResponse = await response.json();
         const newImageUrl = floodResponse.savedFilePath;
         setSelectedImageUrl(`${CONFIG.API_BASE_URL}/${newImageUrl}`);
+        refreshImages();
 
         toast({
           title: "Background removed successfully.",
@@ -156,6 +158,7 @@ export const BackgroundRemover = () => {
 
       // Clear selected points but keep the dialog open
       setSelectedPoints([]);
+      refreshImages();
     } catch (error: any) {
       console.error(error);
       toast({

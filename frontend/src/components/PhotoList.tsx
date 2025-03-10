@@ -11,7 +11,7 @@ import { useImageUploadHandler } from "@/utils/ImageUploadHandler";
 
 const PhotoList = () => {
   const { handleUpload } = useImageUploadHandler();
-  const { setSelectedImageUrl,setUploadedImageCount, uploadedImageCount,setCroppedImageUrl,setSelectedImageId  } = useUpload();
+  const { setSelectedImageUrl,setUploadedImageCount, uploadedImageCount,setCroppedImageUrl,setSelectedImageId, selectedImageId } = useUpload();
   const [uploadedImages, setUploadedImages] = useState<{ id: string; url: string }[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +27,8 @@ const PhotoList = () => {
         setLoading(false);
         return;
       }
+
+      const currentSelectedImageId = selectedImageId;
 
       try {
         const response = await fetch(`${CONFIG.API_BASE_URL}/api/images/userimages/${userId}`);
@@ -45,7 +47,22 @@ const PhotoList = () => {
         setUploadedImages(formattedImages);
         setUploadedImageCount(formattedImages.length);
 
-        if (formattedImages.length > 0) {
+
+        // Find the previously selected image in the new list
+        if (currentSelectedImageId) {
+          const previouslySelectedImage = formattedImages.find(img => img.id === currentSelectedImageId);
+          
+          if (previouslySelectedImage) {
+            // If found, keep it selected
+            setSelectedImageUrl(previouslySelectedImage.url);
+            setSelectedImageId(previouslySelectedImage.id);
+          } else if (formattedImages.length > 0) {
+            // If not found (was deleted?), select first image
+            setSelectedImageUrl(formattedImages[0].url);
+            setSelectedImageId(formattedImages[0].id);
+          }
+        } else if (formattedImages.length > 0) {
+          // Initial load (no previously selected image)
           setSelectedImageUrl(formattedImages[0].url);
           setSelectedImageId(formattedImages[0].id);
         }
@@ -59,7 +76,7 @@ const PhotoList = () => {
     };
 
     fetchImages();
-  }, [uploadedImageCount, setSelectedImageUrl, setUploadedImageCount, setCroppedImageUrl, setSelectedImageId]);
+  }, [uploadedImageCount, setSelectedImageUrl, setUploadedImageCount, setCroppedImageUrl, setSelectedImageId, selectedImageId]);
 
   return (
     <div className="w-64 h-screen border-r p-4 flex flex-col">

@@ -18,7 +18,7 @@ const CropImage: React.FC<CropImageProps> = ({
   onCropComplete,
   isCropping,
 }) => {
-  const {setSelectedImageUrl} = useUpload();
+  const {setSelectedImageUrl, setIsLoadingCropData, isLoadingCropData} = useUpload();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -48,17 +48,59 @@ const CropImage: React.FC<CropImageProps> = ({
   };
 
   // Called when the image is loaded to measure the container and set initial crop box
+  useEffect(() => {
+    const fetchPreviousCrop = async () => {
+      if (!imageId) return;
+      
+      setIsLoadingCropData(true);
+      try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/api/images/${imageId}/edit`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Crop data from backend:", data);
+          
+          // Check if valid crop data exists
+          if (data.x !== null && data.y !== null && data.width > 0 && data.height > 0) {
+            console.log("Using existing crop data");
+            // Apply previous crop dimensions
+            setCropBoxData({
+              x: data.x,
+              y: data.y,
+              width: data.width,
+              height: data.height
+            });
+          } else {
+            console.log("No existing crop data, will use default");
+            // Default crop will be set after image loads
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching previous crop data:", error);
+      } finally {
+        setIsLoadingCropData(false);
+      }
+    };
+
+    fetchPreviousCrop();
+  }, [imageId]);
+
+  // Called when the image is loaded to measure the container and set initial crop box
   const handleImageLoad = () => {
     if (containerRef.current) {
       const { offsetWidth, offsetHeight } = containerRef.current;
       setContainerSize({ width: offsetWidth, height: offsetHeight });
-      const defaultCrop = calculateDefaultCropBox(offsetWidth, offsetHeight);
-      setCropBoxData(defaultCrop);
+      
+      // Only set default crop if no crop data was loaded from backend
+      if (!cropBoxData && !isLoadingCropData) {
+        const defaultCrop = calculateDefaultCropBox(offsetWidth, offsetHeight);
+        setCropBoxData(defaultCrop);
+      }
     }
   };
 
   useEffect(() => {
-    if (containerSize.width && containerSize.height) {
+    if (containerSize.width && containerSize.height && aspectRatio) {
+      // Only update for aspect ratio changes, preserving position
       const updatedCrop = calculateDefaultCropBox(containerSize.width, containerSize.height, cropBoxData || undefined);
       setCropBoxData(updatedCrop);
     }
@@ -96,7 +138,6 @@ const CropImage: React.FC<CropImageProps> = ({
       const fullImageUrl = `${CONFIG.API_BASE_URL}/${newImageUrl}`;
       console.log("New image URL:", fullImageUrl);
       setSelectedImageUrl(fullImageUrl);
-      // setUploadedImageCount(uploadedImageCount + 1);
     } catch (error) {
       console.error("Error saving crop data:", error);
     }
@@ -104,7 +145,6 @@ const CropImage: React.FC<CropImageProps> = ({
 
   const onCrop = () => {
     if (cropBoxData) {
-      // localStorage.setItem("cropBoxData", JSON.stringify(cropBoxData));
       onCropComplete(cropBoxData);
       saveCropToBackend(cropBoxData);
     }
