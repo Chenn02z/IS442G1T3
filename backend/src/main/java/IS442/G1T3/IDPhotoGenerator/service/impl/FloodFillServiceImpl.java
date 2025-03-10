@@ -62,7 +62,7 @@ public class FloodFillServiceImpl implements FloodFillService {
         BufferedImage processedImage = floodFill(originalImage, seedPoints, tolerance);
 
         // Create a unique filename based on the process count
-        String processedFileName = "floodfill_" + imageId + "_v" + originalEntity.getProcessCount() + ".png";
+        String processedFileName = "floodfill_" + imageId + "_v" + (originalEntity.getProcessCount() + 1)+ ".png";
         String relativePath = storagePath + File.separator + processedFileName;
         String absoluteProcessedPath = new File("").getAbsolutePath() + File.separator + relativePath;
 
@@ -77,7 +77,7 @@ public class FloodFillServiceImpl implements FloodFillService {
         newImageEntity.setUserId(originalEntity.getUserId());
         newImageEntity.setOriginalFileName(originalEntity.getOriginalFileName());
         newImageEntity.setSavedFilePath(relativePath);
-        newImageEntity.setProcessCount(originalEntity.getProcessCount());  // Start with process count 1 for the new image
+        newImageEntity.setProcessCount(originalEntity.getProcessCount() + 1);  // Start with process count 1 for the new image
         newImageEntity.setStatus(ImageStatus.COMPLETED.toString());
         newImageEntity.setBackgroundOption(originalEntity.getBackgroundOption());
 

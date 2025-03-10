@@ -18,7 +18,6 @@ import java.util.UUID;
 @ToString(onlyExplicitlyIncluded = true)
 public class ImageEntity {
 
-    @Id
     @Column(name = "image_id", updatable = false, nullable = false)
     private UUID imageId;
 
@@ -28,6 +27,7 @@ public class ImageEntity {
     @Column(name = "original_file_name", nullable = false)
     private String originalFileName;
 
+    @Id
     @Column(name = "saved_file_path", nullable = false)
     private String savedFilePath;
 

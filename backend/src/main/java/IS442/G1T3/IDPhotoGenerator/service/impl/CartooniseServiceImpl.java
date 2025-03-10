@@ -63,7 +63,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
 		// Create a unique filename for the new processed image
 		// UUID newImageId = UUID.randomUUID();
-		String processedFileName = "cartoonised_" + imageId + "_v" + originalImage.getProcessCount() +".png";
+		String processedFileName = "cartoonised_" + imageId + "_v" + (originalImage.getProcessCount() + 1) +".png";
 		String relativePath = storagePath + File.separator + processedFileName;
 		String absoluteProcessedPath = new File("").getAbsolutePath() + File.separator + relativePath;
 
@@ -79,7 +79,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
 		newImageEntity.setUserId(originalImage.getUserId());
 		newImageEntity.setOriginalFileName(originalImage.getOriginalFileName());
 		newImageEntity.setSavedFilePath(relativePath);
-		newImageEntity.setProcessCount(originalImage.getProcessCount());  // Start with process count 1 for the new image
+		newImageEntity.setProcessCount(originalImage.getProcessCount() + 1);  // Start with process count 1 for the new image
 		newImageEntity.setStatus(ImageStatus.COMPLETED.toString());
 		newImageEntity.setBackgroundOption(originalImage.getBackgroundOption());
 		
