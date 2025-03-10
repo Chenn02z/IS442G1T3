@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -56,6 +57,7 @@ public class ImageCropServiceImpl implements ImageCropService {
             dto.setY(cropEntity.getY());
             dto.setWidth(cropEntity.getWidth());
             dto.setHeight(cropEntity.getHeight());
+            dto.setCroppedFilePath(cropEntity.getCroppedFilePath());
         }
         return dto;
     }
@@ -64,9 +66,16 @@ public class ImageCropServiceImpl implements ImageCropService {
     // public CropResponseDTO saveCrop(UUID imageId, int x, int y, int width, int height) {
     public String saveCrop(UUID imageId, int x, int y, int width, int height) {
         // Retrieve the image entity or throw an exception if not found.
-        ImageEntity imageEntity = imageRepository.findById(imageId)
-        // ImageEntity imageEntity = imageRepository.findByImageId(imageId)
-                .orElseThrow(() -> new RuntimeException("Image not found with id: " + imageId));
+//        ImageEntity imageEntity = imageRepository.findById(imageId)
+//         ImageEntity imageEntity = imageRepository.findByImageId(imageId)
+//                .orElseThrow(() -> new RuntimeException("Image not found with id: " + imageId));
+        Optional<ImageEntity> optionalEntity = Optional.ofNullable(imageRepository.findByImageId(imageId));
+        ImageEntity imageEntity;
+        if (optionalEntity.isPresent()) {
+            imageEntity = optionalEntity.get();
+        } else {
+            throw new RuntimeException("Image not found with id: " + imageId);
+        }
 
         // Get the saved file path from the image entity.
         String savedFilePath = imageEntity.getSavedFilePath();
@@ -124,6 +133,7 @@ public class ImageCropServiceImpl implements ImageCropService {
             cropEntity.setY(y);
             cropEntity.setWidth(width);
             cropEntity.setHeight(height);
+            cropEntity.setCroppedFilePath(croppedFileName);
             cropRepository.save(cropEntity);
         } else {
             cropEntity = new CropEntity();
@@ -132,6 +142,7 @@ public class ImageCropServiceImpl implements ImageCropService {
             cropEntity.setY(y);
             cropEntity.setWidth(width);
             cropEntity.setHeight(height);
+            cropEntity.setCroppedFilePath(croppedFileName);
             cropEntity.setImage(imageEntity);  // Set the foreign key reference
             cropRepository.save(cropEntity);
         }
