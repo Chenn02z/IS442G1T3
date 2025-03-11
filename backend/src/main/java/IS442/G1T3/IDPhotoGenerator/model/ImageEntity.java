@@ -46,6 +46,9 @@ public class ImageEntity {
     @Column(name = "version", nullable = false)
     private int processCount = 0;
 
+    @Column(name = "prev_file_path")
+    private String prevFilePath;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

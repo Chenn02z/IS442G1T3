@@ -79,6 +79,7 @@ public class FloodFillServiceImpl implements FloodFillService {
         newImageEntity.setSavedFilePath(relativePath);
         newImageEntity.setProcessCount(originalEntity.getProcessCount() + 1);  // Start with process count 1 for the new image
         newImageEntity.setStatus(ImageStatus.COMPLETED.toString());
+        newImageEntity.setPrevFilePath(originalEntity.getSavedFilePath());
         newImageEntity.setBackgroundOption(originalEntity.getBackgroundOption());
 
         // Save the new image entity
