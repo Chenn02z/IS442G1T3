@@ -36,7 +36,7 @@ public class BackgroundRemovalController {
         }
     }
 
-    @PostMapping("/{imageId}/cartoonise")
+    @PostMapping("/{imageId}/auto")
     public ResponseEntity<ImageEntity> cartooniseImage(
             @PathVariable UUID imageId,
             @RequestParam String filePath) {

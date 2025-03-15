@@ -93,7 +93,7 @@ export const BackgroundRemover = () => {
         formData.append("filePath", url);
         const response = await fetch(
           CONFIG.API_BASE_URL +
-            `/api/background-removal/${selectedImageId}/cartoonise`,
+            `/api/background-removal/${selectedImageId}/auto`,
           {
             method: "POST",
             body: formData,
