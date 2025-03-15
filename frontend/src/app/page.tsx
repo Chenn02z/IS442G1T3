@@ -9,7 +9,6 @@ export const UUID_LOOKUP_KEY = "userUUID_";
 
 export default function Home() {
   const [userUUID, setUserUUID] = useState<string>("");
-  const [isCropping, setIsCropping] = useState<boolean>(false);
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<number | null>(null);
 
   useEffect(() => {
@@ -26,19 +25,19 @@ export default function Home() {
       <div className="flex">
         {/* Left Sidebar */}
         <div className="w-14">
-          <SideBar setIsCropping={setIsCropping} setSelectedAspectRatio={setSelectedAspectRatio} />
+          <SideBar setSelectedAspectRatio={setSelectedAspectRatio} />
         </div>
 
         {/* Right Sidebar (PhotoList) */}
-        <div className="w-64 border-l">
+        <div className="w-fit">
           <PhotoList />
         </div>
-        <div className="ml-14 flex-1 p-3"> 
+        <div className="flex-1 px-3 py-3"> 
           {/* Main content here */}
           <div>
             User UUID: {userUUID}
           </div>
-          <UploadImageForm isCropping={isCropping} setIsCropping={setIsCropping} selectedAspectRatio={selectedAspectRatio}/>
+          <UploadImageForm selectedAspectRatio={selectedAspectRatio}/>
         </div>
       </div>
     </UploadProvider>

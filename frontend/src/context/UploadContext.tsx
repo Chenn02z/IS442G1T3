@@ -13,6 +13,8 @@ interface UploadContextProps {
   uploadedImageCount: number;
   setUploadedImageCount: (count: number) => void;
   refreshImages: () => void;
+  isCropping: boolean;
+  setIsCropping: (isCropping: boolean) => void;
   isLoadingCropData: boolean;
   setIsLoadingCropData: (isLoading: boolean) => void;
 }
@@ -26,6 +28,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [uploadedImageCount, setUploadedImageCount] = useState<number>(0);
+  const [isCropping, setIsCropping] = useState<boolean>(false);
   const [isLoadingCropData, setIsLoadingCropData] = useState<boolean>(false);
   const refreshImages = useCallback(() => {
     setUploadedImageCount((prev) => prev + 1); // Trigger a re-fetch in `PhotoList.tsx`
@@ -38,6 +41,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       croppedImageUrl, setCroppedImageUrl,
       uploadedImageCount, setUploadedImageCount,
       selectedImageId, setSelectedImageId,
+      isCropping, setIsCropping,
       isLoadingCropData, setIsLoadingCropData,
       refreshImages
     }}>

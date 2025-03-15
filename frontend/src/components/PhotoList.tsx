@@ -7,11 +7,12 @@ import { CONFIG } from "../../config";
 import { UUID_LOOKUP_KEY } from "@/app/page";
 import { useUpload } from "@/context/UploadContext";
 import { useImageUploadHandler } from "@/utils/ImageUploadHandler";
+import Image from "next/image";
 
 
 const PhotoList = () => {
   const { handleUpload } = useImageUploadHandler();
-  const { setSelectedImageUrl,setUploadedImageCount, uploadedImageCount,setCroppedImageUrl,setSelectedImageId, selectedImageId } = useUpload();
+  const { setSelectedImageUrl,setUploadedImageCount, uploadedImageCount,setCroppedImageUrl, setSelectedImageId, setIsCropping } = useUpload();
   const [uploadedImages, setUploadedImages] = useState<{ id: string; url: string }[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,8 +28,6 @@ const PhotoList = () => {
         setLoading(false);
         return;
       }
-
-      const currentSelectedImageId = selectedImageId;
 
       try {
         const response = await fetch(`${CONFIG.API_BASE_URL}/api/images/userimages/${userId}`);
@@ -47,26 +46,6 @@ const PhotoList = () => {
         setUploadedImages(formattedImages);
         setUploadedImageCount(formattedImages.length);
 
-
-        // Find the previously selected image in the new list
-        if (currentSelectedImageId) {
-          const previouslySelectedImage = formattedImages.find(img => img.id === currentSelectedImageId);
-          
-          if (previouslySelectedImage) {
-            // If found, keep it selected
-            setSelectedImageUrl(previouslySelectedImage.url);
-            setSelectedImageId(previouslySelectedImage.id);
-          } else if (formattedImages.length > 0) {
-            // If not found (was deleted?), select first image
-            setSelectedImageUrl(formattedImages[0].url);
-            setSelectedImageId(formattedImages[0].id);
-          }
-        } else if (formattedImages.length > 0) {
-          // Initial load (no previously selected image)
-          setSelectedImageUrl(formattedImages[0].url);
-          setSelectedImageId(formattedImages[0].id);
-        }
-        
       } catch (error) {
         setError("Failed to fetch images.");
         console.error("Error fetching images:", error);
@@ -76,26 +55,29 @@ const PhotoList = () => {
     };
 
     fetchImages();
-  }, [uploadedImageCount, setSelectedImageUrl, setUploadedImageCount, setCroppedImageUrl, setSelectedImageId, selectedImageId]);
+  }, [uploadedImageCount, setSelectedImageUrl, setUploadedImageCount, setCroppedImageUrl, setSelectedImageId]);
 
   return (
-    <div className="w-64 h-screen border-r p-4 flex flex-col">
+    <div className="h-screen border-r-2 p-2 flex flex-col">
       {/* Header */}
-      <h2 className="mb-4">Uploaded Images</h2>
+      <h2 className="mb-4 font-bold">Images</h2>
 
       {/* Error State */}
       {error && <p className="text-center">{error}</p>}
 
       {/* Loading State */}
       {loading && (
-        <div className="flex items-center space-x-3 p-2 rounded-md">
-          <Skeleton className="w-10 h-10 object-cover rounded-md" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[100px]" />
-          </div>
-        </div>
+        <>
+          {Array(5).fill(0).map((_, i) => (
+            <div key={i} className="flex items-center space-x-3 p-2 rounded-md">
+              <Skeleton className="w-10 h-10 object-cover rounded-md" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-[100px]" />
+              </div>
+            </div>
+          ))}
+        </>
       )}
-
       {/* Scrollable area for images */}
       <ScrollArea className="flex-1 overflow-auto">
         <div className="space-y-2">
@@ -103,8 +85,9 @@ const PhotoList = () => {
             uploadedImages.map(({ id, url }) => (
               <div
                 key={id}
-                className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-200 transition cursor-pointer"
+                className="flex justify-between space-x-3 p-2 rounded-md hover:bg-gray-200 transition cursor-pointer"
                 onClick={() => {
+                  setIsCropping(false);
                   setSelectedImageUrl(url);
                   console.log(url);
                   setCroppedImageUrl(null);
@@ -112,8 +95,13 @@ const PhotoList = () => {
                   localStorage.removeItem("cropBoxData");
                 }}
               >
-                <img src={url} alt={`Image ${id}`} className="w-10 h-10 object-cover rounded-md" />
-                <span className="text-sm truncate flex-1">{url}</span>
+                <Image 
+                  src={url}
+                  alt={`Image ${id}`}
+                  className="w-10 h-10 object-cover rounded-md"
+                  width={50}
+                  height={50}
+                />
                 <Trash2 className="w-4 h-4 cursor-pointer hover:text-red-700" />
               </div>
             ))
@@ -142,7 +130,7 @@ const PhotoList = () => {
               className="cursor-pointer flex flex-col items-center gap-2"
             >
               <UploadCloud className="h-10 w-10 text-gray-500" />
-              <p className="text-gray-700 text-sm">Click to upload an Image</p>
+              <p className="text-gray-700 text-sm">Upload an Image</p>
               <p className="text-muted-foreground text-xs">Supported formats: .jpeg, .png</p>
             </label>
           </>

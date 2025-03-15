@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { ThemeModeToggle } from "@/components/ThemeModeToggle";
 import CropSidebar from "@/components/CropSideBar";
 import {
@@ -8,16 +8,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { BackgroundRemover } from "./BackgroundRemover";
+import { useUpload } from "@/context/UploadContext";
 
 const SideBar = ({
-  setIsCropping,
   setSelectedAspectRatio, // ✅ Accept as a prop
 }: {
-  setIsCropping: (cropping: boolean) => void;
   setSelectedAspectRatio: (ratio: number | null) => void;
 }) => {
+  const { setIsCropping } = useUpload();
   return (
-    <div className="fixed flex flex-col space-y-2 w-fit h-full p-2 items-center border-2 border-r-lightgray-500">
+    <div className="fixed flex flex-col space-y-2 w-fit h-full p-2 items-center border-r-2">
       <ThemeModeToggle />
       <p className="text-xs pt-3 pb-1 font-semibold">Edit:</p>
       <TooltipProvider>

@@ -8,24 +8,18 @@ import CropImage from "./CropImage";
 import DownloadButton from "./DownloadButton";
 
 const UploadImageForm = ({
-  isCropping,
-  setIsCropping,
   selectedAspectRatio,
 }: {
-  isCropping: boolean;
-  setIsCropping: (cropping: boolean) => void;
   selectedAspectRatio: number | null;
 }) => {
-  const { selectedImageUrl, croppedImageUrl, setCroppedImageUrl, uploadedImageCount,selectedImageId } = useUpload();
+  const { selectedImageUrl, croppedImageUrl, selectedImageId, isCropping, setIsCropping } = useUpload();
   const { handleUpload } = useImageUploadHandler();
-  // console.log(selectedImageId);
-  // console.log(selectedImageUrl);
 
   return (
     <Card className="hover:cursor-pointer hover:bg-secondary hover:border-primary transition-all ease-in-out">
       <CardContent className="flex flex-col h-full items-center justify-center px-2 py-24 text-xs">
         {/* Before image upload */}
-        {uploadedImageCount === 0 && (
+        {!selectedImageId && (
           <>
             <input
               type="file"
@@ -55,13 +49,13 @@ const UploadImageForm = ({
                 aspectRatio={selectedAspectRatio}
                 imageId={selectedImageId}
                 isCropping={isCropping}
-                onCropComplete={(croppedImage) => {
-                  setCroppedImageUrl(croppedImage);
+                onCropComplete={() => {
+                  // setCroppedImageUrl(croppedImage);
                   setIsCropping(false);
                 }}
               />
             ) : (
-              <DisplayImage imageUrl={croppedImageUrl || selectedImageUrl} />
+              <DisplayImage imageUrl={croppedImageUrl || selectedImageUrl} /> // weird
             )}
 
             {/* Save and Download Buttons */}

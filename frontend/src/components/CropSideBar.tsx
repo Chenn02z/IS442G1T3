@@ -63,23 +63,25 @@ const CropSidebar: React.FC<CropSidebarProps> = ({ setIsCropping, setSelectedAsp
           <ScrollArea className="h-[400px]">
             <div className="grid grid-cols-3 gap-4">
               {aspectRatios.map((ratio) => (
-                <Button
-                  key={ratio.value}
-                  variant={selectedRatio === ratio.value ? "default" : "outline"}
-                  className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
-                  onClick={() => {
-                    setSelectedRatio(ratio.value);
-                    setSelectedAspectRatio(ratio.aspectRatio);
-                    localStorage.setItem("selectedRatio", ratio.value);
-                  }}
-                >
-                  {ratio.value === "freeform" ? (
-                    <Scan className="text-gray-500 w-8 h-8" />
-                  ) : (
-                    <div className={`border border-gray-500 ${ratio.boxClass}`} />
-                  )}
-                  <span className="text-xs">{ratio.label}</span>
-                </Button>
+                <SheetClose asChild key={ratio.value}>
+                  <Button
+                    key={ratio.value}
+                    variant={selectedRatio === ratio.value ? "default" : "outline"}
+                    className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
+                    onClick={() => {
+                      setSelectedRatio(ratio.value);
+                      setSelectedAspectRatio(ratio.aspectRatio);
+                      localStorage.setItem("selectedRatio", ratio.value);
+                    }}
+                  >
+                    {ratio.value === "freeform" ? (
+                      <Scan className="text-gray-500 w-8 h-8" />
+                    ) : (
+                      <div className={`border border-gray-500 ${ratio.boxClass}`} />
+                    )}
+                    <span className="text-xs">{ratio.label}</span>
+                  </Button>
+                </SheetClose>
               ))}
             </div>
           </ScrollArea>

@@ -4,13 +4,11 @@ import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
 import IS442.G1T3.IDPhotoGenerator.dto.CropEditResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.dto.CropResponseDTO;
 import IS442.G1T3.IDPhotoGenerator.model.CropEntity;
-import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
 import IS442.G1T3.IDPhotoGenerator.repository.CropRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageRepository;
 import IS442.G1T3.IDPhotoGenerator.service.ImageCropService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -25,6 +23,9 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class ImageCropServiceImpl implements ImageCropService {
+
+    @Value("${image.storage.path}")
+    private String storagePath;
 
     private final ImageRepository imageRepository;
     private final CropRepository cropRepository;
@@ -64,7 +65,7 @@ public class ImageCropServiceImpl implements ImageCropService {
 
     // Saves a new crop record (or updates an existing one) when the user clicks Save
     // public CropResponseDTO saveCrop(UUID imageId, int x, int y, int width, int height) {
-    public String saveCrop(UUID imageId, int x, int y, int width, int height) {
+    public CropResponseDTO saveCrop(UUID imageId, int x, int y, int width, int height) {
         // Retrieve the image entity or throw an exception if not found.
 //        ImageEntity imageEntity = imageRepository.findById(imageId)
 //         ImageEntity imageEntity = imageRepository.findByImageId(imageId)
@@ -109,8 +110,8 @@ public class ImageCropServiceImpl implements ImageCropService {
 
         // Define a file name and path for the cropped image.
         String croppedFileName = "cropped_" + imageId + "_" + x + "_" + y + "_" + width + "_" + height + ".png";
-        Path croppedFilePath = originalPath.getParent().resolve(croppedFileName);
-        File croppedFile = croppedFilePath.toFile();
+        Path croppedAbsoluteFilePath = originalPath.getParent().resolve(croppedFileName);
+        File croppedFile = croppedAbsoluteFilePath.toFile();
 
         // Ensure the parent directory exists.
         File parentDir = croppedFile.getParentFile();
@@ -151,19 +152,10 @@ public class ImageCropServiceImpl implements ImageCropService {
         // e.g. imageRepo.save(imageEntity)
 
         // Build and return the response DTO.
-        // CropResponseDTO response = new CropResponseDTO();
-        // response.setCropId(cropEntity.getCropId());
-        // response.setImageId(imageId);
-        // response.setX(x);
-        // response.setY(y);
-        // response.setWidth(width);
-        // response.setHeight(height);
-        // response.setCroppedImageUrl(croppedFilePath.toString());
-        // return response;
+        String croppedSavedFilePath = String.join("/", storagePath, croppedFileName);
+        CropResponseDTO response = new CropResponseDTO(croppedSavedFilePath);
 
-        // Return croppedimageurl
-
-        return croppedFilePath.toString();
+        return response;
     }
 
     

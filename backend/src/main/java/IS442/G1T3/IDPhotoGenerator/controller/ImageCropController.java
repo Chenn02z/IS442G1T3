@@ -32,25 +32,11 @@ public class ImageCropController {
         return ResponseEntity.ok(response);
     }
 
-    // Endpoint 2: When users click save after editing
-    // Performs the crop operation and saves/updates the CropEntity in the crops repository.
-    // It returns a response with the new crop parameters and cropped image URL.
-    // @PostMapping("/{imageId}/crop")
-    // public ResponseEntity<CropResponseDTO> cropImage(
-    //         @PathVariable UUID imageId,
-    //         @RequestParam int x,
-    //         @RequestParam int y,
-    //         @RequestParam int width,
-    //         @RequestParam int height) {
-    //     CropResponseDTO response = imageCropService.saveCrop(imageId, x, y, width, height);
-    //     return ResponseEntity.ok(response);
-    // }
-
     @PostMapping("/{imageId}/crop")
-    public ResponseEntity<String> cropImage(
+    public ResponseEntity<CropResponseDTO> cropImage(
             @PathVariable UUID imageId,
             @Valid @RequestBody CropRequestDTO cropRequest) {
-        String response = imageCropService.saveCrop(
+        CropResponseDTO response = imageCropService.saveCrop(
                 imageId,
                 cropRequest.getX(),
                 cropRequest.getY(),
