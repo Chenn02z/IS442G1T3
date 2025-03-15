@@ -3,12 +3,12 @@ import SideBar from "@/components/SideBar";
 import { useEffect, useState } from "react";
 import { v4 as getUUIDv4 } from "uuid";
 import UploadImageForm from "@/components/UploadImageForm";
+import PhotoList from "@/components/PhotoList";
 import { UploadProvider } from "@/context/UploadContext";
 export const UUID_LOOKUP_KEY = "userUUID_";
 
 export default function Home() {
   const [userUUID, setUserUUID] = useState<string>("");
-  const [isCropping, setIsCropping] = useState<boolean>(false);
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<number | null>(null);
 
   useEffect(() => {
@@ -23,13 +23,21 @@ export default function Home() {
   return (
     <UploadProvider>
       <div className="flex">
-      <SideBar setIsCropping={setIsCropping} setSelectedAspectRatio={setSelectedAspectRatio} />
-        <div className="ml-14 flex-1 p-3"> 
+        {/* Left Sidebar */}
+        <div className="w-14">
+          <SideBar setSelectedAspectRatio={setSelectedAspectRatio} />
+        </div>
+
+        {/* Right Sidebar (PhotoList) */}
+        <div className="w-fit">
+          <PhotoList />
+        </div>
+        <div className="flex-1 px-3 py-3"> 
           {/* Main content here */}
           <div>
             User UUID: {userUUID}
           </div>
-          <UploadImageForm isCropping={isCropping} setIsCropping={setIsCropping} selectedAspectRatio={selectedAspectRatio}/>
+          <UploadImageForm selectedAspectRatio={selectedAspectRatio}/>
         </div>
       </div>
     </UploadProvider>

@@ -6,9 +6,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CropRequestDTO {
-    private double x;
-    private double y;
-    private double width;
-    private double height;
+    private int x;
+    private int y;
+    private int width;
+    private int height;
 
 }

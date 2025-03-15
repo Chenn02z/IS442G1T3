@@ -35,10 +35,19 @@ public class UserImageController
      * @return a map where each key is an image ID and each value is the corresponding saved file path
      */
     @Operation(summary = "Get User Images' id and savedFilePath", description = "Retrieves a mapping of image IDs to their corresponding saved file paths for the specified user. eg. {'image-id' : 'saved-file-path'}")
+//    @GetMapping("/userimages/{userId}")
+//    public Map<UUID, String> getUserImages(@PathVariable UUID userId) {
+//        List<ImageEntity> userImages = imageRepository.findByUserId(userId);
+//        Map<UUID, String> imageMap = new HashMap<UUID, String>();
+//        for (ImageEntity imageEntity : userImages) {
+//            imageMap.put(imageEntity.getImageId(), imageEntity.getSavedFilePath());
+//        }
+//        return imageMap;
+//    }
     @GetMapping("/userimages/{userId}")
     public Map<UUID, String> getUserImages(@PathVariable UUID userId) {
-        List<ImageEntity> userImages = imageRepository.findByUserId(userId);
-        Map<UUID, String> imageMap = new HashMap<UUID, String>();
+        List<ImageEntity> userImages = imageRepository.findLatestVersionsByUserId(userId);
+        Map<UUID, String> imageMap = new HashMap<>();
         for (ImageEntity imageEntity : userImages) {
             imageMap.put(imageEntity.getImageId(), imageEntity.getSavedFilePath());
         }

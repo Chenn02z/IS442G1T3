@@ -36,25 +36,16 @@ public class BackgroundRemovalController {
         }
     }
 
-    @PostMapping("/cartoonise")
-    public ResponseEntity<?> cartooniseImage(
-            @RequestParam("image") MultipartFile imageFile,
-            @RequestParam(value = "userId", required = false) UUID userId) {
+    @PostMapping("/{imageId}/cartoonise")
+    public ResponseEntity<ImageEntity> cartooniseImage(
+            @PathVariable UUID imageId,
+            @RequestParam String filePath) {
         try {
-            // Validate input
-            if (imageFile == null || imageFile.isEmpty()) {
-                return ResponseEntity.badRequest().body("Image file is required");
-            }
-
-            byte[] processedImage = cartooniseServiceImpl.cartooniseImage(imageFile, userId);
-            return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_PNG)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, 
-                            "attachment; filename=\"cartoonised_" + imageFile.getOriginalFilename() + "\"")
-                    .body(processedImage);
+            ImageEntity processedImage = cartooniseServiceImpl.cartooniseImage(imageId, filePath);
+            return ResponseEntity.ok(processedImage);
         } catch (Exception e) {
             log.error("Error processing image: ", e);
-            return ResponseEntity.internalServerError().body("Error processing image: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

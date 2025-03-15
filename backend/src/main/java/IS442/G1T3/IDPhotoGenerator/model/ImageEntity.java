@@ -18,7 +18,6 @@ import java.util.UUID;
 @ToString(onlyExplicitlyIncluded = true)
 public class ImageEntity {
 
-    @Id
     @Column(name = "image_id", updatable = false, nullable = false)
     private UUID imageId;
 
@@ -28,6 +27,7 @@ public class ImageEntity {
     @Column(name = "original_file_name", nullable = false)
     private String originalFileName;
 
+    @Id
     @Column(name = "saved_file_path", nullable = false)
     private String savedFilePath;
 
@@ -42,6 +42,12 @@ public class ImageEntity {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name = "version", nullable = false)
+    private int processCount = 0;
+
+    @Column(name = "prev_file_path")
+    private String prevFilePath;
 
     @PrePersist
     protected void onCreate() {

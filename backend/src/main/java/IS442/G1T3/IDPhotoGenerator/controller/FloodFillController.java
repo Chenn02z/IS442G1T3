@@ -1,5 +1,6 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
+import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
 import IS442.G1T3.IDPhotoGenerator.service.FloodFillService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -10,36 +11,31 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/images")
 @Slf4j
 public class FloodFillController {
 
-    private final FloodFillService FloodFillService;
+    private final FloodFillService floodFillService;
 
-    public FloodFillController(FloodFillService FloodFillService) {
-        this.FloodFillService = FloodFillService;
+    public FloodFillController(FloodFillService floodFillService) {
+        this.floodFillService = floodFillService;
     }
 
-    @PostMapping("/remove-background")
-    public ResponseEntity<?> removeBackground(
-            @RequestParam("file") MultipartFile file,
+    @PostMapping("/{imageId}/remove-background")
+    public ResponseEntity<ImageEntity> removeBackground(
+            @PathVariable UUID imageId,
+            @RequestParam("filePath") String filePath,
             @RequestParam("seedPoints") String seedPointsJson,
             @RequestParam(value = "tolerance", defaultValue = "10") int tolerance) {
         try {
-            byte[] processedImage = FloodFillService.removeBackground(file, seedPointsJson, tolerance);
-
-            return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_PNG)
-                    .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"processed_" + file.getOriginalFilename() + "\"")
-                    .body(processedImage);
-
+            ImageEntity processedImage = floodFillService.removeBackground(imageId, filePath, seedPointsJson, tolerance);
+            return ResponseEntity.ok(processedImage);
         } catch (IOException e) {
             log.error("Error processing image", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error processing image: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

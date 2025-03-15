@@ -1,6 +1,8 @@
 package IS442.G1T3.IDPhotoGenerator.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Objects;
@@ -8,6 +10,8 @@ import java.util.UUID;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CropEditResponseDTO {
 
     private UUID imageId;
@@ -16,20 +20,22 @@ public class CropEditResponseDTO {
     private double y;
     private double width;
     private double height;
+    private String croppedFilePath;
 
     // No-argument constructor
-    public CropEditResponseDTO() {
-    }
+//    public CropEditResponseDTO() {
+//    }
 
     // Parameterized constructor
-    public CropEditResponseDTO(UUID imageId, String originalImageUrl, Integer x, Integer y, Integer width, Integer height) {
-        this.imageId = imageId;
-        this.originalImageUrl = originalImageUrl;
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-    }
+//    public CropEditResponseDTO(UUID imageId, String originalImageUrl, Integer x, Integer y, Integer width, Integer height, String croppedFilePath) {
+//        this.imageId = imageId;
+//        this.originalImageUrl = originalImageUrl;
+//        this.x = x;
+//        this.y = y;
+//        this.width = width;
+//        this.height = height;
+//        this.croppedFilePath = croppedFilePath;
+//    }
 
 
 

@@ -1,10 +1,15 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
+import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
+import IS442.G1T3.IDPhotoGenerator.model.enums.ImageStatus;
+import IS442.G1T3.IDPhotoGenerator.repository.ImageRepository;
+import IS442.G1T3.IDPhotoGenerator.service.FileStorageService;
 import IS442.G1T3.IDPhotoGenerator.service.FloodFillService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,7 +17,10 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 
@@ -21,29 +29,61 @@ import java.util.List;
 public class FloodFillServiceImpl implements FloodFillService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ImageRepository imageRepository;
+
+    @Value("${image.storage.path}")
+    private String storagePath;
+
+    public FloodFillServiceImpl(ImageRepository imageRepository) {
+        this.imageRepository = imageRepository;
+    }
 
     @Override
-    public byte[] removeBackground(MultipartFile file, String seedPointsJson, int tolerance) throws IOException {
+    public ImageEntity removeBackground(UUID imageId, String filePath, String seedPointsJson, int tolerance) throws IOException {
+        // Get original image from repository
+        ImageEntity originalEntity = imageRepository.findBySavedFilePath(filePath)
+                .orElseThrow(() -> new RuntimeException("Image not found with file path: " + filePath));
+
+        // Increment the process count
+//        imageEntity.setProcessCount(imageEntity.getProcessCount() + 1);
+
+        // Get the saved file path
+        String savedFilePath = originalEntity.getSavedFilePath();
+        File originalFile = new File(savedFilePath);
+
+        // Check if the file exists
+        if (!originalFile.exists()) {
+            throw new RuntimeException("Original image file not found on server at: " + savedFilePath);
+        }
+
+        // Process the image
+        BufferedImage originalImage = ImageIO.read(originalFile);
         List<Point> seedPoints = parsePoints(seedPointsJson);
-        BufferedImage originalImage = ImageIO.read(file.getInputStream());
         BufferedImage processedImage = floodFill(originalImage, seedPoints, tolerance);
 
-        // Create a new BufferedImage with transparency support
-        BufferedImage transparentImage = new BufferedImage(
-                processedImage.getWidth(),
-                processedImage.getHeight(),
-                BufferedImage.TYPE_INT_ARGB
-        );
+        // Create a unique filename based on the process count
+        String processedFileName = "floodfill_" + imageId + "_v" + (originalEntity.getProcessCount() + 1)+ ".png";
+        String relativePath = storagePath + File.separator + processedFileName;
+        String absoluteProcessedPath = new File("").getAbsolutePath() + File.separator + relativePath;
 
-        // Copy the processed image to the transparent image
-        Graphics2D g2d = transparentImage.createGraphics();
-        g2d.drawImage(processedImage, 0, 0, null);
-        g2d.dispose();
+        // Ensure directory exists
+        new File(absoluteProcessedPath).getParentFile().mkdirs();
 
-        // Convert to byte array
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(transparentImage, "png", baos);
-        return baos.toByteArray();
+        // Save the processed image
+        ImageIO.write(processedImage, "PNG", new File(absoluteProcessedPath));
+
+        ImageEntity newImageEntity = new ImageEntity();
+        newImageEntity.setImageId(imageId);
+        newImageEntity.setUserId(originalEntity.getUserId());
+        newImageEntity.setOriginalFileName(originalEntity.getOriginalFileName());
+        newImageEntity.setSavedFilePath(relativePath);
+        newImageEntity.setProcessCount(originalEntity.getProcessCount() + 1);  // Start with process count 1 for the new image
+        newImageEntity.setStatus(ImageStatus.COMPLETED.toString());
+        newImageEntity.setPrevFilePath(originalEntity.getSavedFilePath());
+        newImageEntity.setBackgroundOption(originalEntity.getBackgroundOption());
+
+        // Save the new image entity
+        return imageRepository.save(newImageEntity);
     }
 
     private List<Point> parsePoints(String seedPointsJson) throws JsonProcessingException {

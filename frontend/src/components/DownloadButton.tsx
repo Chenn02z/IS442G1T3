@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { Button } from './ui/button';
 
 interface DownloadButtonProps {
   croppedImageUrl: string | null;
@@ -21,7 +22,9 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ croppedImageUrl }) => {
     setDownloading(true);
     try {
       const response = await fetch(croppedImageUrl);
-      if (!response.ok) throw new Error('Download failed');
+      if (!response.ok) {
+        throw new Error('Download failed')
+      };
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -48,17 +51,12 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({ croppedImageUrl }) => {
   };
 
   return (
-    <button
+    <Button
       onClick={handleDownload}
-      className={`px-4 py-2 rounded transition-colors ${
-        croppedImageUrl && !downloading
-          ? 'bg-black text-white hover:bg-gray-800'
-          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-      }`}
       disabled={!croppedImageUrl || downloading}
     >
-      {downloading ? 'Downloading...' : 'Download Cropped Image'}
-    </button>
+      {downloading ? 'Downloading...' : 'Download Image'}
+    </Button>
   );
 };
 

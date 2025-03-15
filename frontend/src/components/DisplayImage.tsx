@@ -1,27 +1,26 @@
 import React from "react";
 import Image from "next/image";
+import { useUpload } from "@/context/UploadContext";
 
-type DisplayImageProps = {
-  imageUrl: string | null;
-};
+const DisplayImage: React.FC = () => {
+  const { selectedImageUrl } = useUpload();
 
-const DisplayImage: React.FC<DisplayImageProps> = ({ imageUrl }) => {
-  if (!imageUrl) return null;
+  if (!selectedImageUrl) return null;
 
   return (
     <div className="flex flex-col items-center space-y-2">
       <Image
-        src={imageUrl}
+        src={selectedImageUrl}
         alt="Uploaded preview"
-        height={250}
-        width={250}
+        height={500}
+        width={500}
         className="object-cover rounded-md shadow-md"
         unoptimized
-        // if not it somehow throws an error when loading image in the frontend
       />
     </div>
   );
 };
 
 export default DisplayImage;
+
 

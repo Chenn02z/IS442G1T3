@@ -32,14 +32,17 @@ public class CropEntity {
     @Column(name = "crop_height", nullable = false)
     private double height;
 
+    @Column(name = "cropped_file_path", nullable = false, unique = true)
+    private String croppedFilePath;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "image_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "saved_file_path", referencedColumnName = "saved_file_path",  nullable = false)
     private ImageEntity image;  // Foreign key reference to ImageEntity
 
     @PrePersist
