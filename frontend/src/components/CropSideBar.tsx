@@ -26,11 +26,14 @@ interface CropSidebarProps {
 }
 
 const CropSidebar: React.FC<CropSidebarProps> = ({ setIsCropping, setSelectedAspectRatio }) => {
+  // console.log("CropSidebar rendering");
   const [selectedRatio, setSelectedRatio] = useState<string>("freeform");
 
   useEffect(() => {
-    if (typeof window !== "undefined") { // to access localstorage
+    console.log("CropSidebar effect running, selectedRatio:", selectedRatio); // todo: might change this
+    if (typeof window !== "undefined") {
       const savedRatio = localStorage.getItem("selectedRatio");
+      console.log("Saved ratio from localStorage:", savedRatio);
       if (savedRatio) {
         setSelectedRatio(savedRatio);
         const matching = aspectRatios.find((r) => r.value === savedRatio);
@@ -42,6 +45,7 @@ const CropSidebar: React.FC<CropSidebarProps> = ({ setIsCropping, setSelectedAsp
   }, [setSelectedAspectRatio]);
 
   const handleSidebarOpen = (isOpen: boolean) => {
+    console.log("Sidebar open state changed:", isOpen);
     if (isOpen) {
       setIsCropping(true);
       if (localStorage.getItem("cropBoxData")) {
@@ -50,6 +54,14 @@ const CropSidebar: React.FC<CropSidebarProps> = ({ setIsCropping, setSelectedAsp
         localStorage.setItem("selectedRatio", "freeform");
       }
     }
+  };
+
+  const handleRatioSelect = (ratio: any) => {
+    console.log("Selected ratio:", ratio);
+    setSelectedRatio(ratio.value);
+    console.log("Setting aspect ratio to:", ratio.aspectRatio);
+    setSelectedAspectRatio(ratio.aspectRatio);
+    localStorage.setItem("selectedRatio", ratio.value);
   };
 
   return (
@@ -68,11 +80,7 @@ const CropSidebar: React.FC<CropSidebarProps> = ({ setIsCropping, setSelectedAsp
                     key={ratio.value}
                     variant={selectedRatio === ratio.value ? "default" : "outline"}
                     className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
-                    onClick={() => {
-                      setSelectedRatio(ratio.value);
-                      setSelectedAspectRatio(ratio.aspectRatio);
-                      localStorage.setItem("selectedRatio", ratio.value);
-                    }}
+                    onClick={() => handleRatioSelect(ratio)}
                   >
                     {ratio.value === "freeform" ? (
                       <Scan className="text-gray-500 w-8 h-8" />
