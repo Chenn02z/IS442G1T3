@@ -137,8 +137,27 @@ const CropImage: React.FC<CropImageProps> = ({
 
     console.log("Both image loaded and server data fetch complete");
     
-    // If we have valid server data, use it (converting from natural to display coords)
-    if (serverCropData) {
+    // If we have a specific aspect ratio selected, always calculate new box
+    if (aspectRatio !== null) {
+      console.log("Aspect ratio selected, calculating new crop box");
+      const defaultBox = calculateDefaultCropBox(
+        displayedSize.width, 
+        displayedSize.height, 
+        aspectRatio,
+        cropBoxData  // Pass current crop to maintain center position
+      );
+      
+      const clampedBox = clampBoxToDisplay(
+        defaultBox, 
+        displayedSize.width, 
+        displayedSize.height
+      );
+      
+      console.log("Setting new aspect ratio crop box:", clampedBox);
+      setCropBoxData(clampedBox);
+    }
+    // If no aspect ratio (freeform) and we have server data, use that
+    else if (serverCropData) {
       console.log("Using server crop data:", serverCropData);
       const displayedBox = scaleToDisplayed(
         serverCropData, 
@@ -157,9 +176,9 @@ const CropImage: React.FC<CropImageProps> = ({
       console.log("Converted to display coordinates:", clampedBox);
       setCropBoxData(clampedBox);
     } 
-    // Otherwise fall back to a default box
+    // Otherwise use default box
     else {
-      console.log("No server data, using default crop box");
+      console.log("No server data or aspect ratio, using default crop box");
       const defaultBox = calculateDefaultCropBox(
         displayedSize.width, 
         displayedSize.height, 
@@ -181,7 +200,7 @@ const CropImage: React.FC<CropImageProps> = ({
     naturalSize, 
     serverCropData, 
     isLoadingCropData, 
-    aspectRatio
+    aspectRatio  // This dependency is important!
   ]);
 
   // ──────────────────────────────────────────────────────────

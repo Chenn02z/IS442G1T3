@@ -28,44 +28,46 @@ interface CropSidebarProps {
 const CropSidebar: React.FC<CropSidebarProps> = ({ setIsCropping, setSelectedAspectRatio }) => {
   // console.log("CropSidebar rendering");
   const [selectedRatio, setSelectedRatio] = useState<string>("freeform");
+  const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    console.log("CropSidebar effect running, selectedRatio:", selectedRatio); // todo: might change this
-    if (typeof window !== "undefined") {
-      const savedRatio = localStorage.getItem("selectedRatio");
-      console.log("Saved ratio from localStorage:", savedRatio);
-      if (savedRatio) {
-        setSelectedRatio(savedRatio);
-        const matching = aspectRatios.find((r) => r.value === savedRatio);
-        if (matching) {
-          setSelectedAspectRatio(matching.aspectRatio);
-        }
-      }
-    }
-  }, [setSelectedAspectRatio]);
-
-  const handleSidebarOpen = (isOpen: boolean) => {
-    console.log("Sidebar open state changed:", isOpen);
-    if (isOpen) {
+  // Handle sheet open/close
+  const handleSheetChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open) {
+      // When opening, start in cropping mode and reset to freeform
       setIsCropping(true);
-      if (localStorage.getItem("cropBoxData")) {
-        setSelectedRatio("freeform");
-        setSelectedAspectRatio(null);
-        localStorage.setItem("selectedRatio", "freeform");
-      }
+      setSelectedRatio("freeform");
+      setSelectedAspectRatio(null);
+    } else {
+      // When closing, exit cropping mode
+      // setIsCropping(false);
     }
   };
 
-  const handleRatioSelect = (ratio: any) => {
+  // Handle ratio selection without closing the sheet
+  const handleRatioSelect = (ratio: typeof aspectRatios[0]) => {
     console.log("Selected ratio:", ratio);
     setSelectedRatio(ratio.value);
-    console.log("Setting aspect ratio to:", ratio.aspectRatio);
     setSelectedAspectRatio(ratio.aspectRatio);
-    localStorage.setItem("selectedRatio", ratio.value);
+  };
+
+  // Handle the Done button click
+  const handleDone = () => {
+    setIsOpen(false);  // Close the sheet
+    // setIsCropping(false);
+  };
+
+  // Handle the Cancel button click
+  const handleCancel = () => {
+    setIsOpen(false);  // Close the sheet
+    setIsCropping(false);
+    // Reset to freeform when canceling
+    setSelectedRatio("freeform");
+    setSelectedAspectRatio(null);
   };
 
   return (
-    <Sheet onOpenChange={handleSidebarOpen}>
+    <Sheet open={isOpen} onOpenChange={handleSheetChange}>
       <SheetTrigger asChild>
         <Crop className="w-5 h-5" />
       </SheetTrigger>
@@ -75,30 +77,30 @@ const CropSidebar: React.FC<CropSidebarProps> = ({ setIsCropping, setSelectedAsp
           <ScrollArea className="h-[400px]">
             <div className="grid grid-cols-3 gap-4">
               {aspectRatios.map((ratio) => (
-                <SheetClose asChild key={ratio.value}>
-                  <Button
-                    key={ratio.value}
-                    variant={selectedRatio === ratio.value ? "default" : "outline"}
-                    className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
-                    onClick={() => handleRatioSelect(ratio)}
-                  >
-                    {ratio.value === "freeform" ? (
-                      <Scan className="text-gray-500 w-8 h-8" />
-                    ) : (
-                      <div className={`border border-gray-500 ${ratio.boxClass}`} />
-                    )}
-                    <span className="text-xs">{ratio.label}</span>
-                  </Button>
-                </SheetClose>
+                <Button
+                  key={ratio.value}
+                  variant={selectedRatio === ratio.value ? "default" : "outline"}
+                  className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
+                  onClick={() => handleRatioSelect(ratio)}
+                >
+                  {ratio.value === "freeform" ? (
+                    <Scan className="text-gray-500 w-8 h-8" />
+                  ) : (
+                    <div className={`border border-gray-500 ${ratio.boxClass}`} />
+                  )}
+                  <span className="text-xs">{ratio.label}</span>
+                </Button>
               ))}
             </div>
           </ScrollArea>
         </div>
         <div className="flex justify-between mt-4">
-          <SheetClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </SheetClose>
-          <Button variant="default">Done</Button>
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button variant="default" onClick={handleDone}>
+            Done
+          </Button>
         </div>
       </SheetContent>
     </Sheet>
