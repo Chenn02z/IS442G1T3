@@ -92,7 +92,7 @@ const PhotoList = () => {
                   console.log(url);
                   setCroppedImageUrl(null);
                   setSelectedImageId(id);
-                  localStorage.removeItem("cropBoxData");
+                  localStorage.removeItem("selectedRatio");
                 }}
               >
                 <Image 
