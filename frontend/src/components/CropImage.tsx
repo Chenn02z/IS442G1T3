@@ -35,17 +35,21 @@ const CropImage: React.FC<CropImageProps> = ({
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
   // Displayed (on-screen) size, after CSS scaling
   const [displayedSize, setDisplayedSize] = useState({ width: 0, height: 0 });
-
+  // Raw crop data from server (in natural coordinates)
+  const [serverCropData, setServerCropData] = useState<CropData | null>(null);
   // The bounding box we show on-screen (in displayed coords)
   const [cropBoxData, setCropBoxData] = useState<CropData | null>(null);
+  // Flag to track when image has loaded
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   // ──────────────────────────────────────────────────────────
-  // 1. Whenever the imageUrl changes, reset the crop box so
-  //    we can re-measure a brand-new image or newly cropped image.
+  // 1. When imageUrl changes, reset states for a fresh start
   // ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (imageUrl) {
-      // Reset so handleImageLoad can compute a fresh box
+      console.log("imageUrl changed → resetting states");
+      setIsImageLoaded(false);
+      setServerCropData(null);
       setCropBoxData(null);
     }
   }, [imageUrl]);
@@ -58,6 +62,7 @@ const CropImage: React.FC<CropImageProps> = ({
     if (!imageId) return;
 
     const fetchPreviousCrop = async () => {
+      console.log("Fetching existing crop data for imageId:", imageId);
       setIsLoadingCropData(true);
       try {
         const response = await fetch(`${CONFIG.API_BASE_URL}/api/images/${imageId}/edit`);
@@ -71,19 +76,21 @@ const CropImage: React.FC<CropImageProps> = ({
             data.width > 0 &&
             data.height > 0
           ) {
-            // Store them temporarily in "natural" coords
-            setCropBoxData({
+            // Store raw server data (natural coords)
+            setServerCropData({
               x: data.x,
               y: data.y,
               width: data.width,
               height: data.height,
             });
           } else {
-            setCropBoxData(null);
+            console.log("Server crop data is invalid or incomplete; using null.");
+            setServerCropData(null);
           }
         }
       } catch (error) {
         console.error("Error fetching previous crop data:", error);
+        setServerCropData(null);
       } finally {
         setIsLoadingCropData(false);
       }
@@ -93,56 +100,89 @@ const CropImage: React.FC<CropImageProps> = ({
   }, [imageId, setIsLoadingCropData]);
 
   // ──────────────────────────────────────────────────────────
-  // 3. Once the <img> loads, measure both natural & displayed
-  //    sizes. Then:
-  //    - If we have "natural" coords from server, scale → displayed
-  //    - If no coords, create a default centered box
+  // 3. Handle image load - measure dimensions
   // ──────────────────────────────────────────────────────────
   const handleImageLoad = () => {
-    if (!imageRef.current) return;
-
+    if (!imageRef.current) {
+      console.log("handleImageLoad called but imageRef is null");
+      return;
+    }
+    
     const { naturalWidth, naturalHeight } = imageRef.current;
     const { clientWidth, clientHeight } = imageRef.current;
 
+    console.log("Image loaded → NATURAL size:", { naturalWidth, naturalHeight });
+    console.log("Image loaded → DISPLAYED size:", { clientWidth, clientHeight });
+
     setNaturalSize({ width: naturalWidth, height: naturalHeight });
     setDisplayedSize({ width: clientWidth, height: clientHeight });
-
-    // If we have NATURAL coords from the server, scale them to displayed coords:
-    if (cropBoxData && !isLoadingCropData && cropBoxData.width > 0 && cropBoxData.height > 0) {
-      // Detect if cropBoxData is still in "natural" space by comparing to image bounds
-      const isLikelyNatural = cropBoxData.x + cropBoxData.width <= naturalWidth + 1;
-      if (isLikelyNatural) {
-        const displayedBox = scaleToDisplayed(cropBoxData, naturalWidth, naturalHeight, clientWidth, clientHeight);
-        // Also clamp the box inside the displayed area
-        const clampedBox = clampBoxToDisplay(displayedBox, clientWidth, clientHeight);
-        setCropBoxData(clampedBox);
-        return;
-      }
-    }
-
-    // Otherwise, if no data or we've reset, create a default.
-    if (!cropBoxData && !isLoadingCropData) {
-      const defaultBox = calculateDefaultCropBox(clientWidth, clientHeight, aspectRatio);
-      const clampedBox = clampBoxToDisplay(defaultBox, clientWidth, clientHeight);
-      setCropBoxData(clampedBox);
-    }
+    setIsImageLoaded(true);
   };
 
   // ──────────────────────────────────────────────────────────
-  // 4. If aspect ratio changes, recenter the bounding box
+  // 4. Once image is loaded AND server fetch is complete, 
+  //    determine the crop box based on available data
   // ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (cropBoxData && displayedSize.width && displayedSize.height && aspectRatio) {
-      const updated = calculateDefaultCropBox(
-        displayedSize.width,
-        displayedSize.height,
-        aspectRatio,
-        cropBoxData
-      );
-      const clamped = clampBoxToDisplay(updated, displayedSize.width, displayedSize.height);
-      setCropBoxData(clamped);
+    // Wait until we have all the information we need
+    if (!isImageLoaded || displayedSize.width === 0 || displayedSize.height === 0) {
+      console.log("Waiting for image to load completely...");
+      return;
     }
-  }, [aspectRatio]);
+    
+    if (isLoadingCropData) {
+      console.log("Waiting for server crop data to finish loading...");
+      return;
+    }
+
+    console.log("Both image loaded and server data fetch complete");
+    
+    // If we have valid server data, use it (converting from natural to display coords)
+    if (serverCropData) {
+      console.log("Using server crop data:", serverCropData);
+      const displayedBox = scaleToDisplayed(
+        serverCropData, 
+        naturalSize.width, 
+        naturalSize.height,
+        displayedSize.width, 
+        displayedSize.height
+      );
+      
+      const clampedBox = clampBoxToDisplay(
+        displayedBox, 
+        displayedSize.width, 
+        displayedSize.height
+      );
+      
+      console.log("Converted to display coordinates:", clampedBox);
+      setCropBoxData(clampedBox);
+    } 
+    // Otherwise fall back to a default box
+    else {
+      console.log("No server data, using default crop box");
+      const defaultBox = calculateDefaultCropBox(
+        displayedSize.width, 
+        displayedSize.height, 
+        aspectRatio
+      );
+      
+      const clampedBox = clampBoxToDisplay(
+        defaultBox, 
+        displayedSize.width, 
+        displayedSize.height
+      );
+      
+      console.log("Setting default crop box:", clampedBox);
+      setCropBoxData(clampedBox);
+    }
+  }, [
+    isImageLoaded, 
+    displayedSize, 
+    naturalSize, 
+    serverCropData, 
+    isLoadingCropData, 
+    aspectRatio
+  ]);
 
   // ──────────────────────────────────────────────────────────
   // 5. Utility to scale NATURAL coords → DISPLAYED coords
@@ -227,7 +267,11 @@ const CropImage: React.FC<CropImageProps> = ({
   //    & send to the server
   // ──────────────────────────────────────────────────────────
   const onCrop = () => {
-    if (!cropBoxData) return;
+    if (!cropBoxData) {
+      console.log("No cropBoxData to crop.");
+      return;
+    }
+    console.log("Applying crop with cropBoxData:", cropBoxData);
     onCropComplete(cropBoxData);
 
     const scaleX = naturalSize.width / displayedSize.width;
@@ -238,17 +282,25 @@ const CropImage: React.FC<CropImageProps> = ({
     const actualW = Math.round(cropBoxData.width * scaleX);
     const actualH = Math.round(cropBoxData.height * scaleY);
 
-    saveCropToBackend({ x: actualX, y: actualY, width: actualW, height: actualH });
+    saveCropToBackend({
+      imageId: imageId as string,
+      x: actualX,
+      y: actualY,
+      width: actualW,
+      height: actualH
+    });
   };
 
   // ──────────────────────────────────────────────────────────
   // 9. Save crop data to backend with NATURAL coords
   // ──────────────────────────────────────────────────────────
-  async function saveCropToBackend(cropBox: CropData) {
+  async function saveCropToBackend(cropBox: CropData & { imageId: string }) {
     if (!imageId || !imageUrl) {
       console.error("Image ID or URL missing, cannot save crop.");
       return;
     }
+
+    console.log("Sending crop data to backend:", cropBox);
 
     try {
       const response = await fetch(`${CONFIG.API_BASE_URL}/api/images/${imageId}/crop`, {
@@ -277,6 +329,17 @@ const CropImage: React.FC<CropImageProps> = ({
   // ──────────────────────────────────────────────────────────
   // 10. Render
   // ──────────────────────────────────────────────────────────
+  console.log("Component render state:", { 
+    imageUrl, 
+    imageId, 
+    aspectRatio, 
+    serverCropData,
+    cropBoxData, 
+    displayedSize,
+    isImageLoaded,
+    isLoadingCropData
+  });
+
   return (
     <div className="w-full flex flex-col items-center">
       <div className="relative inline-block">
