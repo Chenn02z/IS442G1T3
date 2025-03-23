@@ -6,6 +6,7 @@ import { useImageUploadHandler } from "@/utils/ImageUploadHandler";
 import DisplayImage from "./DisplayImage";
 import CropImage from "./CropImage";
 import DownloadButton from "./DownloadButton";
+import VersionHistoryDrawer from "./VersionHistoryDrawer";
 
 const UploadImageForm = ({
   selectedAspectRatio,
@@ -62,9 +63,10 @@ const UploadImageForm = ({
         </CardContent>
       </Card>
 
-      {/* Download Button - Now outside the Card */}
+      {/* Action Buttons - Download and History */}
       {selectedImageUrl && !isCropping && (
-        <div className="flex justify-end mt-2">
+        <div className="flex justify-end mt-2 space-x-2">
+          <VersionHistoryDrawer imageId={selectedImageId} />
           <DownloadButton croppedImageUrl={croppedImageUrl || selectedImageUrl} />
         </div>
       )}
