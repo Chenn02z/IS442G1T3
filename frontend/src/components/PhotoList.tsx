@@ -1,3 +1,12 @@
+/**
+ * PhotoList Component - Displays a scrollable list of uploaded images
+ * 
+ * Features:
+ * - Fetches user's uploaded images from backend
+ * - Displays images in a scrollable sidebar
+ * - Handles image selection and loading states
+ * - Shows loading and error states
+ */
 import React, { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,14 +18,19 @@ import { useUpload } from "@/context/UploadContext";
 import { useImageUploadHandler } from "@/utils/ImageUploadHandler";
 import Image from "next/image";
 
-
+/**
+ * PhotoList component displays a scrollable list of user's uploaded images
+ */
 const PhotoList = () => {
   const { handleUpload } = useImageUploadHandler();
-  const { setSelectedImageUrl,setUploadedImageCount, uploadedImageCount,setCroppedImageUrl, setSelectedImageId, setIsCropping } = useUpload();
+  const { setSelectedImageUrl, setUploadedImageCount, uploadedImageCount, setCroppedImageUrl, setSelectedImageId, setIsCropping } = useUpload();
   const [uploadedImages, setUploadedImages] = useState<{ id: string; url: string }[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Fetch user's images on component mount and when uploadedImageCount changes
+   */
   useEffect(() => {
     const fetchImages = async () => {
       setLoading(true);
@@ -38,6 +52,7 @@ const PhotoList = () => {
 
         const data = await response.json();
 
+        // Format the images for display
         const formattedImages = Object.entries(data).map(([id, path]) => ({
           id,
           url: `${CONFIG.API_BASE_URL}/${path}`,
@@ -55,7 +70,19 @@ const PhotoList = () => {
     };
 
     fetchImages();
-  }, [uploadedImageCount, setSelectedImageUrl, setUploadedImageCount, setCroppedImageUrl, setSelectedImageId]);
+    // Only depend on uploadedImageCount to prevent unnecessary re-fetches
+  }, [uploadedImageCount, setUploadedImageCount]);
+
+  /**
+   * Handles image selection when user clicks on an image thumbnail
+   */
+  const handleImageSelect = (id: string, url: string) => {
+    setIsCropping(false);
+    setSelectedImageUrl(url);
+    setCroppedImageUrl(null);
+    setSelectedImageId(id);
+    localStorage.removeItem("selectedRatio");
+  };
 
   return (
     <div className="h-screen border-r-2 p-2 flex flex-col">
@@ -63,7 +90,7 @@ const PhotoList = () => {
       <h2 className="mb-4 font-bold">Images</h2>
 
       {/* Error State */}
-      {error && <p className="text-center">{error}</p>}
+      {error && <p className="text-center text-red-500">{error}</p>}
 
       {/* Loading State */}
       {loading && (
@@ -78,6 +105,7 @@ const PhotoList = () => {
           ))}
         </>
       )}
+      
       {/* Scrollable area for images */}
       <ScrollArea className="flex-1 overflow-auto">
         <div className="space-y-2">
@@ -86,14 +114,7 @@ const PhotoList = () => {
               <div
                 key={id}
                 className="flex justify-between space-x-3 p-2 rounded-md hover:bg-gray-200 transition cursor-pointer"
-                onClick={() => {
-                  setIsCropping(false);
-                  setSelectedImageUrl(url);
-                  console.log(url);
-                  setCroppedImageUrl(null);
-                  setSelectedImageId(id);
-                  localStorage.removeItem("selectedRatio");
-                }}
+                onClick={() => handleImageSelect(id, url)}
               >
                 <Image 
                   src={url}

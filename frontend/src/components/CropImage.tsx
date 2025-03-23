@@ -1,27 +1,48 @@
+/**
+ * CropImage Component - Handles image cropping operations
+ * 
+ * Features:
+ * - Interactive crop box using react-rnd
+ * - Aspect ratio support
+ * - Saves crop data to backend
+ * - Handles image loading and coordinate transformations
+ */
 import React, { useRef, useEffect, useState } from "react";
 import { Rnd } from "react-rnd";
 import { CONFIG } from "../../config";
 import { useUpload } from "@/context/UploadContext";
 
-type CropImageProps = {
+/**
+ * Interface for crop box data
+ */
+interface CropData {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Interface for backend response after crop operation
+ */
+interface CropResponseDto {
+  savedFilePath: string;
+}
+
+/**
+ * Props for CropImage component
+ */
+interface CropImageProps {
   imageId: string | null;
   imageUrl: string | null;
   aspectRatio: number | null;
   onCropComplete: (cropBox: CropData) => void;
   isCropping: boolean;
-};
+}
 
-type CropResponseDto = {
-  savedFilePath: string;
-};
-
-type CropData = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
+/**
+ * CropImage component provides interactive image cropping
+ */
 const CropImage: React.FC<CropImageProps> = ({
   imageId,
   imageUrl,
@@ -144,7 +165,7 @@ const CropImage: React.FC<CropImageProps> = ({
         displayedSize.width, 
         displayedSize.height, 
         aspectRatio,
-        cropBoxData  // Pass current crop to maintain center position
+        cropBoxData || undefined  // Convert null to undefined
       );
       
       const clampedBox = clampBoxToDisplay(

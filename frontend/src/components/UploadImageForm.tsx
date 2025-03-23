@@ -16,58 +16,59 @@ const UploadImageForm = ({
   const { handleUpload } = useImageUploadHandler();
 
   return (
-    <Card className="hover:cursor-pointer hover:bg-secondary hover:border-primary transition-all ease-in-out">
-      <CardContent className="flex flex-col h-full items-center justify-center px-2 py-24 text-xs">
-        {/* Before image upload */}
-        {!selectedImageId && (
-          <>
-            <input
-              type="file"
-              accept="image/jpeg, image/png"
-              className="hidden"
-              id="file-upload"
-              multiple
-              onChange={handleUpload}
-            />
-            <label
-              htmlFor="file-upload"
-              className="cursor-pointer flex flex-col items-center gap-2"
-            >
-              <UploadCloud className="h-10 w-10 text-gray-500" />
-              <p className="text-gray-700 text-sm">Click to upload an Image</p>
-              <p className="text-muted-foreground text-xs">Supported formats: .jpeg, .png</p>
-            </label>
-          </>
-        )}
-
-        {/* After image upload */}
-        {selectedImageUrl && (
-          <>
-            {isCropping ? (
-              <CropImage
-                imageUrl={selectedImageUrl}
-                aspectRatio={selectedAspectRatio}
-                imageId={selectedImageId}
-                isCropping={isCropping}
-                onCropComplete={() => {
-                  // setCroppedImageUrl(croppedImage);
-                  setIsCropping(false);
-                }}
+    <div className="flex flex-col space-y-4">
+      <Card className="hover:cursor-pointer hover:bg-secondary hover:border-primary transition-all ease-in-out">
+        <CardContent className="flex flex-col h-full items-center justify-center px-2 py-24 text-xs">
+          {/* Before image upload */}
+          {!selectedImageId && (
+            <>
+              <input
+                type="file"
+                accept="image/jpeg, image/png"
+                className="hidden"
+                id="file-upload"
+                multiple
+                onChange={handleUpload}
               />
-            ) : (
-              <DisplayImage imageUrl={croppedImageUrl || selectedImageUrl} /> // weird
-            )}
+              <label
+                htmlFor="file-upload"
+                className="cursor-pointer flex flex-col items-center gap-2"
+              >
+                <UploadCloud className="h-10 w-10 text-gray-500" />
+                <p className="text-gray-700 text-sm">Click to upload an Image</p>
+                <p className="text-muted-foreground text-xs">Supported formats: .jpeg, .png</p>
+              </label>
+            </>
+          )}
 
-            {/* Save and Download Buttons */}
-            {!isCropping && (
-              <div className="flex flex-col items-center mt-4 space-y-2">
-                <DownloadButton croppedImageUrl={croppedImageUrl || selectedImageUrl} />
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+          {/* After image upload */}
+          {selectedImageUrl && (
+            <>
+              {isCropping ? (
+                <CropImage
+                  imageUrl={selectedImageUrl}
+                  aspectRatio={selectedAspectRatio}
+                  imageId={selectedImageId}
+                  isCropping={isCropping}
+                  onCropComplete={() => {
+                    setIsCropping(false);
+                  }}
+                />
+              ) : (
+                <DisplayImage imageUrl={croppedImageUrl || selectedImageUrl} />
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Download Button - Now outside the Card */}
+      {selectedImageUrl && !isCropping && (
+        <div className="flex justify-end mt-2">
+          <DownloadButton croppedImageUrl={croppedImageUrl || selectedImageUrl} />
+        </div>
+      )}
+    </div>
   );
 };
 
