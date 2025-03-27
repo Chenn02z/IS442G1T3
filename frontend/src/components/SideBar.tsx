@@ -17,7 +17,7 @@ const SideBar = ({
 }) => {
   const { setIsCropping } = useUpload();
   return (
-    <div className="fixed flex flex-col space-y-2 w-fit h-full p-2 items-center border-r-2">
+    <div className="flex flex-col space-y-2 w-full h-full p-2 items-center border-r-2">
       <ThemeModeToggle />
       <p className="text-xs pt-3 pb-1 font-semibold">Edit:</p>
       <TooltipProvider>

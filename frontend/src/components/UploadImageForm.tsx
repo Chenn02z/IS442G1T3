@@ -6,21 +6,40 @@ import { useImageUploadHandler } from "@/utils/ImageUploadHandler";
 import DisplayImage from "./DisplayImage";
 import CropImage from "./CropImage";
 import DownloadButton from "./DownloadButton";
+import { useEffect } from "react";
 
-const UploadImageForm = ({
-  selectedAspectRatio,
-}: {
+// Update the props interface to remove isCropping
+interface UploadImageFormProps {
   selectedAspectRatio: number | null;
+}
+
+const UploadImageForm: React.FC<UploadImageFormProps> = ({
+  selectedAspectRatio,
 }) => {
-  const { selectedImageUrl, croppedImageUrl, selectedImageId, isCropping, setIsCropping } = useUpload();
+  const {
+    selectedImageUrl,
+    croppedImageUrl,
+    selectedImageId,
+    setIsCropping,
+    isCropping,
+  } = useUpload();
   const { handleUpload } = useImageUploadHandler();
 
+  // For debugging
+  useEffect(() => {
+    console.log("UploadImageForm state:", {
+      contextIsCropping: isCropping,
+      selectedImageId,
+      selectedImageUrl,
+    });
+  }, [isCropping, selectedImageId, selectedImageUrl]);
+
   return (
-    <Card className="hover:cursor-pointer hover:bg-secondary hover:border-primary transition-all ease-in-out">
-      <CardContent className="flex flex-col h-full items-center justify-center px-2 py-24 text-xs">
+    <Card className="w-full max-w-3xl mx-auto">
+      <CardContent className="flex flex-col items-center justify-center min-h-[400px] p-6">
         {/* Before image upload */}
         {!selectedImageId && (
-          <>
+          <div className="flex flex-col items-center justify-center w-full h-full">
             <input
               type="file"
               accept="image/jpeg, image/png"
@@ -31,40 +50,46 @@ const UploadImageForm = ({
             />
             <label
               htmlFor="file-upload"
-              className="cursor-pointer flex flex-col items-center gap-2"
+              className="cursor-pointer flex flex-col items-center gap-4 p-8 border-2 border-dashed rounded-lg hover:bg-secondary/50 transition-colors"
             >
-              <UploadCloud className="h-10 w-10 text-gray-500" />
-              <p className="text-gray-700 text-sm">Click to upload an Image</p>
-              <p className="text-muted-foreground text-xs">Supported formats: .jpeg, .png</p>
+              <UploadCloud className="h-12 w-12 text-muted-foreground" />
+              <div className="text-center">
+                <p className="text-base font-medium">
+                  Click to upload an Image
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Supported formats: .jpeg, .png
+                </p>
+              </div>
             </label>
-          </>
+          </div>
         )}
 
         {/* After image upload */}
-        {selectedImageUrl && (
-          <>
+        {selectedImageUrl && selectedImageId && (
+          <div className="w-full">
             {isCropping ? (
-              <CropImage
-                imageUrl={selectedImageUrl}
-                aspectRatio={selectedAspectRatio}
-                imageId={selectedImageId}
-                isCropping={isCropping}
-                onCropComplete={() => {
-                  // setCroppedImageUrl(croppedImage);
-                  setIsCropping(false);
-                }}
-              />
+              <>
+                <div className="relative max-w-full overflow-hidden">
+                  <CropImage
+                    imageUrl={selectedImageUrl}
+                    aspectRatio={selectedAspectRatio}
+                    imageId={selectedImageId}
+                    isCropping={true} // Always true when this component is rendered
+                    onCropComplete={() => setIsCropping(false)}
+                  />
+                </div>
+              </>
             ) : (
-              <DisplayImage imageUrl={croppedImageUrl || selectedImageUrl} /> // weird
-            )}
-
-            {/* Save and Download Buttons */}
-            {!isCropping && (
-              <div className="flex flex-col items-center mt-4 space-y-2">
-                <DownloadButton croppedImageUrl={croppedImageUrl || selectedImageUrl} />
+              <div className="flex flex-col items-center gap-6">
+                <DisplayImage imageUrl={croppedImageUrl || selectedImageUrl} />
+                <DownloadButton
+                  imageUrl={croppedImageUrl || selectedImageUrl}
+                  imageId={selectedImageId}
+                />
               </div>
             )}
-          </>
+          </div>
         )}
       </CardContent>
     </Card>

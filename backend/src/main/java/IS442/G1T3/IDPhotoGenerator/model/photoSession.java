@@ -18,7 +18,7 @@ import java.util.UUID;
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
-public class photoSession {
+public class PhotoSession {
     @Id
     @Column(name = "image_id", updatable = false, nullable = false)
     private UUID imageId;

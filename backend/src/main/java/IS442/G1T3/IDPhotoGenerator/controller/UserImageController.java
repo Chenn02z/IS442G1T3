@@ -1,7 +1,7 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
-import IS442.G1T3.IDPhotoGenerator.repository.ImageRepository;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,39 +17,29 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/api/images")
-public class UserImageController
-{
-    private final ImageRepository imageRepository;
+public class UserImageController {
+    private final ImageNewRepository imageNewRepository;
 
-    public UserImageController(ImageRepository imageRepository) {
-        this.imageRepository = imageRepository;
+    public UserImageController(ImageNewRepository imageNewRepository) {
+        this.imageNewRepository = imageNewRepository;
     }
 
     /**
-     * Retrieves a mapping of image IDs to their corresponding saved file paths for the specified user.
+     * Retrieves a mapping of image IDs to their corresponding current image URLs for the specified user.
      *
      * <p>This endpoint fetches all images associated with the provided user ID, and returns a map where
-     * the key is the image's unique identifier (UUID) and the value is the path where the image is saved.
+     * the key is the image's unique identifier (UUID) and the value is the current image URL.
      *
      * @param userId the UUID of the user whose images are being retrieved
-     * @return a map where each key is an image ID and each value is the corresponding saved file path
+     * @return a map where each key is an image ID and each value is the corresponding current image URL
      */
-    @Operation(summary = "Get User Images' id and savedFilePath", description = "Retrieves a mapping of image IDs to their corresponding saved file paths for the specified user. eg. {'image-id' : 'saved-file-path'}")
-//    @GetMapping("/userimages/{userId}")
-//    public Map<UUID, String> getUserImages(@PathVariable UUID userId) {
-//        List<ImageEntity> userImages = imageRepository.findByUserId(userId);
-//        Map<UUID, String> imageMap = new HashMap<UUID, String>();
-//        for (ImageEntity imageEntity : userImages) {
-//            imageMap.put(imageEntity.getImageId(), imageEntity.getSavedFilePath());
-//        }
-//        return imageMap;
-//    }
+    @Operation(summary = "Get User Images' id and currentImageUrl", description = "Retrieves a mapping of image IDs to their corresponding current image URLs for the specified user. eg. {'image-id' : 'current-image-url'}")
     @GetMapping("/userimages/{userId}")
     public Map<UUID, String> getUserImages(@PathVariable UUID userId) {
-        List<ImageEntity> userImages = imageRepository.findLatestVersionsByUserId(userId);
+        List<ImageNewEntity> userImages = imageNewRepository.findByUserId(userId);
         Map<UUID, String> imageMap = new HashMap<>();
-        for (ImageEntity imageEntity : userImages) {
-            imageMap.put(imageEntity.getImageId(), imageEntity.getSavedFilePath());
+        for (ImageNewEntity imageEntity : userImages) {
+            imageMap.put(imageEntity.getImageId(), imageEntity.getCurrentImageUrl());
         }
         return imageMap;
     }

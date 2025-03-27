@@ -1,19 +1,19 @@
 package IS442.G1T3.IDPhotoGenerator.service;
 
-import org.springframework.web.multipart.MultipartFile;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import java.io.IOException;
 import java.util.UUID;
-import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
 
 public interface FloodFillService {
     /**
-     * Processes the flood fill request for an existing image.
+     * Applies flood fill algorithm to remove background from an image.
      *
-     * @param imageId The UUID of the image to process
-     * @param filePath The relative path of the image to process, with respect to the backend server
-     * @param seedPointsJson The list of seedpoint coordinates to remove the background from
-     * @param tolerance The tolerance of colour difference between surrounding pixels
-     * @return ImageEntity containing the processed image details
+     * @param imageId The unique identifier of the image
+     * @param filePath The path to the image file
+     * @param seedPointsJson JSON string containing an array of points where flood fill should start
+     * @param tolerance Color tolerance for the flood fill algorithm
+     * @return The processed image entity
+     * @throws IOException If an error occurs during file operations
      */
-    ImageEntity removeBackground(UUID imageId, String filePath, String seedPointsJson, int tolerance) throws IOException;
+    ImageNewEntity removeBackground(UUID imageId, String filePath, String seedPointsJson, int tolerance) throws IOException;
 }

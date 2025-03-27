@@ -1,27 +1,28 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
-import IS442.G1T3.IDPhotoGenerator.repository.ImageRepository;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
+import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.BackgroundRemovalService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+// Use javax.imageio instead of jakarta.imageio
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-import java.util.UUID;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -34,38 +35,114 @@ public class BackgroundRemovalServiceImpl implements BackgroundRemovalService {
     private static final String WHITE_HEX = "#FFFFFF";
     private static final String TRANSPARENT_HEX = "#00000000";
 
-    private final ImageRepository imageRepository;
+    private final ImageNewRepository imageNewRepository;
+    private final PhotoSessionRepository photoSessionRepository;
 
-    @Value("${app.upload.dir:${user.home}}")
-    private String uploadDir;
+    @Value("${image.storage.path}")
+    private String storagePath;
 
-    public BackgroundRemovalServiceImpl(ImageRepository imageRepository) {
-        this.imageRepository = imageRepository;
+    public BackgroundRemovalServiceImpl(ImageNewRepository imageNewRepository,
+                                      PhotoSessionRepository photoSessionRepository) {
+        this.imageNewRepository = imageNewRepository;
+        this.photoSessionRepository = photoSessionRepository;
     }
 
     @Override
-    public ImageEntity removeBackground(MultipartFile file, UUID userId, String backgroundOption) throws Exception {
-        Path uploadPath = Paths.get(uploadDir).resolve("Desktop");
-        Files.createDirectories(uploadPath);
-
-        String originalFilename = file.getOriginalFilename();
-        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        String savedFileName = UUID.randomUUID() + fileExtension;
-
-        BufferedImage originalImage = ImageIO.read(new ByteArrayInputStream(file.getBytes()));
-        BufferedImage processedImage = processImage(originalImage, backgroundOption);
-
-        Path processedPath = uploadPath.resolve("processed_" + savedFileName);
-        ImageIO.write(processedImage, "PNG", processedPath.toFile());
-
-        return imageRepository.save(ImageEntity.builder()
-                .imageId(UUID.randomUUID())
-                .userId(userId)
-                .originalFileName(originalFilename)
-                .savedFilePath(processedPath.toString())
-                .backgroundOption(backgroundOption)
-                .status("COMPLETED")
-                .build());
+    public ImageNewEntity removeBackground(MultipartFile file, UUID userId, String backgroundOption) throws Exception {
+        try {
+            log.info("Starting background removal process for backgroundOption: {}", backgroundOption);
+            
+            UUID imageId = UUID.randomUUID();
+            
+            // Convert relative path to absolute path if needed
+            Path uploadPath = Paths.get(storagePath);
+            if (!uploadPath.isAbsolute()) {
+                uploadPath = Paths.get(System.getProperty("user.dir")).resolve(storagePath);
+            }
+            
+            // Make sure directory exists
+            Files.createDirectories(uploadPath);
+            log.info("Using storage path: {}", uploadPath.toAbsolutePath());
+            
+            String fileExtension = ".png";  // Always save as PNG
+            
+            // Save original image first
+            String baseFileName = imageId.toString() + "_1" + fileExtension;
+            Path originalPath = uploadPath.resolve(baseFileName);
+            
+            log.info("Reading original image from multipart file");
+            BufferedImage originalImage = ImageIO.read(new ByteArrayInputStream(file.getBytes()));
+            
+            if (originalImage == null) {
+                throw new IOException("Failed to read image from uploaded file");
+            }
+            
+            log.info("Writing original image to: {}", originalPath);
+            File originalFile = originalPath.toFile();
+            boolean originalImageSaved = ImageIO.write(originalImage, "PNG", originalFile);
+            
+            if (!originalImageSaved) {
+                throw new IOException("Failed to save original image to file system");
+            }
+            
+            log.info("Processing image with background removal algorithm");
+            BufferedImage processedImage = processImage(originalImage, backgroundOption);
+            
+            String processedFileName = imageId.toString() + "_2" + fileExtension;
+            Path processedPath = uploadPath.resolve(processedFileName);
+            
+            log.info("Writing processed image to: {}", processedPath);
+            File processedFile = processedPath.toFile();
+            boolean processedImageSaved = ImageIO.write(processedImage, "PNG", processedFile);
+            
+            if (!processedImageSaved) {
+                throw new IOException("Failed to save processed image to file system");
+            }
+            
+            // Create and save the original image entity
+            ImageNewEntity originalImageEntity = ImageNewEntity.builder()
+                    .imageId(imageId)
+                    .userId(userId)
+                    .version(1)
+                    .label("Original")
+                    .baseImageUrl(baseFileName)
+                    .currentImageUrl(baseFileName)
+                    .build();
+                    
+            log.info("Saving original image entity to database");
+            imageNewRepository.save(originalImageEntity);
+            
+            // Create and save the processed image entity
+            ImageNewEntity processedImageEntity = ImageNewEntity.builder()
+                    .imageId(imageId)
+                    .userId(userId)
+                    .version(2)
+                    .label("Background Removal")
+                    .baseImageUrl(baseFileName)
+                    .currentImageUrl(processedFileName)
+                    .build();
+                    
+            log.info("Saving processed image entity to database");
+            ImageNewEntity savedEntity = imageNewRepository.save(processedImageEntity);
+            
+            // Create and save photo session with version tracking
+            PhotoSession photoSession = new PhotoSession();
+            photoSession.setImageId(imageId);
+            photoSession.setUndoStack("1,2");  // Original is version 1, processed is version 2
+            photoSession.setRedoStack("");
+            
+            log.info("Saving photo session to database");
+            photoSessionRepository.save(photoSession);
+            
+            log.info("Background removal process completed successfully");
+            return savedEntity;
+        } catch (IOException e) {
+            log.error("IO error during background removal: {}", e.getMessage(), e);
+            throw new Exception("Failed to process the image: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Unexpected error during background removal: {}", e.getMessage(), e);
+            throw new Exception("An unexpected error occurred: " + e.getMessage(), e);
+        }
     }
 
     private BufferedImage processImage(BufferedImage original, String backgroundOption) {

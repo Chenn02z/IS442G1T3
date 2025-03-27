@@ -1,6 +1,6 @@
 package IS442.G1T3.IDPhotoGenerator.service;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -16,7 +16,7 @@ public interface ImageUploadService {
      * @return The persisted ImageEntity.
      * @throws IOException If an I/O error occurs during file saving.
      */
-    ImageEntity processImage(
+    ImageNewEntity processImage(
             MultipartFile imageFile, UUID userId
     ) throws IOException;
 }

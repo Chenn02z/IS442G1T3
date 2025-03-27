@@ -17,6 +17,8 @@ public interface ImageNewRepository extends JpaRepository<ImageNewEntity, String
     // Find a single image by currentImageUrl (if needed)
     ImageNewEntity findByCurrentImageUrl(String currentImageUrl);
 
+    ImageNewEntity findByBaseImageUrl(String baseImageUrl);
+
     // Find all images by userId
     List<ImageNewEntity> findByUserId(UUID userId);
 
@@ -24,5 +26,10 @@ public interface ImageNewRepository extends JpaRepository<ImageNewEntity, String
     @Query("SELECT i FROM ImageNewEntity i WHERE i.imageId = :imageId AND i.version = " +
             "(SELECT MAX(i2.version) FROM ImageNewEntity i2 WHERE i2.imageId = :imageId)")
     ImageNewEntity findLatestRowByImageId(@Param("imageId") UUID imageId);
+
+    List<ImageNewEntity> findByImageId(UUID imageId);
+
+    // Add the missing method
+    ImageNewEntity findByImageIdAndVersion(UUID imageId, int version);
 }
 
