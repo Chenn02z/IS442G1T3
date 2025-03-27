@@ -1,37 +1,18 @@
-// src/context/UploadContext.tsx
-/**
- * UploadContext - Central state management for image handling operations
- * 
- * This context provides state management for:
- * - Image selection, upload, and display
- * - Cropping operations
- * - Background removal
- * - Image metadata tracking
- */
 "use client";
 import React, { createContext, useState, useContext, useCallback } from "react";
 import { CONFIG } from "../../config";
 
 interface UploadContextProps {
-  // File management
   uploadedFile: File | null;
   setUploadedFile: (file: File | null) => void;
-  
-  // Image selection and display
   selectedImageUrl: string | null;
   setSelectedImageUrl: (url: string | null) => void;
-  selectedImageId: string | null;
-  setSelectedImageId: (id: string | null) => void;
-  
-  // Cropped image state
   croppedImageUrl: string | null;
   setCroppedImageUrl: (url: string | null) => void;
-  
-  // Image collection management
+  selectedImageId: string | null;
+  setSelectedImageId: (id: string | null) => void;
   uploadedImageCount: number;
   setUploadedImageCount: (count: number) => void;
-  
-  // UI state for operations
   isCropping: boolean;
   setIsCropping: (cropping: boolean) => void;
   isLoadingCropData: boolean;
@@ -44,29 +25,16 @@ interface UploadContextProps {
 
 const UploadContext = createContext<UploadContextProps | undefined>(undefined);
 
-/**
- * Provider component that wraps the application to make upload state available
- */
-export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // File state
+export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  
-  // Image selection state
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
-  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  
-  // Cropping state
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+  const [uploadedImageCount, setUploadedImageCount] = useState<number>(0);
   const [isCropping, setIsCroppingState] = useState<boolean>(false);
   const [isLoadingCropData, setIsLoadingCropData] = useState<boolean>(false);
-  
-  // Collection management
-  const [uploadedImageCount, setUploadedImageCount] = useState<number>(0);
-  
-  /**
-   * Triggers a refresh of the images list
-   * Works by incrementing a counter that PhotoList watches
-   */
 
   const refreshImages = useCallback(() => {
     // Add a timestamp-based cache buster to ensure fresh data
@@ -280,11 +248,6 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   );
 };
 
-/**
- * Custom hook for accessing the upload context
- * @returns The upload context with all state and methods
- * @throws Error if used outside of UploadProvider
- */
 export const useUpload = () => {
   const context = useContext(UploadContext);
   if (context === undefined) {
