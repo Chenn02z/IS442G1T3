@@ -1,3 +1,11 @@
+/**
+ * ImageUploadHandler - Custom hook for handling image upload operations
+ * 
+ * Provides functions and state for:
+ * - Uploading images to the server
+ * - Processing upload responses
+ * - Managing upload state (loading, errors)
+ */
 "use client";
 import { useState } from "react";
 import { CONFIG } from "../../config";
@@ -5,25 +13,47 @@ import { UUID_LOOKUP_KEY } from "@/app/page";
 import { useUpload } from "@/context/UploadContext";
 import { useToast } from "@/hooks/use-toast";
 
+/**
+ * Hook that provides image upload functionality and state
+ * @returns Object containing upload handlers and state
+ */
 export const useImageUploadHandler = () => {
-  const { setUploadedFile, selectedImageUrl, setSelectedImageUrl, refreshImages, setSelectedImageId, selectedImageId } = useUpload();
+  // Access upload context
+  const { 
+    setUploadedFile, 
+    selectedImageUrl, 
+    setSelectedImageUrl, 
+    refreshImages,
+    setSelectedImageId,
+    selectedImageId 
+  } = useUpload();
+  
   const { toast } = useToast();
+
+  // Upload state
   const [uploading, setUploading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
 
+  /**
+   * Handles image upload from file input
+   * @param event Change event from file input
+   */
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
     const files = event.target.files ? Array.from(event.target.files) : [];
+    
     if (files.length === 0) {
       setError("Please select at least one image.");
       return;
     }
 
+    // Reset crop state
     localStorage.removeItem("cropBoxData");
     setUploadedFile(files[0]);
     setUploading(true);
     setCroppedImageUrl(null);
+    
     const newUploadedUrls: string[] = [];
     const newUploadedIds: string[] = [];
 
@@ -33,7 +63,7 @@ export const useImageUploadHandler = () => {
         formData.append("imageFile", file);
         formData.append("userId", localStorage.getItem(UUID_LOOKUP_KEY) ?? "");
 
-        const response = await fetch(CONFIG.API_BASE_URL + "/api/images/upload", {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/api/images/upload`, {
           method: "POST",
           body: formData,
         });

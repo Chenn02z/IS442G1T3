@@ -1,27 +1,45 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+/**
+ * CropImage Component - Handles image cropping operations
+ * 
+ * Features:
+ * - Interactive crop box using react-rnd
+ * - Aspect ratio support
+ * - Saves crop data to backend
+ * - Handles image loading and coordinate transformations
+ */
+import React, { useRef, useEffect, useState } from "react";
 import { Rnd } from "react-rnd";
 import { CONFIG } from "../../config";
 import { useUpload } from "@/context/UploadContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
-type CropImageProps = {
+/**
+ * Interface for crop box data
+ */
+interface CropData {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Interface for backend response after crop operation
+ */
+interface CropResponseDto {
+  savedFilePath: string;
+}
+
+/**
+ * Props for CropImage component
+ */
+interface CropImageProps {
   imageId: string | null;
   imageUrl: string | null;
   aspectRatio: number | null;
   onCropComplete: (cropBox: CropData) => void;
   isCropping: boolean;
-};
-
-type CropResponseDto = {
-  savedFilePath: string;
-};
-
-export type CropData = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
 };
 
 const CropImage: React.FC<CropImageProps> = ({
@@ -186,9 +204,10 @@ const CropImage: React.FC<CropImageProps> = ({
     let newBox: CropData;
     if (aspectRatio !== null) {
       const defaultBox = calculateDefaultCropBox(
-        displayedSize.width,
-        displayedSize.height,
-        aspectRatio
+        displayedSize.width, 
+        displayedSize.height, 
+        aspectRatio,
+        cropBoxData || undefined  // Convert null to undefined
       );
       newBox = clampBoxToDisplay(
         defaultBox,

@@ -1,3 +1,12 @@
+/**
+ * PhotoList Component - Displays a scrollable list of uploaded images
+ * 
+ * Features:
+ * - Fetches user's uploaded images from backend
+ * - Displays images in a scrollable sidebar
+ * - Handles image selection and loading states
+ * - Shows loading and error states
+ */
 import React, { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -85,6 +94,9 @@ const PhotoList = () => {
     }
   };
 
+  /**
+   * Fetch user's images on component mount and when uploadedImageCount changes
+   */
   useEffect(() => {
     const fetchImages = async () => {
       setLoading(true);
@@ -122,7 +134,19 @@ const PhotoList = () => {
     };
 
     fetchImages();
+    // Only depend on uploadedImageCount to prevent unnecessary re-fetches
   }, [uploadedImageCount, setUploadedImageCount]);
+
+  /**
+   * Handles image selection when user clicks on an image thumbnail
+   */
+  const handleImageSelect = (id: string, url: string) => {
+    setIsCropping(false);
+    setSelectedImageUrl(url);
+    setCroppedImageUrl(null);
+    setSelectedImageId(id);
+    localStorage.removeItem("selectedRatio");
+  };
 
   return (
     <div className="h-screen border-r-2 p-2 flex flex-col">
@@ -130,6 +154,7 @@ const PhotoList = () => {
       <h2 className="mb-4 font-bold">Images</h2>
 
       {/* Error State */}
+      {error && <p className="text-center text-red-500">{error}</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
 
       {/* Loading State */}
