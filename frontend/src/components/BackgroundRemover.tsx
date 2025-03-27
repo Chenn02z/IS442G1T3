@@ -124,7 +124,7 @@ export const BackgroundRemover = () => {
           refreshImages();
 
           // Make sure we're using the latest image state
-          await restoreCurrentImageUrl(selectedImageId);
+          await restoreCurrentImageUrl(selectedImageUrl);
 
           toast({
             title: "Background removed successfully.",
@@ -200,7 +200,7 @@ export const BackgroundRemover = () => {
         });
 
         // Close the dialog after successful background removal
-        setIsDialogOpen(false);
+        handleDone();
       } else {
         throw new Error("Invalid response from server");
       }
