@@ -114,7 +114,8 @@ public class FloodFillServiceImpl implements FloodFillService {
                     .userId(originalEntity.getUserId())
                     .version(nextVersion)
                     .label("Flood Fill")
-                    .baseImageUrl(originalEntity.getCurrentImageUrl()) // Changed from baseImageUrl to currentImageUrl
+                    // .baseImageUrl(originalEntity.getCurrentImageUrl()) // Changed from baseImageUrl to currentImageUrl
+                    .baseImageUrl(processedFileName)
                     .currentImageUrl(processedFileName)
                     .build();
 

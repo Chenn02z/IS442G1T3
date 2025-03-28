@@ -73,6 +73,7 @@ export function HistoryDrawer({ imageId, open, onOpenChange }: HistoryDrawerProp
         // Get the latest version data
         const latestResponse = await StateManagementService.getLatestVersion(id);
         
+        
         if (latestResponse.status === 'success') {
           setCurrentVersion(latestResponse.data.version.toString());
         }

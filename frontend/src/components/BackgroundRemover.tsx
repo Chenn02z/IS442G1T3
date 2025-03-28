@@ -123,8 +123,10 @@ export const BackgroundRemover = () => {
           setSelectedImageUrl(newImageUrl);
           refreshImages();
 
-          // Make sure we're using the latest image state
-          await restoreCurrentImageUrl(selectedImageUrl);
+          // Fix: Use selectedImageId instead of selectedImageUrl
+          if (selectedImageId) {
+            await restoreCurrentImageUrl(selectedImageId);
+          }
 
           toast({
             title: "Background removed successfully.",
