@@ -19,9 +19,16 @@ public class FileStorageServiceImpl implements FileStorageService {
     @Override
     public String saveOriginalImage(MultipartFile file, UUID imageId) throws IOException {
         String saveDir = System.getProperty("user.dir") + File.separator + storagePath;
-        String newFileName = imageId.toString() + "_" + file.getOriginalFilename();
+        String newFileName = imageId.toString() + "_1.png";  // Always use .png extension
         String relativeSaveDir = storagePath + File.separator + newFileName;
         String filePath = saveDir + File.separator + newFileName;
+        
+        // Create directory if it doesn't exist
+        File directory = new File(saveDir);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        
         File newFile = new File(filePath);
         file.transferTo(newFile);
         return relativeSaveDir;

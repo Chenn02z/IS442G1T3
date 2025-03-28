@@ -1,14 +1,10 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.service.FloodFillService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -25,13 +21,12 @@ public class FloodFillController {
     }
 
     @PostMapping("/{imageId}/remove-background")
-    public ResponseEntity<ImageEntity> removeBackground(
+    public ResponseEntity<ImageNewEntity> removeBackground(
             @PathVariable UUID imageId,
-            @RequestParam("filePath") String filePath,
             @RequestParam("seedPoints") String seedPointsJson,
             @RequestParam(value = "tolerance", defaultValue = "10") int tolerance) {
         try {
-            ImageEntity processedImage = floodFillService.removeBackground(imageId, filePath, seedPointsJson, tolerance);
+            ImageNewEntity processedImage = floodFillService.removeBackground(imageId, null, seedPointsJson, tolerance);
             return ResponseEntity.ok(processedImage);
         } catch (IOException e) {
             log.error("Error processing image", e);

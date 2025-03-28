@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-
 import { SquareX } from "lucide-react";
 import { useUpload } from "@/context/UploadContext";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +30,10 @@ export const BackgroundRemover = () => {
     selectedImageUrl,
     setSelectedImageUrl,
     refreshImages,
+    getFullImageUrl,
+    restoreCurrentImageUrl,
+    setIsCropping,
+    isCropping,
   } = useUpload();
   const [workingFile, setWorkingFile] = useState<File | null>(null);
   const { toast } = useToast();
@@ -40,6 +43,7 @@ export const BackgroundRemover = () => {
   >([]);
   const [step, setStep] = useState<"select" | "manual">("select");
   const imageRef = useRef<HTMLImageElement>(null);
+  const [displayImageUrl, setDisplayImageUrl] = useState<string | null>(null);
 
   // Initialize workingFile when dialog opens
   useEffect(() => {
@@ -48,10 +52,11 @@ export const BackgroundRemover = () => {
     }
   }, [isDialogOpen, uploadedFile]);
 
-  // Debug logging
   useEffect(() => {
-    console.log(JSON.stringify(selectedPoints));
-  }, [isDialogOpen, step, selectedPoints, workingFile]);
+    if (selectedImageUrl) {
+      setDisplayImageUrl(getFullImageUrl(selectedImageUrl));
+    }
+  }, [selectedImageUrl, getFullImageUrl]);
 
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
     if (!imageRef.current) return;
@@ -75,7 +80,6 @@ export const BackgroundRemover = () => {
   };
 
   const handleBackgroundRemoval = async (type: string) => {
-    console.log("Handling background removal:", type);
     if (!selectedImageUrl) {
       toast({
         title: "No uploaded file",
@@ -88,61 +92,86 @@ export const BackgroundRemover = () => {
       setStep("manual");
     } else {
       try {
-        const formData = new FormData();
-        var url = selectedImageUrl.split("8080/")[1];
-        formData.append("filePath", url);
+        // Show loading toast
+        toast({
+          title: "Processing image",
+          description: "Removing background automatically...",
+        });
+
         const response = await fetch(
-          CONFIG.API_BASE_URL +
-            `/api/background-removal/${selectedImageId}/auto`,
+          `${CONFIG.API_BASE_URL}/api/background-removal/${selectedImageId}/auto`,
           {
             method: "POST",
-            body: formData,
           }
         );
         if (!response.ok) {
           throw new Error("Failed to send image for background removal");
         }
 
-        const floodResponse = await response.json();
-        const newImageUrl = floodResponse.savedFilePath;
-        setSelectedImageUrl(`${CONFIG.API_BASE_URL}/${newImageUrl}`);
-        refreshImages();
+        const processedImage = await response.json();
+        console.log("Auto background removal response:", processedImage);
 
-        toast({
-          title: "Background removed successfully.",
-        });
+        if (processedImage && processedImage.currentImageUrl) {
+          // Ensure we handle the URL correctly
+          const newImageUrl = `${CONFIG.API_BASE_URL}/api/images/${processedImage.currentImageUrl}`;
+          console.log(
+            "New image URL after auto background removal:",
+            newImageUrl
+          );
+
+          // Update UI with new image
+          setSelectedImageUrl(newImageUrl);
+          refreshImages();
+
+          // Fix: Use selectedImageId instead of selectedImageUrl
+          if (selectedImageId) {
+            await restoreCurrentImageUrl(selectedImageId);
+          }
+
+          toast({
+            title: "Background removed successfully.",
+          });
+        } else {
+          throw new Error("Invalid response from server");
+        }
+
+        // Close the dialog
         setIsDialogOpen(false);
       } catch (error: any) {
-        console.error(error);
+        console.error("Auto background removal error:", error);
         toast({
           title: "Error processing image",
           description: error.message,
+          variant: "destructive",
         });
       }
     }
   };
 
   const floodFill = async () => {
-    if (!selectedImageUrl) {
+    if (!selectedImageId || selectedPoints.length === 0) {
       toast({
-        title: "No uploaded file",
-        description: "Please upload a file first.",
+        title: "No points selected",
+        description: "Please select at least one point on the background.",
       });
       return;
     }
 
-    const formData = new FormData();
-    var url = selectedImageUrl.split("8080/")[1];
-    formData.append("filePath", url);
-    formData.append("tolerance", "30");
-    formData.append("seedPoints", JSON.stringify(selectedPoints));
-
     try {
+      // Show loading toast
+      toast({
+        title: "Processing image",
+        description: "Removing background manually...",
+      });
+
       const response = await fetch(
         `${CONFIG.API_BASE_URL}/api/images/${selectedImageId}/remove-background`,
         {
           method: "POST",
-          body: formData,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: `seedPoints=${JSON.stringify(selectedPoints)}&tolerance=30`,
         }
       );
 
@@ -150,189 +179,183 @@ export const BackgroundRemover = () => {
         throw new Error("Failed to process image");
       }
 
-      const floodResponse = await response.json();
-      const newImageUrl = floodResponse.savedFilePath;
-      setSelectedImageUrl(`${CONFIG.API_BASE_URL}/${newImageUrl}`);
-      toast({
-        title: "Image processed successfully",
-      });
+      const processedImage = await response.json();
+      console.log("Manual background removal response:", processedImage);
 
-      // Clear selected points but keep the dialog open
+      if (processedImage && processedImage.currentImageUrl) {
+        // Ensure we handle the URL correctly
+        const newImageUrl = `${CONFIG.API_BASE_URL}/api/images/${processedImage.currentImageUrl}`;
+        console.log(
+          "New image URL after manual background removal:",
+          newImageUrl
+        );
+
+        // Update UI with new image URL
+        setSelectedImageUrl(newImageUrl);
+        refreshImages();
+
+        // Make sure we're using the latest image state
+        await restoreCurrentImageUrl(selectedImageId);
+
+        toast({
+          title: "Background removed successfully",
+        });
+
+        // Close the dialog after successful background removal
+        handleDone();
+      } else {
+        throw new Error("Invalid response from server");
+      }
+
       setSelectedPoints([]);
-      refreshImages();
     } catch (error: any) {
-      console.error(error);
+      console.error("Manual background removal error:", error);
       toast({
         title: "Error processing image",
         description: error.message,
+        variant: "destructive",
       });
     }
   };
 
-  const handleDialogClose = () => {
-    console.log("Closing dialog");
-    setIsDialogOpen(false);
-    setSelectedPoints([]);
-    setStep("select");
-    setWorkingFile(null);
+  const handleDialogClose = (open: boolean) => {
+    // If the dialog is being closed and it wasn't closed programmatically
+    if (!open) {
+      // Reset the state
+      setSelectedPoints([]);
+      setStep("select");
+      setWorkingFile(null);
+      setIsDialogOpen(false);
+    }
   };
 
   const handleDone = () => {
-    console.log("Done clicked - updating main file");
     if (workingFile) {
       setUploadedFile(workingFile);
       toast({
         title: "Changes saved successfully",
       });
     }
-    handleDialogClose();
+    handleDialogClose(false);
   };
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="relative">
-            <div
-              className="border border-1 p-1 rounded-md cursor-pointer"
-              onClick={() => setIsDialogOpen(true)}
-            >
-              <SquareX className="h-5 w-5" />
-            </div>
-
-            <Dialog
-              open={isDialogOpen}
-              onOpenChange={(open) => {
-                console.log("Dialog onOpenChange:", open);
-                if (!open) {
-                  handleDialogClose();
-                }
-                setIsDialogOpen(open);
-              }}
-            >
-              <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-auto z-[100]">
-                {step === "select" ? (
-                  <>
-                    <DialogHeader>
-                      <DialogTitle>Background Removal</DialogTitle>
-                      <DialogDescription>
-                        Choose how you want to remove the background
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid grid-cols-2 gap-4 p-4">
-                      <Button
-                        variant="outline"
-                        className="flex flex-col gap-2 h-auto p-6"
-                        onClick={() => handleBackgroundRemoval("auto")}
-                      >
-                        <div className="text-lg font-semibold">Auto</div>
-                        <div className="text-sm text-muted-foreground">
-                          Automatically remove background using OpenCV
-                        </div>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="flex flex-col gap-2 h-auto p-6"
-                        onClick={() => handleBackgroundRemoval("manual")}
-                      >
-                        <div className="text-lg font-semibold">Manual</div>
-                        <div className="text-sm text-muted-foreground">
-                          Select points to remove background
-                        </div>
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <DialogHeader>
-                      <DialogTitle>Manual Background Removal</DialogTitle>
-                      <DialogDescription>
-                        Click on the image to select points for background
-                        removal
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col gap-4">
-                      <div className="relative w-full">
-                        {selectedImageUrl && (
-                          <img
-                            ref={imageRef}
-                            src={selectedImageUrl}
-                            alt="Upload preview"
-                            className="w-full cursor-crosshair"
-                            onClick={handleImageClick}
-                          />
-                        )}
-                        {selectedPoints.map((point, index) => (
-                          <div
-                            key={index}
-                            className="absolute w-2 h-2 bg-red-500 rounded-full transform -translate-x-1 -translate-y-1"
-                            style={{
-                              left: `${
-                                (point.x /
-                                  (imageRef.current?.naturalWidth ?? 1)) *
-                                100
-                              }%`,
-                              top: `${
-                                (point.y /
-                                  (imageRef.current?.naturalHeight ?? 1)) *
-                                100
-                              }%`,
-                            }}
-                          />
-                        ))}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 w-full">
-                        <Button
-                          variant="secondary"
-                          onClick={() => setSelectedPoints([])}
-                        >
-                          Clear Points
-                        </Button>
-                        <Button variant="default" onClick={floodFill}>
-                          Process Points
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                )}
-                <div className="flex justify-between mt-4">
-                  <DialogClose asChild>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        console.log("Cancel clicked");
-                        handleDialogClose();
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </DialogClose>
-                  {step === "manual" && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        console.log("Back clicked");
-                        setStep("select");
-                      }}
-                    >
-                      Back
-                    </Button>
-                  )}
-                  <DialogClose asChild>
-                    <Button variant="default" onClick={handleDone}>
-                      Done
-                    </Button>
-                  </DialogClose>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+          <Button
+            variant="ghost"
+            className="h-10 w-10 p-0 flex items-center justify-center"
+            onClick={() => {
+              if (isCropping) {
+                setIsCropping(false);
+                setTimeout(() => {
+                  setIsDialogOpen(true);
+                }, 100);
+              } else {
+                setIsDialogOpen(true);
+              }
+            }}
+            disabled={!selectedImageUrl}
+          >
+            <SquareX className="h-5 w-5" />
+          </Button>
         </TooltipTrigger>
-        <TooltipContent side="right">
-          <p>Remove Background</p>
+        <TooltipContent>
+          <p>Remove image background</p>
         </TooltipContent>
       </Tooltip>
+
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+        <DialogContent className="max-w-4xl">
+          {step === "select" ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Remove Background</DialogTitle>
+                <DialogDescription>
+                  Choose a method to remove the background
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  variant="outline"
+                  className="flex flex-col gap-2 h-auto p-6"
+                  onClick={() => handleBackgroundRemoval("auto")}
+                >
+                  <div className="text-lg font-semibold">Auto</div>
+                  <div className="text-sm text-muted-foreground">
+                    Automatically remove background using OpenCV
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex flex-col gap-2 h-auto p-6"
+                  onClick={() => handleBackgroundRemoval("manual")}
+                >
+                  <div className="text-lg font-semibold">Manual</div>
+                  <div className="text-sm text-muted-foreground">
+                    Select points to remove background
+                  </div>
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Manual Background Removal</DialogTitle>
+                <DialogDescription>
+                  Click on the image to select points for background removal
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col gap-4">
+                <div className="relative w-full">
+                  {displayImageUrl && (
+                    <img
+                      ref={imageRef}
+                      src={displayImageUrl}
+                      alt="Upload preview"
+                      className="w-full cursor-crosshair"
+                      onClick={handleImageClick}
+                    />
+                  )}
+                  {selectedPoints.map((point, index) => (
+                    <div
+                      key={index}
+                      className="absolute w-2 h-2 bg-red-500 rounded-full transform -translate-x-1 -translate-y-1"
+                      style={{
+                        left: `${
+                          (point.x / (imageRef.current?.naturalWidth ?? 1)) *
+                          100
+                        }%`,
+                        top: `${
+                          (point.y / (imageRef.current?.naturalHeight ?? 1)) *
+                          100
+                        }%`,
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 w-full">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setSelectedPoints([])}
+                  >
+                    Clear Points
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={floodFill}
+                    disabled={selectedPoints.length === 0}
+                  >
+                    Process Points
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 };

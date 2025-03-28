@@ -1,9 +1,9 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
-import IS442.G1T3.IDPhotoGenerator.model.enums.ImageStatus;
-import IS442.G1T3.IDPhotoGenerator.repository.ImageRepository;
-import IS442.G1T3.IDPhotoGenerator.service.FileStorageService;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
+import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.FloodFillService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -11,79 +11,125 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
+import java.util.Queue;
 
 @Service
 @Slf4j
 public class FloodFillServiceImpl implements FloodFillService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final ImageRepository imageRepository;
+    private final ImageNewRepository imageNewRepository;
+    private final PhotoSessionRepository photoSessionRepository;
+    private final boolean isOpenCVAvailable;
 
     @Value("${image.storage.path}")
     private String storagePath;
 
-    public FloodFillServiceImpl(ImageRepository imageRepository) {
-        this.imageRepository = imageRepository;
+    public FloodFillServiceImpl(ImageNewRepository imageNewRepository,
+                              PhotoSessionRepository photoSessionRepository) {
+        this.imageNewRepository = imageNewRepository;
+        this.photoSessionRepository = photoSessionRepository;
+        this.isOpenCVAvailable = !"true".equals(System.getProperty("opencv.unavailable"));
+        log.info("FloodFillServiceImpl initialized with OpenCV available: {}", isOpenCVAvailable);
     }
 
     @Override
-    public ImageEntity removeBackground(UUID imageId, String filePath, String seedPointsJson, int tolerance) throws IOException {
-        // Get original image from repository
-        ImageEntity originalEntity = imageRepository.findBySavedFilePath(filePath)
-                .orElseThrow(() -> new RuntimeException("Image not found with file path: " + filePath));
+    public ImageNewEntity removeBackground(UUID imageId, String filePath, String seedPointsJson, int tolerance) throws IOException {
+        try {
+            // Get original image from repository
+            ImageNewEntity originalEntity = imageNewRepository.findLatestRowByImageId(imageId);
+            if (originalEntity == null) {
+                throw new RuntimeException("Image not found with id: " + imageId);
+            }
 
-        // Increment the process count
-//        imageEntity.setProcessCount(imageEntity.getProcessCount() + 1);
+            // Get photo session for version tracking
+            PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
+            if (photoSession == null) {
+                photoSession = new PhotoSession();
+                photoSession.setImageId(imageId);
+                photoSession.setUndoStack("1");
+            }
 
-        // Get the saved file path
-        String savedFilePath = originalEntity.getSavedFilePath();
-        File originalFile = new File(savedFilePath);
+            // Get the next version number
+            String undoStack = photoSession.getUndoStack();
+            int nextVersion = 1;
+            if (undoStack != null && !undoStack.isBlank()) {
+                String[] versions = undoStack.split(",");
+                nextVersion = Integer.parseInt(versions[versions.length - 1]) + 1;
+            }
 
-        // Check if the file exists
-        if (!originalFile.exists()) {
-            throw new RuntimeException("Original image file not found on server at: " + savedFilePath);
+            // Convert relative path to absolute path
+            String saveDir = System.getProperty("user.dir") + File.separator + storagePath;
+            File storageDirFile = new File(saveDir);
+            if (!storageDirFile.exists()) {
+                storageDirFile.mkdirs();
+            }
+
+            // Resolve the input image path using currentImageUrl
+            String currentFileName = originalEntity.getCurrentImageUrl();
+            String inputPath = saveDir + File.separator + currentFileName;
+            File originalFile = new File(inputPath);
+
+            // Check if the file exists
+            if (!originalFile.exists()) {
+                throw new IOException("Original image file not found on server at: " + inputPath);
+            }
+
+            // Process the image
+            BufferedImage originalImage = ImageIO.read(originalFile);
+            List<Point> seedPoints = parsePoints(seedPointsJson);
+            
+            // Apply flood fill
+            BufferedImage processedImage = floodFill(originalImage, seedPoints, tolerance);
+
+            // Save the processed image
+            String processedFileName = imageId.toString() + "_" + nextVersion + ".png";
+            String outputPath = saveDir + File.separator + processedFileName;
+
+            log.info("Saving processed image to: {}", outputPath);
+            File outputFile = new File(outputPath);
+            boolean saved = ImageIO.write(processedImage, "PNG", outputFile);
+            if (!saved) {
+                throw new RuntimeException("Failed to save processed image");
+            }
+
+            // Update undo stack
+            String newUndoStack = undoStack == null || undoStack.isBlank() ? 
+                String.valueOf(nextVersion) : undoStack + "," + nextVersion;
+            photoSession.setUndoStack(newUndoStack);
+            photoSession.setRedoStack("");
+            photoSessionRepository.save(photoSession);
+
+            // Create and save the new image entity
+            ImageNewEntity processedEntity = ImageNewEntity.builder()
+                    .imageId(imageId)
+                    .userId(originalEntity.getUserId())
+                    .version(nextVersion)
+                    .label("Flood Fill")
+                    // .baseImageUrl(originalEntity.getCurrentImageUrl()) // Changed from baseImageUrl to currentImageUrl
+                    .baseImageUrl(processedFileName)
+                    .currentImageUrl(processedFileName)
+                    .build();
+
+            return imageNewRepository.save(processedEntity);
+        } catch (JsonProcessingException e) {
+            log.error("Error parsing seed points JSON: {}", e.getMessage());
+            throw new IOException("Error processing JSON data: " + e.getMessage(), e);
+        } catch (IOException e) {
+            log.error("IO error during background removal: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error during background removal: {}", e.getMessage());
+            throw new IOException("Error during background removal: " + e.getMessage(), e);
         }
-
-        // Process the image
-        BufferedImage originalImage = ImageIO.read(originalFile);
-        List<Point> seedPoints = parsePoints(seedPointsJson);
-        BufferedImage processedImage = floodFill(originalImage, seedPoints, tolerance);
-
-        // Create a unique filename based on the process count
-        String processedFileName = "floodfill_" + imageId + "_v" + (originalEntity.getProcessCount() + 1)+ ".png";
-        String relativePath = storagePath + File.separator + processedFileName;
-        String absoluteProcessedPath = new File("").getAbsolutePath() + File.separator + relativePath;
-
-        // Ensure directory exists
-        new File(absoluteProcessedPath).getParentFile().mkdirs();
-
-        // Save the processed image
-        ImageIO.write(processedImage, "PNG", new File(absoluteProcessedPath));
-
-        ImageEntity newImageEntity = new ImageEntity();
-        newImageEntity.setImageId(imageId);
-        newImageEntity.setUserId(originalEntity.getUserId());
-        newImageEntity.setOriginalFileName(originalEntity.getOriginalFileName());
-        newImageEntity.setSavedFilePath(relativePath);
-        newImageEntity.setProcessCount(originalEntity.getProcessCount() + 1);  // Start with process count 1 for the new image
-        newImageEntity.setStatus(ImageStatus.COMPLETED.toString());
-        newImageEntity.setPrevFilePath(originalEntity.getSavedFilePath());
-        newImageEntity.setBackgroundOption(originalEntity.getBackgroundOption());
-
-        // Save the new image entity
-        return imageRepository.save(newImageEntity);
     }
 
     private List<Point> parsePoints(String seedPointsJson) throws JsonProcessingException {

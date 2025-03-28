@@ -1,8 +1,9 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
-import IS442.G1T3.IDPhotoGenerator.model.enums.ImageStatus;
-import IS442.G1T3.IDPhotoGenerator.repository.ImageRepository;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
+import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.CartoonisationService;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -11,9 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,90 +19,121 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class CartooniseServiceImpl implements CartoonisationService {
 
-	private final ImageRepository imageRepository;
+    private final ImageNewRepository imageNewRepository;
+    private final PhotoSessionRepository photoSessionRepository;
 
-	@Value("${image.storage.path}")
-	private String storagePath;
+    @Value("${image.storage.path}")
+    private String storagePath;
 
-	static {
-		try {
-			nu.pattern.OpenCV.loadLocally();
-		} catch (Exception e) {
-			System.err.println("Error loading OpenCV native library: " + e.getMessage());
-		}
-	}
+    static {
+        try {
+            nu.pattern.OpenCV.loadLocally();
+        } catch (Exception e) {
+            log.error("Error loading OpenCV native library: {}", e.getMessage());
+        }
+    }
 
-	public CartooniseServiceImpl(ImageRepository imageRepository) {
-		this.imageRepository = imageRepository;
-	}
+    public CartooniseServiceImpl(ImageNewRepository imageNewRepository,
+                               PhotoSessionRepository photoSessionRepository) {
+        this.imageNewRepository = imageNewRepository;
+        this.photoSessionRepository = photoSessionRepository;
+    }
 
-	@Override
-	public ImageEntity cartooniseImage(UUID imageId, String filePath) throws Exception {
-		// Get original image from repository
-		ImageEntity originalImage = imageRepository.findBySavedFilePath(filePath)
-				.orElseThrow(() -> new RuntimeException("Image not found at: " + filePath));
+    @Override
+    public ImageNewEntity cartooniseImage(UUID imageId) throws Exception {
+        // Find the latest image directly by imageId
+        ImageNewEntity latestImage = imageNewRepository.findLatestRowByImageId(imageId);
+        if (latestImage == null) {
+            throw new RuntimeException("Image not found with id: " + imageId);
+        }
 
-		// Load the original image path
-		Path originalPath = Paths.get(originalImage.getSavedFilePath());
-		if (!originalPath.isAbsolute()) {
-			originalPath = Paths.get(System.getProperty("user.dir"))
-					.resolve(originalImage.getSavedFilePath())
-					.normalize();
-		}
+        // Get photo session for version tracking
+        PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
+        if (photoSession == null) {
+            // Create new photo session if it doesn't exist
+            photoSession = new PhotoSession();
+            photoSession.setImageId(imageId);
+            photoSession.setUndoStack("1");
+        }
 
-		// Read the image using OpenCV
-		Mat image = Imgcodecs.imread(originalPath.toString());
-		if (image.empty()) {
-			throw new RuntimeException("Failed to load image: " + originalPath);
-		}
+        // Get the next version number
+        String undoStack = photoSession.getUndoStack();
+        int nextVersion = 1;
+        if (undoStack != null && !undoStack.isBlank()) {
+            String[] versions = undoStack.split(",");
+            nextVersion = Integer.parseInt(versions[versions.length - 1]) + 1;
+        }
 
-		// Process the image
-		Mat result = removeBackgroundUsingGrabCut(image);
+        // Convert relative path to absolute path
+        String saveDir = System.getProperty("user.dir") + File.separator + storagePath;
+        File storageDirFile = new File(saveDir);
+        if (!storageDirFile.exists()) {
+            storageDirFile.mkdirs();
+        }
 
-		// Create a unique filename for the new processed image
-		// UUID newImageId = UUID.randomUUID();
-		String processedFileName = "cartoonised_" + imageId + "_v" + originalImage.getProcessCount() +".png";
-		String relativePath = storagePath + File.separator + processedFileName;
-		String absoluteProcessedPath = new File("").getAbsolutePath() + File.separator + relativePath;
+        // Resolve the input image path - use currentImageUrl instead of baseImageUrl
+        // to work with the latest version of the image
+        String currentImageFileName = latestImage.getCurrentImageUrl();
+        String inputPath = saveDir + File.separator + currentImageFileName;
+        log.info("Loading image from: {}", inputPath);
 
-		// Ensure parent directory exists
-		new File(absoluteProcessedPath).getParentFile().mkdirs();
+        // Load and process the image
+        Mat image = Imgcodecs.imread(inputPath);
+        if (image.empty()) {
+            throw new RuntimeException("Failed to load image from: " + inputPath);
+        }
 
-		// Save the processed image
-		Imgcodecs.imwrite(absoluteProcessedPath, result);
+        // Apply cartoon effect
+        Mat result = removeBackgroundUsingGrabCut(image);
 
-		// Create a new image entity instead of updating the existing one
-		ImageEntity newImageEntity = new ImageEntity();
-		newImageEntity.setImageId(imageId);
-		newImageEntity.setUserId(originalImage.getUserId());
-		newImageEntity.setOriginalFileName(originalImage.getOriginalFileName());
-		newImageEntity.setSavedFilePath(relativePath);
-		newImageEntity.setProcessCount(originalImage.getProcessCount());  // Start with process count 1 for the new image
-		newImageEntity.setStatus(ImageStatus.COMPLETED.toString());
-		newImageEntity.setBackgroundOption(originalImage.getBackgroundOption());
-		
-		// Save the new image entity
-		return imageRepository.save(newImageEntity);
-	}
+        // Save the processed image
+        String processedFileName = imageId.toString() + "_" + nextVersion + ".png";
+        String outputPath = saveDir + File.separator + processedFileName;
 
-	private Mat removeBackgroundUsingGrabCut(Mat image) {
-		Mat mask = new Mat(image.size(), CvType.CV_8UC1, Scalar.all(0));
-		Mat bgModel = new Mat();
-		Mat fgModel = new Mat();
-		Rect rect = new Rect(1, 1, image.width() - 2, image.height() - 2);
+        log.info("Saving processed image to: {}", outputPath);
+        boolean saved = Imgcodecs.imwrite(outputPath, result);
+        if (!saved) {
+            throw new RuntimeException("Failed to save processed image");
+        }
 
-		// GrabCut segmentation
-		Imgproc.grabCut(image, mask, rect, bgModel, fgModel, 5, Imgproc.GC_INIT_WITH_RECT);
+        // Update undo stack
+        String newUndoStack = undoStack == null || undoStack.isBlank() ? 
+            String.valueOf(nextVersion) : undoStack + "," + nextVersion;
+        photoSession.setUndoStack(newUndoStack);
+        photoSession.setRedoStack("");
+        photoSessionRepository.save(photoSession);
 
-		// Create a mask of probably and definitely foreground pixels
-		Mat foregroundMask = new Mat();
-		Core.compare(mask, new Scalar(Imgproc.GC_PR_FGD), foregroundMask, Core.CMP_EQ);
+        // Create and save the new image entity
+        ImageNewEntity processedImage = ImageNewEntity.builder()
+                .imageId(imageId)
+                .userId(latestImage.getUserId())
+                .version(nextVersion)
+                .label("Cartoonise")
+                .baseImageUrl(latestImage.getCurrentImageUrl()) // Use currentImageUrl as the baseImageUrl for this new version
+                .currentImageUrl(processedFileName)
+                .build();
 
-		// Create the foreground image
-		Mat foreground = new Mat(image.size(), CvType.CV_8UC3, new Scalar(255, 255, 255));
-		image.copyTo(foreground, foregroundMask);
+        return imageNewRepository.save(processedImage);
+    }
 
-		return foreground;
-	}
+    private Mat removeBackgroundUsingGrabCut(Mat image) {
+        Mat mask = new Mat(image.size(), CvType.CV_8UC1, Scalar.all(0));
+        Mat bgModel = new Mat();
+        Mat fgModel = new Mat();
+        Rect rect = new Rect(1, 1, image.width() - 2, image.height() - 2);
+
+        // GrabCut segmentation
+        Imgproc.grabCut(image, mask, rect, bgModel, fgModel, 5, Imgproc.GC_INIT_WITH_RECT);
+
+        // Create a mask of probably and definitely foreground pixels
+        Mat foregroundMask = new Mat();
+        Core.compare(mask, new Scalar(Imgproc.GC_PR_FGD), foregroundMask, Core.CMP_EQ);
+
+        // Create the foreground image
+        Mat foreground = new Mat(image.size(), CvType.CV_8UC3, new Scalar(255, 255, 255));
+        image.copyTo(foreground, foregroundMask);
+
+        return foreground;
+    }
 }
 

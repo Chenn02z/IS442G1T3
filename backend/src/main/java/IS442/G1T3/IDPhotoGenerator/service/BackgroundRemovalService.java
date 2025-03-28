@@ -1,6 +1,6 @@
 package IS442.G1T3.IDPhotoGenerator.service;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageEntity;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
@@ -15,6 +15,6 @@ public interface BackgroundRemovalService {
      * @return The persisted image entity with processing results.
      * @throws Exception If any error occurs during processing.
      */
-    ImageEntity removeBackground(MultipartFile file, UUID userId, String backgroundOption) throws Exception;
+    ImageNewEntity removeBackground(MultipartFile file, UUID userId, String backgroundOption) throws Exception;
 }
 
