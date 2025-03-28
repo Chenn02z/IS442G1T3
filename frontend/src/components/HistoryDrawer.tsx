@@ -242,13 +242,7 @@ export function HistoryDrawer({ imageId, open, onOpenChange }: HistoryDrawerProp
       const confirmResponse = await StateManagementService.confirm(imageId);
       
       if (confirmResponse.status === 'success') {
-        // First refresh images
         await refreshImages();
-        
-        // Wait a moment for the refresh to complete
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Then restore the current image URL
         await restoreCurrentImageUrl(imageId);
         
         // Reset preview state

@@ -17,7 +17,7 @@ const DisplayImage: React.FC<DisplayImageProps> = ({ imageUrl }) => {
   useEffect(() => {
     if (selectedImageId) {
       // Refresh the image list
-      refreshImages();
+      // refreshImages();
 
       // Use restoreCurrentImageUrl to ensure we have the latest image
       restoreCurrentImageUrl(selectedImageId).catch((error) => {
