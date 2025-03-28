@@ -244,6 +244,7 @@ export function HistoryDrawer({ imageId, open, onOpenChange }: HistoryDrawerProp
       if (confirmResponse.status === 'success') {
         await refreshImages();
         await restoreCurrentImageUrl(imageId);
+        console.log("restored to:" + imageId);
         
         // Reset preview state
         setPreviewVersion(null);

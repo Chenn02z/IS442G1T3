@@ -96,8 +96,8 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
         );
         if (response.ok) {
           const data = await response.json();
-          console.log("DEBUG - /statemanagement/latest/ response:", data);
-          console.log("DEBUG - Entity label:", data.data?.label);
+          console.log("RESTORE TO IMAGE VER:", data.data?.version);
+          // console.log("DEBUG - Entity label:", data.data?.label);
 
           if (
             data.status === "success" &&

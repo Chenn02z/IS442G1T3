@@ -10,8 +10,11 @@ const DisplayImage: React.FC<DisplayImageProps> = ({ imageUrl }) => {
     getFullImageUrl,
     selectedImageId,
     restoreCurrentImageUrl,
-    refreshImages,
+    selectedImageUrl,
   } = useUpload();
+
+  // Use selectedImageUrl from context instead of prop
+  const displayUrl = selectedImageUrl || imageUrl;
 
   // Ensure we're displaying the latest version of the image
   useEffect(() => {
@@ -24,9 +27,9 @@ const DisplayImage: React.FC<DisplayImageProps> = ({ imageUrl }) => {
         console.error("Error restoring current image URL:", error);
       });
     }
-  }, [selectedImageId, restoreCurrentImageUrl, refreshImages, imageUrl]);
+  }, [selectedImageId, restoreCurrentImageUrl]);
 
-  if (!imageUrl) {
+  if (!displayUrl) {
     return null;
   }
 
@@ -34,7 +37,7 @@ const DisplayImage: React.FC<DisplayImageProps> = ({ imageUrl }) => {
     <div className="relative w-full aspect-square">
       <div className="relative w-full h-full">
         <img
-          src={getFullImageUrl(imageUrl)}
+          src={getFullImageUrl(displayUrl)}
           alt="Displayed image"
           className="w-full h-full object-contain rounded-lg"
           style={{ maxHeight: "80vh" }}
