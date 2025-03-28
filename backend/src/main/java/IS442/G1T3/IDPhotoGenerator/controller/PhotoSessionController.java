@@ -1,10 +1,12 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
-import java.util.UUID;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,13 +14,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
-import IS442.G1T3.IDPhotoGenerator.service.PhotoSessionService;
-import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.dto.ApiResponse;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import IS442.G1T3.IDPhotoGenerator.dto.StateManagementResponse;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.service.PhotoSessionService;
 
 
 @RestController
@@ -35,7 +34,7 @@ public class PhotoSessionController {
     public ResponseEntity<?> undo(@RequestBody Map<String, String> request) {
         try {
             UUID imageId = UUID.fromString(request.get("imageId"));
-            ImageNewEntity result = photoSessionService.undo(imageId);
+            StateManagementResponse result = photoSessionService.undo(imageId);
             return ResponseEntity.ok(new ApiResponse<>("success", result));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -47,7 +46,7 @@ public class PhotoSessionController {
     public ResponseEntity<?> redo(@RequestBody Map<String, String> request) {
         try {
             UUID imageId = UUID.fromString(request.get("imageId"));
-            ImageNewEntity result = photoSessionService.redo(imageId);
+            StateManagementResponse result = photoSessionService.redo(imageId);
             return ResponseEntity.ok(new ApiResponse<>("success", result));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

@@ -1,15 +1,16 @@
 package IS442.G1T3.IDPhotoGenerator.service;
 
-import java.util.UUID;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import IS442.G1T3.IDPhotoGenerator.dto.StateManagementResponse;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 
 public interface PhotoSessionService {
     // State management operations
-    ImageNewEntity undo(UUID imageId);
-    ImageNewEntity redo(UUID imageId);
+    StateManagementResponse undo(UUID imageId);
+    StateManagementResponse redo(UUID imageId);
     ImageNewEntity confirm(UUID imageId);
     Map<String, List<String>> getHistory(UUID imageId);
     ImageNewEntity getLatestVersion(UUID imageId);

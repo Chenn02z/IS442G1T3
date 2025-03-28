@@ -1,12 +1,14 @@
 "use client";
 import { Card, CardContent } from "@/components/ui/card";
-import { UploadCloud } from "lucide-react";
+import { UploadCloud, History } from "lucide-react";
 import { useUpload } from "@/context/UploadContext";
 import { useImageUploadHandler } from "@/utils/ImageUploadHandler";
 import DisplayImage from "./DisplayImage";
 import CropImage from "./CropImage";
 import DownloadButton from "./DownloadButton";
-import { useEffect } from "react";
+import { HistoryDrawer } from "./HistoryDrawer";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 // Update the props interface to remove isCropping
 interface UploadImageFormProps {
@@ -24,6 +26,7 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
     isCropping,
   } = useUpload();
   const { handleUpload } = useImageUploadHandler();
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // For debugging
   useEffect(() => {
@@ -83,15 +86,35 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
             ) : (
               <div className="flex flex-col items-center gap-6">
                 <DisplayImage imageUrl={croppedImageUrl || selectedImageUrl} />
-                <DownloadButton
-                  imageUrl={croppedImageUrl || selectedImageUrl}
-                  imageId={selectedImageId}
-                />
+                <div className="flex items-center space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setIsHistoryOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <History className="h-4 w-4" />
+                    History
+                  </Button>
+                  <DownloadButton
+                    imageUrl={croppedImageUrl || selectedImageUrl}
+                    imageId={selectedImageId}
+                  />
+                </div>
               </div>
             )}
           </div>
         )}
       </CardContent>
+      
+      {/* History Drawer */}
+      {selectedImageId && (
+        <HistoryDrawer
+          imageId={selectedImageId}
+          open={isHistoryOpen}
+          onOpenChange={setIsHistoryOpen}
+        />
+      )}
     </Card>
   );
 };

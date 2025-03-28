@@ -1,20 +1,21 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.UUID;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import IS442.G1T3.IDPhotoGenerator.dto.StateManagementResponse;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.PhotoSessionService;
-import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -30,7 +31,7 @@ public class PhotoSessionServiceImpl implements PhotoSessionService {
     }
 
     @Override
-    public ImageNewEntity undo(UUID imageId) {
+    public StateManagementResponse undo(UUID imageId) {
         PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
         if (photoSession == null) {
             throw new RuntimeException("Image not found with id: " + imageId);
@@ -63,14 +64,12 @@ public class PhotoSessionServiceImpl implements PhotoSessionService {
         photoSession.setRedoStack(String.join(",", redoList));
         photoSessionRepository.save(photoSession);
 
-        // Get the current version's image
-        String currentVersion = undoList.get(undoList.size() - 1);
-        String currentImageUrl = imageId.toString() + "_" + currentVersion;
-        return imageNewRepository.findByCurrentImageUrl(currentImageUrl);
+        // Return just the top of redo stack
+        return new StateManagementResponse(lastVersion);
     }
 
     @Override
-    public ImageNewEntity redo(UUID imageId) {
+    public StateManagementResponse redo(UUID imageId) {
         PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
         if (photoSession == null) {
             throw new RuntimeException("Image not found with id: " + imageId);
@@ -103,9 +102,9 @@ public class PhotoSessionServiceImpl implements PhotoSessionService {
         photoSession.setRedoStack(String.join(",", redoList));
         photoSessionRepository.save(photoSession);
 
-        // Get the redone version's image
-        String currentImageUrl = imageId.toString() + "_" + versionToRedo;
-        return imageNewRepository.findByCurrentImageUrl(currentImageUrl);
+        // Return just the next version that could be redone
+        String nextRedoVersion = redoList.isEmpty() ? null : redoList.get(redoList.size() - 1);
+        return new StateManagementResponse(nextRedoVersion);
     }
 
     @Override
@@ -130,11 +129,11 @@ public class PhotoSessionServiceImpl implements PhotoSessionService {
         photoSessionRepository.save(photoSession);
 
         // Get and return the current version's image
-        String currentImageUrl = imageId.toString() + "_" + currentVersion;
+        String currentImageUrl = imageId.toString() + "_" + currentVersion + ".png";
         ImageNewEntity currentImage = imageNewRepository.findByCurrentImageUrl(currentImageUrl);
         
         if (currentImage == null) {
-            throw new RuntimeException("Image version not found: " + currentImageUrl);
+            throw new RuntimeException("Image url not found: " + currentImageUrl);
         }
         
         return currentImage;
@@ -168,7 +167,30 @@ public class PhotoSessionServiceImpl implements PhotoSessionService {
 
     @Override
     public ImageNewEntity getLatestVersion(UUID imageId) {
-        return imageNewRepository.findLatestRowByImageId(imageId);
+        PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
+        if (photoSession == null) {
+            throw new RuntimeException("Image not found with id: " + imageId);
+        }
+
+        // Get the current version from undo stack
+        String undoStack = photoSession.getUndoStack();
+        if (undoStack == null || undoStack.isBlank()) {
+            throw new RuntimeException("No versions available");
+        }
+
+        // Get the last version from undo stack
+        String[] versions = undoStack.split(",");
+        String currentVersion = versions[versions.length - 1];
+
+        // Get and return the current version's image
+        String currentImageUrl = imageId.toString() + "_" + currentVersion + ".png";
+        ImageNewEntity currentImage = imageNewRepository.findByCurrentImageUrl(currentImageUrl);
+        
+        if (currentImage == null) {
+            throw new RuntimeException("Image version not found: " + currentImageUrl);
+        }
+        
+        return currentImage;
     }
 
     @Override
@@ -184,7 +206,15 @@ public class PhotoSessionServiceImpl implements PhotoSessionService {
     public List<ImageNewEntity> getUserLatestList(UUID userId) {
         List<UUID> imageIds = getUserImages(userId);
         return imageIds.stream()
-                .map(imageNewRepository::findLatestRowByImageId)
+                .map(imageId -> {
+                    try {
+                        return getLatestVersion(imageId);
+                    } catch (RuntimeException e) {
+                        // Skip images that might have been deleted or have no versions
+                        return null;
+                    }
+                })
+                .filter(image -> image != null)
                 .collect(Collectors.toList());
     }
 
