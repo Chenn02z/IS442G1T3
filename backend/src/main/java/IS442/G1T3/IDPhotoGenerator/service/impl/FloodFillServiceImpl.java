@@ -42,7 +42,7 @@ public class FloodFillServiceImpl implements FloodFillService {
     }
 
     @Override
-    public ImageNewEntity removeBackground(UUID imageId, String filePath, String seedPointsJson, int tolerance) throws IOException {
+    public ImageNewEntity removeBackground(UUID imageId, String seedPointsJson, int tolerance) throws IOException {
         try {
             // Get original image from repository
             ImageNewEntity originalEntity = imageNewRepository.findLatestRowByImageId(imageId);

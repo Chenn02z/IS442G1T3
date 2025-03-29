@@ -109,7 +109,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
                 .userId(latestImage.getUserId())
                 .version(nextVersion)
                 .label("Cartoonise")
-                .baseImageUrl(latestImage.getCurrentImageUrl()) // Use currentImageUrl as the baseImageUrl for this new version
+                .baseImageUrl(processedFileName) // changed this from currUrl to processedFileName
                 .currentImageUrl(processedFileName)
                 .build();
 

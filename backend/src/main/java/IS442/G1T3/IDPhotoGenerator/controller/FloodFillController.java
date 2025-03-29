@@ -26,7 +26,7 @@ public class FloodFillController {
             @RequestParam("seedPoints") String seedPointsJson,
             @RequestParam(value = "tolerance", defaultValue = "10") int tolerance) {
         try {
-            ImageNewEntity processedImage = floodFillService.removeBackground(imageId, null, seedPointsJson, tolerance);
+            ImageNewEntity processedImage = floodFillService.removeBackground(imageId, seedPointsJson, tolerance);
             return ResponseEntity.ok(processedImage);
         } catch (IOException e) {
             log.error("Error processing image", e);
