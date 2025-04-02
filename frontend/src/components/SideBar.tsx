@@ -1,4 +1,3 @@
-import React from "react";
 import { ThemeModeToggle } from "@/components/ThemeModeToggle";
 import CropSidebar from "@/components/CropSideBar";
 import {
@@ -8,6 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { BackgroundRemover } from "./BackgroundRemover";
+import { ClothesReplacer } from "./ClothesReplacer";
 import { useUpload } from "@/context/UploadContext";
 
 const SideBar = ({
@@ -36,6 +36,7 @@ const SideBar = ({
         </Tooltip>
       </TooltipProvider>
       <BackgroundRemover />
+      <ClothesReplacer />
     </div>
   );
 };
