@@ -29,13 +29,13 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // For debugging
-  useEffect(() => {
-    console.log("UploadImageForm state:", {
-      contextIsCropping: isCropping,
-      selectedImageId,
-      selectedImageUrl,
-    });
-  }, [isCropping, selectedImageId, selectedImageUrl]);
+  // useEffect(() => {
+  //   console.log("UploadImageForm state:", {
+  //     contextIsCropping: isCropping,
+  //     selectedImageId,
+  //     selectedImageUrl,
+  //   });
+  // }, [isCropping, selectedImageId, selectedImageUrl]);
 
   return (
     <Card className="w-full max-w-3xl mx-auto">

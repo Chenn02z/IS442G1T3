@@ -33,7 +33,6 @@ const CropSidebar: React.FC<CropSidebarProps> = ({
     selectedImageId,
     isCropping,
     restoreCurrentImageUrl,
-    getBaseImageUrlForCropping,
   } = useUpload();
 
   // Reduced debug logs to prevent excessive console output
@@ -60,25 +59,24 @@ const CropSidebar: React.FC<CropSidebarProps> = ({
   const handleRatioSelect = (ratio: (typeof aspectRatios)[0]) => {
     setSelectedRatio(ratio.value);
     setSelectedAspectRatio(ratio.aspectRatio);
+    
+    // Add analytics/logging if needed
+    // console.log(`Aspect ratio changed to ${ratio.value}`);
   };
 
   // Handle the Done button click
   const handleDone = () => {
-    // Store selected ratio in localStorage for persistence
-    localStorage.setItem("selectedRatio", selectedRatio);
-
-    setIsOpen(false); // Close the panel but keep cropping mode active
+    setIsOpen(false);
   };
 
   // Handle the Cancel button click
   const handleCancel = () => {
-    setIsOpen(false); // Close the sheet
-    setIsCropping(false); // Exit cropping mode
+    setIsOpen(false);
+    setIsCropping(false);
 
     // Reset to freeform when canceling
     setSelectedRatio("freeform");
     setSelectedAspectRatio(null);
-    localStorage.removeItem("selectedRatio");
 
     // Restore to current image URL
     if (selectedImageId) {
@@ -95,16 +93,16 @@ const CropSidebar: React.FC<CropSidebarProps> = ({
   }, [isCropping, isOpen]);
 
   // Check for saved aspect ratio in localStorage when component mounts
-  useEffect(() => {
-    const savedRatio = localStorage.getItem("selectedRatio");
-    if (savedRatio) {
-      setSelectedRatio(savedRatio);
-      const ratio = aspectRatios.find((r) => r.value === savedRatio);
-      if (ratio) {
-        setSelectedAspectRatio(ratio.aspectRatio);
-      }
-    }
-  }, [setSelectedAspectRatio]);
+  // useEffect(() => {
+  //   const savedRatio = localStorage.getItem("selectedRatio");
+  //   if (savedRatio) {
+  //     setSelectedRatio(savedRatio);
+  //     const ratio = aspectRatios.find((r) => r.value === savedRatio);
+  //     if (ratio) {
+  //       setSelectedAspectRatio(ratio.aspectRatio);
+  //     }
+  //   }
+  // }, [setSelectedAspectRatio]);
 
   return (
     <Sheet open={isOpen} onOpenChange={handleSheetChange}>

@@ -79,9 +79,9 @@ const CropImage: React.FC<CropImageProps> = ({
         if (response.ok) {
           const data = await response.json();
           console.log("DEBUG - /edit API response:", data);
-          console.log("DEBUG - Current entity label:", data.data?.label);
-          console.log("DEBUG - Base image URL:", data.data?.baseImageUrl);
-          console.log("DEBUG - Current image URL:", data.data?.currentImageUrl);
+          // console.log("DEBUG - Current entity label:", data.data?.label);
+          // console.log("DEBUG - Base image URL:", data.data?.baseImageUrl);
+          // console.log("DEBUG - Current image URL:", data.data?.currentImageUrl);
 
           if (
             data.data &&
@@ -91,12 +91,16 @@ const CropImage: React.FC<CropImageProps> = ({
             data.data.crop.width > 0 &&
             data.data.crop.height > 0
           ) {
-            setServerCropData({
+            const cropData = {
               x: data.data.crop.x,
               y: data.data.crop.y,
               width: data.data.crop.width,
               height: data.data.crop.height,
-            });
+            };
+            // Force the crop box to be null before setting server data
+            setCropBoxData(null);
+            setServerCropData(cropData);
+            console.log("DEBUG - Server crop data being set:", cropData);
           } else {
             setServerCropData(null);
           }
@@ -179,12 +183,16 @@ const CropImage: React.FC<CropImageProps> = ({
 
     // Only set initial crop box if cropBoxData is null
     // This prevents resetting the crop box after user interactions
+    
     if (cropBoxData !== null) {
+      console.log("DEBUG - Crop box data already exists, skipping");
       return;
     }
 
+    console.log("DEBUG - Calculating new crop box");
     let newBox: CropData;
     if (aspectRatio !== null) {
+      console.log("DEBUG - Using default box due to aspectRatio not null");
       const defaultBox = calculateDefaultCropBox(
         displayedSize.width,
         displayedSize.height,
@@ -196,6 +204,8 @@ const CropImage: React.FC<CropImageProps> = ({
         displayedSize.height
       );
     } else if (serverCropData) {
+
+      console.log("DEBUG - Server crop data being used:", serverCropData);
       const displayedBox = scaleToDisplayed(
         serverCropData,
         naturalSize.width,
@@ -209,6 +219,7 @@ const CropImage: React.FC<CropImageProps> = ({
         displayedSize.height
       );
     } else {
+      console.log("DEBUG - Using default box due to serverCropData being null");
       const defaultBox = calculateDefaultCropBox(
         displayedSize.width,
         displayedSize.height,
@@ -220,7 +231,6 @@ const CropImage: React.FC<CropImageProps> = ({
         displayedSize.height
       );
     }
-
     setCropBoxData(newBox);
   }, [
     isImageLoaded,
@@ -391,9 +401,9 @@ const CropImage: React.FC<CropImageProps> = ({
         throw new Error(`Failed to save crop. Status: ${response.status}`);
       }
       const data = await response.json();
-      console.log("DEBUG - Crop API response:", data);
-      console.log("DEBUG - New image label:", data.data?.label);
-      console.log("DEBUG - New current image URL:", data.data?.currentImageUrl);
+      // console.log("DEBUG - Crop API response:", data);
+      // console.log("DEBUG - New image label:", data.data?.label);
+      // console.log("DEBUG - New current image URL:", data.data?.currentImageUrl);
 
       if (data.status === "success" && data.data) {
         const newImageUrl = data.data.currentImageUrl;
