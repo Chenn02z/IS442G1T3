@@ -34,15 +34,15 @@ const PhotoList = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Debug image URLs
-  useEffect(() => {
-    uploadedImages.forEach((image) => {
-      console.log(
-        "Image URL:",
-        `${CONFIG.API_BASE_URL}/api/images/${image.currentImageUrl}`
-      );
-    });
-  }, [uploadedImages]);
+  // // Debug image URLs
+  // useEffect(() => {
+  //   uploadedImages.forEach((image) => {
+  //     console.log(
+  //       "Image URL:",
+  //       `${CONFIG.API_BASE_URL}/api/images/${image.currentImageUrl}`
+  //     );
+  //   });
+  // }, [uploadedImages]);
 
   const handleDelete = async (e: React.MouseEvent, imageId: string) => {
     e.stopPropagation(); // Prevent triggering the parent div's onClick
@@ -160,10 +160,10 @@ const PhotoList = () => {
                   key={`${image.imageId}-${image.version}`}
                   className="flex justify-between space-x-3 p-2 rounded-md hover:bg-gray-200 transition cursor-pointer"
                   onClick={() => {
-                    console.log(
-                      "Clicking image row, setting URL:",
-                      image.currentImageUrl
-                    );
+                    // console.log(
+                    //   "Clicking image row, setting URL:",
+                    //   image.currentImageUrl
+                    // );
                     // Use a timestamp for cache busting but applied only once at click time
                     const timestamp = Date.now();
                     setSelectedImageUrl(
