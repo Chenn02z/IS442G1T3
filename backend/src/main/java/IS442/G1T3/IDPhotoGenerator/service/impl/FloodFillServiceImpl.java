@@ -60,11 +60,15 @@ public class FloodFillServiceImpl implements FloodFillService {
 
             // Get the next version number
             String undoStack = photoSession.getUndoStack();
-            int nextVersion = 1;
+            int nextVersion = originalEntity.getVersion() + 1;
+            int currVersion = 1;
             if (undoStack != null && !undoStack.isBlank()) {
                 String[] versions = undoStack.split(",");
-                nextVersion = Integer.parseInt(versions[versions.length - 1]) + 1;
+                currVersion = Integer.parseInt(versions[versions.length - 1]);
             }
+            log.info("Current version: {}", currVersion);
+            log.info("imageId: {}", imageId);
+            ImageNewEntity currImage = imageNewRepository.findByImageIdAndVersion(imageId, currVersion);
 
             // Convert relative path to absolute path
             String saveDir = System.getProperty("user.dir") + File.separator + storagePath;
@@ -72,9 +76,8 @@ public class FloodFillServiceImpl implements FloodFillService {
             if (!storageDirFile.exists()) {
                 storageDirFile.mkdirs();
             }
-
             // Resolve the input image path using currentImageUrl
-            String currentFileName = originalEntity.getCurrentImageUrl();
+            String currentFileName = currImage.getCurrentImageUrl();
             String inputPath = saveDir + File.separator + currentFileName;
             File originalFile = new File(inputPath);
 

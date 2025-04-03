@@ -1,23 +1,30 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
-import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
-import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
-import IS442.G1T3.IDPhotoGenerator.service.CartoonisationService;
-import org.opencv.core.*;
-import org.opencv.highgui.HighGui;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
+import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
+import IS442.G1T3.IDPhotoGenerator.service.CartoonisationService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -62,13 +69,14 @@ public class CartooniseServiceImpl implements CartoonisationService {
         }
 
         // Get the next version number
+        int nextVersion = latestImage.getVersion() + 1;
         String undoStack = photoSession.getUndoStack();
-        int nextVersion = 1;
+        int currVersion = 1;
         if (undoStack != null && !undoStack.isBlank()) {
             String[] versions = undoStack.split(",");
-            nextVersion = Integer.parseInt(versions[versions.length - 1]) + 1;
+            currVersion = Integer.parseInt(versions[versions.length - 1]);
         }
-
+        ImageNewEntity currImage = imageNewRepository.findByImageIdAndVersion(imageId, currVersion);
         // Convert relative path to absolute path
         String saveDir = System.getProperty("user.dir") + File.separator + storagePath;
         File storageDirFile = new File(saveDir);
@@ -78,7 +86,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
         // Resolve the input image path - use currentImageUrl instead of baseImageUrl
         // to work with the latest version of the image
-        String currentImageFileName = latestImage.getCurrentImageUrl();
+        String currentImageFileName = currImage.getCurrentImageUrl();
         String inputPath = saveDir + File.separator + currentImageFileName;
         log.info("Loading image from: {}", inputPath);
 
