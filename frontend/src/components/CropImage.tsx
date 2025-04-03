@@ -57,7 +57,7 @@ const CropImage: React.FC<CropImageProps> = ({
   // Flag to track when image has loaded
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
-  // 1. When imageUrl changes, reset states for a fresh start.
+  // 1. When imageUrl or aspectRatio changes, reset states for a fresh start.
   useEffect(() => {
     if (imageUrl) {
       setIsImageLoaded(false);
@@ -65,6 +65,14 @@ const CropImage: React.FC<CropImageProps> = ({
       setCropBoxData(null);
     }
   }, [imageUrl]);
+
+  // Add a new effect to reset the crop box when aspect ratio changes
+  useEffect(() => {
+    if (aspectRatio !== null && isCropping) {
+      // Only reset if we're in cropping mode and have a specific aspect ratio
+      setCropBoxData(null);
+    }
+  }, [aspectRatio, isCropping]);
 
   // 2. Fetch existing crop data (in natural coords) from the server if available.
   useEffect(() => {
@@ -78,7 +86,7 @@ const CropImage: React.FC<CropImageProps> = ({
         );
         if (response.ok) {
           const data = await response.json();
-          console.log("DEBUG - /edit API response:", data);
+          // console.log("DEBUG - /edit API response:", data);
           // console.log("DEBUG - Current entity label:", data.data?.label);
           // console.log("DEBUG - Base image URL:", data.data?.baseImageUrl);
           // console.log("DEBUG - Current image URL:", data.data?.currentImageUrl);
@@ -100,7 +108,7 @@ const CropImage: React.FC<CropImageProps> = ({
             // Force the crop box to be null before setting server data
             setCropBoxData(null);
             setServerCropData(cropData);
-            console.log("DEBUG - Server crop data being set:", cropData);
+            // console.log("DEBUG - Server crop data being set:", cropData);
           } else {
             setServerCropData(null);
           }
@@ -158,15 +166,15 @@ const CropImage: React.FC<CropImageProps> = ({
   }, []);
 
   // Helper to compare crop boxes.
-  const isSameBox = useCallback((a: CropData | null, b: CropData): boolean => {
-    return (
-      !!a &&
-      a.x === b.x &&
-      a.y === b.y &&
-      a.width === b.width &&
-      a.height === b.height
-    );
-  }, []);
+  // const isSameBox = useCallback((a: CropData | null, b: CropData): boolean => {
+  //   return (
+  //     !!a &&
+  //     a.x === b.x &&
+  //     a.y === b.y &&
+  //     a.width === b.width &&
+  //     a.height === b.height
+  //   );
+  // }, []);
 
   // 5. Once image is loaded and server data is ready, determine the crop box.
   useEffect(() => {
@@ -184,15 +192,15 @@ const CropImage: React.FC<CropImageProps> = ({
     // Only set initial crop box if cropBoxData is null
     // This prevents resetting the crop box after user interactions
     
-    if (cropBoxData !== null) {
-      console.log("DEBUG - Crop box data already exists, skipping");
-      return;
-    }
+    // if (cropBoxData !== null) {
+    //   console.log("DEBUG - Crop box data already exists, skipping");
+    //   return;
+    // }
 
     console.log("DEBUG - Calculating new crop box");
     let newBox: CropData;
     if (aspectRatio !== null) {
-      console.log("DEBUG - Using default box due to aspectRatio not null");
+      console.log("DEBUG - aspectRatio not null");
       const defaultBox = calculateDefaultCropBox(
         displayedSize.width,
         displayedSize.height,
@@ -238,8 +246,8 @@ const CropImage: React.FC<CropImageProps> = ({
     naturalSize,
     serverCropData,
     isLoadingCropData,
-    aspectRatio,
-    isSameBox,
+    aspectRatio
+    // isSameBox,
   ]);
 
   // Utility to scale natural coordinates to displayed coordinates.
@@ -285,6 +293,7 @@ const CropImage: React.FC<CropImageProps> = ({
     ratio: number | null,
     currentCrop?: CropData | null
   ): CropData {
+    console.log("DEBUG - Calculating default crop box with ratio:", ratio);
     let w = dispWidth * 0.5;
     let h = ratio ? w / ratio : dispHeight * 0.5;
     if (h > dispHeight * 0.5) {
@@ -304,6 +313,12 @@ const CropImage: React.FC<CropImageProps> = ({
     if (calculatedX < 0) calculatedX = 0;
     if (calculatedY < 0) calculatedY = 0;
 
+    console.log("DEBUG - Calculated crop box:", {
+      x: calculatedX,
+      y: calculatedY,
+      width: w,
+      height: h,
+    });
     return {
       x: calculatedX,
       y: calculatedY,
@@ -381,10 +396,10 @@ const CropImage: React.FC<CropImageProps> = ({
       );
     }
 
-    console.log("DEBUG - Sending crop request with payload:", {
-      imageId,
-      cropBox,
-    });
+    // console.log("DEBUG - Sending crop request with payload:", {
+    //   imageId,
+    //   cropBox,
+    // });
 
     try {
       const response = await fetch(

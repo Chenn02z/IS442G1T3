@@ -75,6 +75,7 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
               <>
                 <div className="relative max-w-full overflow-hidden">
                   <CropImage
+                    // key={`crop-${selectedAspectRatio}`}
                     imageUrl={selectedImageUrl}
                     aspectRatio={selectedAspectRatio}
                     imageId={selectedImageId}
