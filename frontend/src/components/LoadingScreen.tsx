@@ -12,9 +12,7 @@ interface LoadingScreenProps {
 const guidelines = [
   "Use a solid-colored background (white)",
   "Ensure consistent lighting with no harsh shadows",
-  "Face the camera straight with a neutral expression",
   "Avoid glasses, hats, or filters",
-  "Head should be centered and clearly visible",
   "Shoulders aligned with the camera and at the bottom of the image",
 ];
 
