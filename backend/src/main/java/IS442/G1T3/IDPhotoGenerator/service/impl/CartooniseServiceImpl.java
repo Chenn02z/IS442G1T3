@@ -53,13 +53,18 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
     @Override
     public ImageNewEntity cartooniseImage(UUID imageId) throws Exception {
-        // Find the latest image directly by imageId
+        // ------
+        // STEP 1
+        // ------
+        // Get latest image from repository, non-destructive nature of the algorithm
         ImageNewEntity latestImage = imageNewRepository.findLatestRowByImageId(imageId);
         if (latestImage == null) {
             throw new RuntimeException("Image not found with id: " + imageId);
         }
-
-        // Get photo session for version tracking
+        // ------
+        // STEP 2
+        // ------
+        // Get photo session for undo redo stack tracking
         PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
         if (photoSession == null) {
             // Create new photo session if it doesn't exist
@@ -68,7 +73,11 @@ public class CartooniseServiceImpl implements CartoonisationService {
             photoSession.setUndoStack("1");
         }
 
-        // Get the next version number
+        // -------
+        // Step 3
+        // -------
+        // Get latest Image version and + 1 to give next version (int nextVersion)
+        // Get the undo stack from the photo session, to give current version (int currVersion)
         int nextVersion = latestImage.getVersion() + 1;
         String undoStack = photoSession.getUndoStack();
         int currVersion = 1;
@@ -84,13 +93,18 @@ public class CartooniseServiceImpl implements CartoonisationService {
             storageDirFile.mkdirs();
         }
 
-        // Resolve the input image path - use currentImageUrl instead of baseImageUrl
-        // to work with the latest version of the image
+        // ------
+        // STEP 4
+        // ------
+        // Resolve the input image path using currentImageUrl from currImage
         String currentImageFileName = currImage.getCurrentImageUrl();
         String inputPath = saveDir + File.separator + currentImageFileName;
         log.info("Loading image from: {}", inputPath);
 
-        // Load and process the image
+        // ------
+        //STEP 5
+        // ------
+        // Load & Process the image
         Mat image = Imgcodecs.imread(inputPath);
         if (image.empty()) {
             throw new RuntimeException("Failed to load image from: " + inputPath);
@@ -109,6 +123,9 @@ public class CartooniseServiceImpl implements CartoonisationService {
             throw new RuntimeException("Failed to save processed image");
         }
 
+        // ------
+        // Step 6
+        // ------
         // Update undo stack
         String newUndoStack = undoStack == null || undoStack.isBlank() ? 
             String.valueOf(nextVersion) : undoStack + "," + nextVersion;
@@ -116,6 +133,9 @@ public class CartooniseServiceImpl implements CartoonisationService {
         photoSession.setRedoStack("");
         photoSessionRepository.save(photoSession);
 
+        // ------
+        // Step 7
+        // ------
         // Create and save the new image entity
         ImageNewEntity processedImage = ImageNewEntity.builder()
                 .imageId(imageId)
