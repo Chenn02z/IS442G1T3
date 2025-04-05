@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import IS442.G1T3.IDPhotoGenerator.factory.CartooniseFactory;
 import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
 import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.service.CartoonisationService;
@@ -125,7 +124,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
         // Create and save the new image entity
         CartooniseFactory cartooniseFactory = (CartooniseFactory) imageFactorySelector.getFactory(ImageOperationType.CARTOONISE);
-        ImageNewEntity processedImage = cartooniseFactory.create(imageId, currentEntity.getUserId(), 1, processedFileName, null);
+        ImageNewEntity processedImage = cartooniseFactory.create(imageId, currentEntity.getUserId(), nextVersion, baseImageUrl, null);
 
 
         return imageNewRepository.save(processedImage);

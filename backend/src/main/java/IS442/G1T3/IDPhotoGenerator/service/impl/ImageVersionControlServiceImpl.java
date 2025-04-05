@@ -25,6 +25,16 @@ public class ImageVersionControlServiceImpl implements ImageVersionControlServic
     }
 
     @Override
+    public void initialisePhotoSession(UUID imageId) {
+        PhotoSession photoSession = PhotoSession.builder()
+                .imageId(imageId)
+                .undoStack("1")
+                .redoStack("")
+                .build();
+        photoSessionRepository.save(photoSession);
+    }
+
+    @Override
     public ImageNewEntity getLatestImageVersion(UUID imageId) {
         // First, check if we have a photo session for this image
         PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);

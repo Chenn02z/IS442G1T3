@@ -2,6 +2,8 @@ package IS442.G1T3.IDPhotoGenerator.controller;
 
 import java.util.UUID;
 
+import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +19,7 @@ import IS442.G1T3.IDPhotoGenerator.service.complianceChecker.ComplianceService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/compliance")
 @Tag(name = "Compliance Check", description = "APIs for checking photo compliance with ID/passport standards")
@@ -27,10 +30,16 @@ public class ComplianceCheckController {
 
     private final ComplianceService complianceService;
     private final ImageNewRepository imageRepository;
+    private final ImageVersionControlService imageVersionControlService;
 
-    public ComplianceCheckController(ComplianceService complianceService, ImageNewRepository imageRepository) {
+    public ComplianceCheckController(
+        ComplianceService complianceService,
+        ImageNewRepository imageRepository,
+        ImageVersionControlService imageVersionControlService)
+    {
         this.complianceService = complianceService;
         this.imageRepository = imageRepository;
+        this.imageVersionControlService = imageVersionControlService;
     }
 
     @PostMapping("/check")
@@ -42,10 +51,11 @@ public class ComplianceCheckController {
             @RequestParam(value = "countryCode", required = false) String countryCode) {
 
         // Find the image by ID
-        ImageNewEntity image = imageRepository.findLatestRowByImageId(imageId);
+        ImageNewEntity image = imageVersionControlService.getLatestImageVersion(imageId);
         if (image == null) {
             return ResponseEntity.notFound().build();
         }
+        log.info("Checking photo compliance for image with ID {} of Version: {}", imageId, image.getVersion());
 
         // Use the defaultCountryCode if countryCode is not provided
         if (countryCode == null || countryCode.isEmpty()) {

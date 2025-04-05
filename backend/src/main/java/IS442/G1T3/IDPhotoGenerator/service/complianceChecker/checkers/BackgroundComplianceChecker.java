@@ -53,9 +53,13 @@ public class BackgroundComplianceChecker implements ComplianceChecker {
             Color topLeft = new Color(bufferedImage.getRGB(0, 0));
             Color topRight = new Color(bufferedImage.getRGB(width - 1, 0));
 
+            // Check mid-points at left and right lengths
+            Color midLeft = new Color(bufferedImage.getRGB(0, height/2));
+            Color midRight = new Color(bufferedImage.getRGB(width - 1, height/2));
+
             // Define your own threshold for "white/off-white":
             // For example, each channel >= 220 => near white
-            if (!isWhiteish(topLeft) || !isWhiteish(topRight)) {
+            if (!isWhiteish(topLeft) || !isWhiteish(topRight) || !isWhiteish(midLeft) || !isWhiteish(midRight)) {
                 throw new RuntimeException("Background must be plain white/off-white and free of patterns.");
             }
         } catch (IOException e) {

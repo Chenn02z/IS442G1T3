@@ -88,7 +88,31 @@ public class ImageResizeServiceImpl implements ImageResizeService {
                     x = Math.max(0, x);
                     y = Math.max(0, y);
 
-                    resizedImage = tempImage.getSubimage(x, y, targetWidth, targetHeight);
+                    // Add bounds checking to ensure the subimage dimensions stay within the original image
+                    int actualWidth = Math.min(targetWidth, scaledWidth - x);
+                    int actualHeight = Math.min(targetHeight, scaledHeight - y);
+
+                    if (actualWidth <= 0 || actualHeight <= 0) {
+                        // Fallback if dimensions are invalid
+                        resizedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+                        g2d = resizedImage.createGraphics();
+                        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                        g2d.drawImage(originalBufferedImage, 0, 0, targetWidth, targetHeight, null);
+                        g2d.dispose();
+                    } else {
+                        // Only attempt to create a subimage if dimensions are valid
+                        resizedImage = tempImage.getSubimage(x, y, actualWidth, actualHeight);
+
+                        // If the actual dimensions differ from target, create a new image with target dimensions
+                        if (actualWidth != targetWidth || actualHeight != targetHeight) {
+                            BufferedImage finalImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+                            g2d = finalImage.createGraphics();
+                            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                            g2d.drawImage(resizedImage, 0, 0, targetWidth, targetHeight, null);
+                            g2d.dispose();
+                            resizedImage = finalImage;
+                        }
+                    }
                 } else {
                     double ratio = Math.min(widthRatio, heightRatio);
                     int newWidth = (int) (originalWidth * ratio);

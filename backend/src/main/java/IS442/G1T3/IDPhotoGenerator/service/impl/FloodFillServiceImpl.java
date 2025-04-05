@@ -130,7 +130,7 @@ public class FloodFillServiceImpl implements FloodFillService {
 
             // Create and save the new image entity
             FloodFillFactory floodFillFactory = (FloodFillFactory) imageFactorySelector.getFactory(ImageOperationType.FLOODFILL);
-            ImageNewEntity processedEntity = floodFillFactory.create(imageId, currentEntity.getUserId(), nextVersion, processedFileName, null);
+            ImageNewEntity processedEntity = floodFillFactory.create(imageId, currentEntity.getUserId(), nextVersion, baseImageUrl, null);
 
 
             return imageNewRepository.save(processedEntity);

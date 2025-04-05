@@ -6,6 +6,11 @@ import java.util.UUID;
 
 public interface ImageVersionControlService {
     /**
+     * Create phot0 session for an image with version == 0
+     */
+    void initialisePhotoSession(UUID imageId);
+
+    /**
      * Retrieves the image entity of the latest version
      */
     ImageNewEntity getLatestImageVersion(UUID imageId);

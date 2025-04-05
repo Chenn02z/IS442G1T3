@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FloodFillFactory implements ImageEntityFactory<Void> {
     @Override
-    public ImageNewEntity create(UUID imageId, UUID userId, int version, String processedFileName, Void params) {
+    public ImageNewEntity create(UUID imageId, UUID userId, int version, String baseImageUrl, Void params) {
         String fileName = imageId.toString() + "_" + version + ".png";
 
         return ImageNewEntity.builder()
@@ -16,8 +16,8 @@ public class FloodFillFactory implements ImageEntityFactory<Void> {
                 .userId(userId)
                 .version(version)
                 .label("Flood Fill")
-                .baseImageUrl(processedFileName)
-                .currentImageUrl(processedFileName)
+                .baseImageUrl(baseImageUrl)
+                .currentImageUrl(fileName)
                 .build();
     }
 }
