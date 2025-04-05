@@ -63,6 +63,7 @@ const CropImage: React.FC<CropImageProps> = ({
       setIsImageLoaded(false);
       setServerCropData(null);
       setCropBoxData(null);
+
     }
   }, [imageUrl]);
 
@@ -451,89 +452,90 @@ const CropImage: React.FC<CropImageProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="relative inline-block">
-        {cropImageUrl && (
-          <img
-            src={
-              cropImageUrl.includes(CONFIG.API_BASE_URL)
-                ? cropImageUrl
-                : getFullImageUrl(cropImageUrl)
-            }
-            ref={imageRef}
-            alt="Crop Preview"
-            className="max-w-full max-h-[70vh] object-contain"
-            onLoad={handleImageLoad}
-          />
-        )}
-
-        {isCropping &&
-          cropBoxData &&
-          displayedSize.width > 0 &&
-          displayedSize.height > 0 && (
-            <Rnd
-              size={{ width: cropBoxData.width, height: cropBoxData.height }}
-              position={{ x: cropBoxData.x, y: cropBoxData.y }}
-              bounds="parent"
-              lockAspectRatio={aspectRatio || false}
-              minWidth={50}
-              minHeight={50}
-              onDrag={(e, d) => {
-                // Update position in real-time during drag
-                setCropBoxData((prev) =>
-                  prev ? { ...prev, x: d.x, y: d.y } : prev
-                );
-              }}
-              onDragStop={(e, d) =>
-                setCropBoxData((prev) =>
-                  prev
-                    ? clampBoxToDisplay(
-                        { ...prev, x: d.x, y: d.y },
-                        displayedSize.width,
-                        displayedSize.height
-                      )
-                    : prev
-                )
+      <div className="relative w-full aspect-square">
+        <div className="relative w-full h-full">
+          {cropImageUrl && (
+            <img
+              src={
+                cropImageUrl.includes(CONFIG.API_BASE_URL)
+                  ? cropImageUrl
+                  : getFullImageUrl(cropImageUrl)
               }
-              onResize={(e, direction, ref, delta, position) => {
-                // Update size in real-time during resize
-                const newWidth = parseFloat(ref.style.width);
-                const newHeight = parseFloat(ref.style.height);
-                setCropBoxData((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        width: newWidth,
-                        height: newHeight,
-                        x: position.x,
-                        y: position.y,
-                      }
-                    : prev
-                );
-              }}
-              onResizeStop={(e, direction, ref, delta, position) => {
-                const newWidth = parseFloat(ref.style.width);
-                const newHeight = parseFloat(ref.style.height);
-                const clamped = clampBoxToDisplay(
-                  {
-                    width: newWidth,
-                    height: newHeight,
-                    x: position.x,
-                    y: position.y,
-                  },
-                  displayedSize.width,
-                  displayedSize.height
-                );
-                setCropBoxData(clamped);
-              }}
-              style={{
-                position: "absolute",
-                border: "2px dashed red",
-                background: "rgba(255, 255, 255, 0.1)",
-                cursor: "move",
-                zIndex: 10,
-              }}
+              ref={imageRef}
+              alt="Crop Preview"
+              className="w-full h-full object-contain rounded-lg"
+              style={{ maxHeight: "80vh" }}
+              onLoad={handleImageLoad}
             />
           )}
+
+          {isCropping &&
+            cropBoxData &&
+            displayedSize.width > 0 &&
+            displayedSize.height > 0 && (
+              <Rnd
+                size={{ width: cropBoxData.width, height: cropBoxData.height }}
+                position={{ x: cropBoxData.x, y: cropBoxData.y }}
+                bounds="parent"
+                lockAspectRatio={aspectRatio || false}
+                minWidth={50}
+                minHeight={50}
+                onDrag={(e, d) => {
+                  setCropBoxData((prev) =>
+                    prev ? { ...prev, x: d.x, y: d.y } : prev
+                  );
+                }}
+                onDragStop={(e, d) =>
+                  setCropBoxData((prev) =>
+                    prev
+                      ? clampBoxToDisplay(
+                          { ...prev, x: d.x, y: d.y },
+                          displayedSize.width,
+                          displayedSize.height
+                        )
+                      : prev
+                  )
+                }
+                onResize={(e, direction, ref, delta, position) => {
+                  const newWidth = parseFloat(ref.style.width);
+                  const newHeight = parseFloat(ref.style.height);
+                  setCropBoxData((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          width: newWidth,
+                          height: newHeight,
+                          x: position.x,
+                          y: position.y,
+                        }
+                      : prev
+                  );
+                }}
+                onResizeStop={(e, direction, ref, delta, position) => {
+                  const newWidth = parseFloat(ref.style.width);
+                  const newHeight = parseFloat(ref.style.height);
+                  const clamped = clampBoxToDisplay(
+                    {
+                      width: newWidth,
+                      height: newHeight,
+                      x: position.x,
+                      y: position.y,
+                    },
+                    displayedSize.width,
+                    displayedSize.height
+                  );
+                  setCropBoxData(clamped);
+                }}
+                style={{
+                  position: "absolute",
+                  border: "2px dashed red",
+                  background: "rgba(255, 255, 255, 0.1)",
+                  cursor: "move",
+                  zIndex: 10,
+                }}
+              />
+            )}
+        </div>
       </div>
 
       {isCropping && (

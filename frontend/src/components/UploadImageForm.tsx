@@ -83,12 +83,12 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
           <div className="w-full">
             {isCropping ? (
               <>
-                <div className="relative max-w-full overflow-hidden">
+                <div className="w-full">
                   <CropImage
                     imageUrl={selectedImageUrl}
                     aspectRatio={selectedAspectRatio}
                     imageId={selectedImageId}
-                    isCropping={true} // Always true when this component is rendered
+                    isCropping={true}
                     onCropComplete={() => setIsCropping(false)}
                   />
                 </div>
