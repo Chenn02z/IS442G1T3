@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,13 +23,11 @@ import IS442.G1T3.IDPhotoGenerator.service.PhotoSessionService;
 
 @RestController
 @RequestMapping("/api/statemanagement")
+@RequiredArgsConstructor
 public class PhotoSessionController {
 
     private final PhotoSessionService photoSessionService;
 
-    public PhotoSessionController(PhotoSessionService photoSessionService) {
-        this.photoSessionService = photoSessionService;
-    }
 
     @PostMapping("/undo")
     public ResponseEntity<?> undo(@RequestBody Map<String, String> request) {

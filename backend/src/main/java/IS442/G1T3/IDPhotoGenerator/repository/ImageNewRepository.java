@@ -17,6 +17,9 @@ public interface ImageNewRepository extends JpaRepository<ImageNewEntity, String
     // Find a single image by currentImageUrl (if needed)
     ImageNewEntity findByCurrentImageUrl(String currentImageUrl);
 
+    @Query("SELECT i FROM ImageNewEntity i WHERE i.currentImageUrl LIKE CONCAT(:currentImageUrl, '%')")
+    ImageNewEntity findByCurrentImageUrlWithoutFormat(@Param("currentImageUrl") String currentImageUrl);
+
     ImageNewEntity findByBaseImageUrl(String baseImageUrl);
 
     // Find all images by userId

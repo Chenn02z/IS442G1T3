@@ -1,17 +1,8 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
-import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
-import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
-import IS442.G1T3.IDPhotoGenerator.service.BackgroundRemovalService;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-// Use javax.imageio instead of jakarta.imageio
-import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -23,6 +14,21 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.imageio.ImageIO;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import IS442.G1T3.IDPhotoGenerator.factory.BackgroundRemovalFactory;
+import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
+import IS442.G1T3.IDPhotoGenerator.factory.OriginalImageFactory;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
+import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
+import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
+import IS442.G1T3.IDPhotoGenerator.service.BackgroundRemovalService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -37,14 +43,17 @@ public class BackgroundRemovalServiceImpl implements BackgroundRemovalService {
 
     private final ImageNewRepository imageNewRepository;
     private final PhotoSessionRepository photoSessionRepository;
+    private final ImageFactorySelector factorySelector;
 
     @Value("${image.storage.path}")
     private String storagePath;
 
     public BackgroundRemovalServiceImpl(ImageNewRepository imageNewRepository,
-                                        PhotoSessionRepository photoSessionRepository) {
+                                      PhotoSessionRepository photoSessionRepository,
+                                      ImageFactorySelector factorySelector) {
         this.imageNewRepository = imageNewRepository;
         this.photoSessionRepository = photoSessionRepository;
+        this.factorySelector = factorySelector;
     }
 
     @Override
@@ -100,27 +109,18 @@ public class BackgroundRemovalServiceImpl implements BackgroundRemovalService {
             }
 
             // Create and save the original image entity
-            ImageNewEntity originalImageEntity = ImageNewEntity.builder()
-                    .imageId(imageId)
-                    .userId(userId)
-                    .version(1)
-                    .label("Original")
-                    .baseImageUrl(baseFileName)
-                    .currentImageUrl(baseFileName)
-                    .build();
 
+            OriginalImageFactory originalFactory = (OriginalImageFactory) factorySelector.getFactory(ImageOperationType.ORIGINAL);
+            ImageNewEntity originalImageEntity = originalFactory.create(imageId, userId, 1, baseFileName, null);
+
+                    
             log.info("Saving original image entity to database");
             imageNewRepository.save(originalImageEntity);
 
             // Create and save the processed image entity
-            ImageNewEntity processedImageEntity = ImageNewEntity.builder()
-                    .imageId(imageId)
-                    .userId(userId)
-                    .version(2)
-                    .label("Background Removal")
-                    .baseImageUrl(baseFileName)
-                    .currentImageUrl(processedFileName)
-                    .build();
+            BackgroundRemovalFactory bgFactory = (BackgroundRemovalFactory) factorySelector.getFactory(ImageOperationType.BACKGROUND_REMOVAL);
+            ImageNewEntity processedImageEntity = bgFactory.create(imageId, userId, 2, baseFileName, null);
+
 
             log.info("Saving processed image entity to database");
             ImageNewEntity savedEntity = imageNewRepository.save(processedImageEntity);

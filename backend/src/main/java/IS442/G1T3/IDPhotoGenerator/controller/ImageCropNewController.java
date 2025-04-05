@@ -2,6 +2,7 @@ package IS442.G1T3.IDPhotoGenerator.controller;
 
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.service.ImageCropNewService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,13 +12,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/images")
+@RequiredArgsConstructor
 public class ImageCropNewController {
 
+    // Use interface to adhere to Dependency Inversion Principle
+    // Use final to prevent bugs
     private final ImageCropNewService imageCropNewService;
 
-    public ImageCropNewController(ImageCropNewService imageCropNewService) {
-        this.imageCropNewService = imageCropNewService;
-    }
 
     @GetMapping("/{imageId}/edit")
     public ResponseEntity<Map<String, Object>> getImageForEditing(@PathVariable UUID imageId) {

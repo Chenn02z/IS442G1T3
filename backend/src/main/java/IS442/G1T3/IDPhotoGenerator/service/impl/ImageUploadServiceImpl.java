@@ -2,6 +2,7 @@ package IS442.G1T3.IDPhotoGenerator.service.impl;
 
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.FileStorageService;
@@ -10,7 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
+import IS442.G1T3.IDPhotoGenerator.factory.OriginalImageFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +26,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
     private final FileStorageService fileStorageService;
     private final ImageNewRepository imageNewRepository;
     private final PhotoSessionRepository photoSessionRepository;
+    private final ImageFactorySelector factorySelector;
 
     @Value("${image.storage.path}")
     private String storagePath;
@@ -31,10 +34,13 @@ public class ImageUploadServiceImpl implements ImageUploadService {
     public ImageUploadServiceImpl(
             FileStorageService fileStorageService,
             ImageNewRepository imageNewRepository,
-            PhotoSessionRepository photoSessionRepository) {
+            PhotoSessionRepository photoSessionRepository,
+            ImageFactorySelector factorySelector
+    ) {
         this.fileStorageService = fileStorageService;
         this.imageNewRepository = imageNewRepository;
         this.photoSessionRepository = photoSessionRepository;
+        this.factorySelector = factorySelector;
     }
 
     @Override
@@ -52,20 +58,18 @@ public class ImageUploadServiceImpl implements ImageUploadService {
         log.info("Saving Image to: " + savedFilePath);
 
         // Create and save the image entity
-        ImageNewEntity imageEntity = ImageNewEntity.builder()
-                .imageId(imageId)
-                .userId(userId)
-                .version(1)
-                .label("Original")
-                .baseImageUrl(fileName)
-                .currentImageUrl(fileName)
-                .build();
+        OriginalImageFactory originalFactory = (OriginalImageFactory) factorySelector.getFactory(ImageOperationType.ORIGINAL);
+        ImageNewEntity imageEntity = originalFactory.create(imageId, userId, 1, fileName, null);
+
 
         // Create and save photo session with initial version tracking
-        PhotoSession photoSession = new PhotoSession();
-        photoSession.setImageId(imageId);
-        photoSession.setUndoStack("1");  // Start with version 1
-        photoSession.setRedoStack("");
+
+        // Make use of Builder pattern for cleaner code
+        PhotoSession photoSession = PhotoSession.builder()
+                .imageId(imageId)
+                .undoStack("1")
+                .redoStack("")
+                .build();
         photoSessionRepository.save(photoSession);
 
         // Save and return the image entity

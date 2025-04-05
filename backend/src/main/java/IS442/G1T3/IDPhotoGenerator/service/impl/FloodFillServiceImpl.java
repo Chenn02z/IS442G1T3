@@ -20,7 +20,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import IS442.G1T3.IDPhotoGenerator.factory.CartooniseFactory;
+import IS442.G1T3.IDPhotoGenerator.factory.FloodFillFactory;
+import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.FloodFillService;
@@ -35,15 +40,18 @@ public class FloodFillServiceImpl implements FloodFillService {
     private final ImageNewRepository imageNewRepository;
     private final ImageVersionControlService imageVersionControlService;
     private final boolean isOpenCVAvailable;
+    private final ImageFactorySelector imageFactorySelector;
 
     @Value("${image.storage.path}")
     private String storagePath;
 
     public FloodFillServiceImpl(
-            ImageNewRepository imageNewRepository,
-            PhotoSessionRepository photoSessionRepository,
-            ImageVersionControlService imageVersionControlService) {
+        ImageNewRepository imageNewRepository,
+        ImageVersionControlService imageVersionControlService,
+        ImageFactorySelector imageFactorySelector
+    ) {
         this.imageNewRepository = imageNewRepository;
+        this.imageFactorySelector = imageFactorySelector;
         this.imageVersionControlService = imageVersionControlService;
         this.isOpenCVAvailable = !"true".equals(System.getProperty("opencv.unavailable"));
         log.info("FloodFillServiceImpl initialized with OpenCV available: {}", isOpenCVAvailable);
@@ -121,14 +129,9 @@ public class FloodFillServiceImpl implements FloodFillService {
             String baseImageUrl = imageVersionControlService.getBaseImageUrl(imageId, currentEntity);
 
             // Create and save the new image entity
-            ImageNewEntity processedEntity = ImageNewEntity.builder()
-                    .imageId(imageId)
-                    .userId(currentEntity.getUserId())
-                    .version(nextVersion)
-                    .label("Flood Fill")
-                    .baseImageUrl(baseImageUrl)
-                    .currentImageUrl(processedFileName)
-                    .build();
+            FloodFillFactory floodFillFactory = (FloodFillFactory) imageFactorySelector.getFactory(ImageOperationType.FLOODFILL);
+            ImageNewEntity processedEntity = floodFillFactory.create(imageId, currentEntity.getUserId(), nextVersion, processedFileName, null);
+
 
             return imageNewRepository.save(processedEntity);
         } catch (JsonProcessingException e) {

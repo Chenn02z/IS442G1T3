@@ -8,15 +8,20 @@ import java.util.UUID;
 
 import javax.imageio.ImageIO;
 
-import IS442.G1T3.IDPhotoGenerator.service.FileStorageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import IS442.G1T3.IDPhotoGenerator.dto.CropParams;
+import IS442.G1T3.IDPhotoGenerator.factory.CropImageFactory;
+import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.service.ImageCropNewService;
-import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
 import lombok.extern.slf4j.Slf4j;
+
+import IS442.G1T3.IDPhotoGenerator.service.FileStorageService;
+import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
 
 @Slf4j
 @Service
@@ -28,14 +33,18 @@ public class ImageCropNewServiceImpl implements ImageCropNewService {
     private final ImageNewRepository imageNewRepository;
     private final FileStorageService fileStorageService;
     private final ImageVersionControlService imageVersionControlService;
+    private final ImageFactorySelector factorySelector;
 
     public ImageCropNewServiceImpl(
-            ImageNewRepository imageNewRepository,
-            FileStorageService fileStorageService,
-            ImageVersionControlService imageVersionControlService) {
+        ImageNewRepository imageNewRepository,
+        FileStorageService fileStorageService,
+        ImageVersionControlService imageVersionControlService,
+        ImageFactorySelector factorySelector
+    ) {
         this.imageNewRepository = imageNewRepository;
         this.fileStorageService = fileStorageService;
         this.imageVersionControlService = imageVersionControlService;
+        this.factorySelector = factorySelector;
     }
 
     @Override
@@ -67,15 +76,6 @@ public class ImageCropNewServiceImpl implements ImageCropNewService {
                 currentEntity.getImageId(), currentEntity.getVersion(),
                 currentEntity.getCurrentImageUrl(), currentEntity.getBaseImageUrl(), currentEntity.getLabel());
 
-//        // Find the latest entity to determine the next version number
-//        ImageNewEntity latestEntity = imageNewRepository.findLatestRowByImageId(imageId);
-//        if (latestEntity == null) {
-//            latestEntity = currentEntity; // Use current if no latest found
-//        }
-//
-//        log.info("Latest entity for version calculation: id={}, version={}",
-//                latestEntity.getImageId(), latestEntity.getVersion());
-
         String baseImageUrl = imageVersionControlService.getBaseImageUrl(imageId, currentEntity);
         String sourceImageUrl = determineSourceImageUrl(currentEntity);
 
@@ -86,14 +86,20 @@ public class ImageCropNewServiceImpl implements ImageCropNewService {
         int newVersion = imageVersionControlService.getNextVersion(imageId);
 
         // Create a new entity for the cropped version using builder pattern
-        ImageNewEntity newEntity = ImageNewEntity.builder()
-                .imageId(imageId)
-                .version(newVersion)
-                .baseImageUrl(baseImageUrl)
-                .userId(currentEntity.getUserId())
-                .label("Crop")
-                .cropData(String.format("%d,%d,%d,%d", x, y, width, height))
+        CropParams cropParams = CropParams.builder()
+                .x(x)
+                .y(y)
+                .width(width)
+                .height(height)
                 .build();
+
+        CropImageFactory cropFactory = (CropImageFactory) factorySelector.getFactory(ImageOperationType.CROP);
+        ImageNewEntity newEntity = cropFactory.create(
+                imageId,
+                currentEntity.getUserId(),
+                currentEntity.getVersion() + 1,
+                baseImageUrl,
+                cropParams);
 
         // Create the actual cropped image file
         try {

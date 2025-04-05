@@ -1,8 +1,11 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.service.BackgroundRemovalService;
+import IS442.G1T3.IDPhotoGenerator.service.CartoonisationService;
 import IS442.G1T3.IDPhotoGenerator.service.impl.BackgroundRemovalServiceImpl;
 import IS442.G1T3.IDPhotoGenerator.service.impl.CartooniseServiceImpl;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,14 +16,18 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/background-removal")
 public class BackgroundRemovalController {
 
+    // Use interface to adhere to Dependency Inversion Principle
+    // Use final for more defensive code
+    private final BackgroundRemovalService backgroundRemovalService;
+
+
+    // Use interface to adhere to Dependency Inversion Principle
     @Autowired
-    private BackgroundRemovalServiceImpl backgroundRemovalServiceImpl;
-    
-    @Autowired
-    private CartooniseServiceImpl cartooniseServiceImpl;
+    private CartoonisationService cartoonisationService;
 
     @PostMapping("/remove")
     public ResponseEntity<ImageNewEntity> removeBackground(
@@ -45,7 +52,7 @@ public class BackgroundRemovalController {
                 return ResponseEntity.badRequest().build();
             }
             
-            ImageNewEntity processedImage = backgroundRemovalServiceImpl.removeBackground(
+            ImageNewEntity processedImage = backgroundRemovalService.removeBackground(
                 imageFile, 
                 effectiveUserId, 
                 backgroundOption
@@ -64,7 +71,7 @@ public class BackgroundRemovalController {
     public ResponseEntity<ImageNewEntity> cartooniseImage(@PathVariable UUID imageId) {
         try {
             log.info("Received cartoonise request for imageId: {}", imageId);
-            ImageNewEntity processedImage = cartooniseServiceImpl.cartooniseImage(imageId);
+            ImageNewEntity processedImage = cartoonisationService.cartooniseImage(imageId);
             return ResponseEntity.ok(processedImage);
         } catch (Exception e) {
             log.error("Error processing image: {}", e.getMessage(), e);

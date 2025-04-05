@@ -20,7 +20,11 @@ import org.opencv.objdetect.CascadeClassifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import IS442.G1T3.IDPhotoGenerator.factory.CartooniseFactory;
+import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.service.CartoonisationService;
 import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
@@ -32,6 +36,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
     private final ImageNewRepository imageNewRepository;
     private final ImageVersionControlService imageVersionControlService;
+    private final ImageFactorySelector imageFactorySelector; // Inject the selector
 
     @Value("${image.storage.path}")
     private String storagePath;
@@ -46,9 +51,13 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
     public CartooniseServiceImpl(
             ImageNewRepository imageNewRepository,
-            ImageVersionControlService imageVersionControlService) {
+            ImageVersionControlService imageVersionControlService,
+            ImageFactorySelector imageFactorySelector
+    ) {
         this.imageNewRepository = imageNewRepository;
         this.imageVersionControlService = imageVersionControlService;
+        this.imageFactorySelector = imageFactorySelector;
+
     }
 
     @Override
@@ -111,18 +120,13 @@ public class CartooniseServiceImpl implements CartoonisationService {
         // ------
         // Step 5
         // ------
-        // Get base image URL from version control service 
+        // Get base image URL from version control service
         String baseImageUrl = imageVersionControlService.getBaseImageUrl(imageId, currentEntity);
 
         // Create and save the new image entity
-        ImageNewEntity processedImage = ImageNewEntity.builder()
-                .imageId(imageId)
-                .userId(currentEntity.getUserId())
-                .version(nextVersion)
-                .label("Cartoonise")
-                .baseImageUrl(baseImageUrl)
-                .currentImageUrl(processedFileName)
-                .build();
+        CartooniseFactory cartooniseFactory = (CartooniseFactory) imageFactorySelector.getFactory(ImageOperationType.CARTOONISE);
+        ImageNewEntity processedImage = cartooniseFactory.create(imageId, latestImage.getUserId(), 1, processedFileName, null);
+
 
         return imageNewRepository.save(processedImage);
     }

@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+import IS442.G1T3.IDPhotoGenerator.service.ImageUploadService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -33,16 +35,16 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/images")
 @Validated
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class ImageUploadController {
 
     @Value("${image.storage.path}")
     private String storagePath;
 
-    private final ImageUploadServiceImpl imageUploadServiceImpl;
+    // Use interface to adhere to Dependency Inversion Principle
+    // Use final to prevent bugs
+    private final ImageUploadService imageUploadService;
 
-    public ImageUploadController(ImageUploadServiceImpl imageUploadServiceImpl) {
-        this.imageUploadServiceImpl = imageUploadServiceImpl;
-    }
 
     private static final String[] ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png"};
 
@@ -75,7 +77,7 @@ public class ImageUploadController {
         try {
             validateImageFile(imageFile);
 
-            ImageNewEntity imageEntity = imageUploadServiceImpl.processImage(imageFile, userId);
+            ImageNewEntity imageEntity = imageUploadService.processImage(imageFile, userId);
             ImageUploadResponse response = new ImageUploadResponse(
                 imageEntity.getImageId(), 
                 imageEntity.getCurrentImageUrl(), 
