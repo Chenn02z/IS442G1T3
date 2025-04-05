@@ -1,10 +1,9 @@
 package IS442.G1T3.IDPhotoGenerator.service;
 
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-import org.springframework.core.io.Resource;
-
 import java.util.UUID;
+
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 
 public interface ImageCropNewService {
 

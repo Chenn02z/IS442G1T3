@@ -21,6 +21,7 @@ interface UploadContextProps {
   getFullImageUrl: (url: string) => string;
   restoreCurrentImageUrl: (imageId: string) => Promise<string | null>;
   getBaseImageUrlForCropping: (imageId: string) => Promise<string | null>;
+  getCropAspectRatio: () => Promise<number | null>;
 }
 
 const UploadContext = createContext<UploadContextProps | undefined>(undefined);
@@ -220,6 +221,27 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
     ]
   );
 
+  const getCropAspectRatio = useCallback(async () => {
+    if (!selectedImageId) return null;
+    
+    try {
+      const response = await fetch(`${CONFIG.API_BASE_URL}/api/images/${selectedImageId}/edit`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === "success" && data.data && data.data.crop) {
+          const { width, height } = data.data.crop;
+          if (width > 0 && height > 0) {
+            return width / height;
+          }
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting crop aspect ratio:", error);
+      return null;
+    }
+  }, [selectedImageId]);
+
   const value = {
     uploadedFile,
     setUploadedFile,
@@ -239,6 +261,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
     getFullImageUrl,
     restoreCurrentImageUrl,
     getBaseImageUrlForCropping,
+    getCropAspectRatio,
   };
 
   return (

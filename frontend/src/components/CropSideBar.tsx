@@ -20,12 +20,11 @@ const aspectRatios = [
   { label: "1:1", value: "1-1", aspectRatio: 1, boxClass: "w-7 h-7" },
   { label: "16:9", value: "16-9", aspectRatio: 16 / 9, boxClass: "w-16 h-9" },
   { label: "9:16", value: "9-16", aspectRatio: 9 / 16, boxClass: "w-3 h-8" },
-  { label: "5:4", value: "5-4", aspectRatio: 5 / 4, boxClass: "w-10 h-8" },
-  { label: "4:5", value: "4-5", aspectRatio: 4 / 5, boxClass: "w-6 h-9" },
   { label: "4:3", value: "4-3", aspectRatio: 4 / 3, boxClass: "w-12 h-9" },
   { label: "3:4", value: "3-4", aspectRatio: 3 / 4, boxClass: "w-9 h-12" },
-  { label: "3:2", value: "3-2", aspectRatio: 3 / 2, boxClass: "w-12 h-8" },
-  // Singapore passport size - 35mm x 45mm (width x height)
+  // US Passport - 2x2 inches (1:1 aspect ratio)
+  { label: "US Passport", value: "us-passport", aspectRatio: 1, boxClass: "w-7 h-7" },
+  // Singapore passport - 35mm x 45mm (7:9 aspect ratio)
   { label: "SG Passport", value: "sg-passport", aspectRatio: 35/45, boxClass: "w-9 h-11" },
   { label: "Custom", value: "custom", aspectRatio: null, boxClass: "" },
 ];

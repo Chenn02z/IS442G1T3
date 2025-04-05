@@ -1,15 +1,14 @@
 package IS442.G1T3.IDPhotoGenerator.repository;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.awt.*;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 
 @Repository
 public interface ImageNewRepository extends JpaRepository<ImageNewEntity, String> {

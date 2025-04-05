@@ -1,24 +1,25 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
+import javax.imageio.ImageIO;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.ImageCropNewService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -86,7 +87,7 @@ public class ImageCropNewServiceImpl implements ImageCropNewService {
                 }
                 
                 // Try finding by imageId and version
-                log.debug("Trying to find entity by imageId and version: {}, {}", imageId, Integer.parseInt(latestVersion));
+                log.debug("Trying to find entity by imageId and version: {}, {}", imageId, latestVersion);
                 try {
                     imageEntity = imageNewRepository.findByImageIdAndVersion(imageId, Integer.parseInt(latestVersion));
                     

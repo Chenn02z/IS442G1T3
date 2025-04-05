@@ -1,79 +1,119 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useUpload } from "@/context/UploadContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { CONFIG } from "../../config";
+import PhotoSizeSelector, { idPhotoPresets } from './PhotoSizeSelector';
+import DownloadOptionsModal from "./DownloadOptionsModal";
 
-interface DownloadButtonProps {
-  imageUrl: string;
-  imageId: string;
-}
-
-const DownloadButton: React.FC<DownloadButtonProps> = ({
-  imageUrl,
-  imageId,
-}) => {
-  const { getFullImageUrl, restoreCurrentImageUrl, refreshImages } =
-    useUpload();
-  const [downloading, setDownloading] = useState(false);
+const DownloadButton: React.FC = () => {
+  const { selectedImageId, getCropAspectRatio } = useUpload();
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [selectedSize, setSelectedSize] = useState(idPhotoPresets[0]);
   const { toast } = useToast();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [originalAspectRatio, setOriginalAspectRatio] = useState<number | null>(null);
 
-  const handleDownload = async () => {
-    if (!imageUrl || !imageId) return;
-
-    setDownloading(true);
+  const downloadImage = async () => {
+    if (!selectedImageId) return;
+    
+    setIsDownloading(true);
     try {
-      // First ensure we have the latest image state
-      await restoreCurrentImageUrl(imageId);
-
-      // Refresh the image list to show the latest state
-      // Add await to ensure the refresh completes but don't trigger an infinite loop
-      refreshImages();
-      // Use a simple timeout instead of modifying state in a promise
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Then download using the API endpoint
-      const response = await fetch(
-        `${CONFIG.API_BASE_URL}/api/images/download/${imageId}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch image");
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `cropped-image-${Date.now()}.png`;
+      let downloadUrl = `${CONFIG.API_BASE_URL}/api/images/download/${selectedImageId}`;
+      
+      // If specific dimensions are selected
+      if (selectedSize.physicalWidth && selectedSize.physicalHeight) {
+        downloadUrl = `${CONFIG.API_BASE_URL}/api/images/download/${selectedImageId}/sized?width=${selectedSize.physicalWidth}&height=${selectedSize.physicalHeight}&dpi=${selectedSize.dpi}&unit=${selectedSize.unit}`;
+      }
+      
+      // Create a link and trigger the download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', '');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
 
       toast({
         title: "Image downloaded successfully",
       });
     } catch (error) {
-      console.error("Error downloading image:", error);
+      console.error('Error downloading image:', error);
       toast({
         title: "Error downloading image",
         description: "Please try again.",
         variant: "destructive",
       });
     } finally {
-      setDownloading(false);
+      setIsDownloading(false);
     }
   };
-
+  
+  // Fetch the aspect ratio when the component loads or selectedImageId changes
+  useEffect(() => {
+    const fetchAspectRatio = async () => {
+      if (selectedImageId) {
+        const ratio = await getCropAspectRatio();
+        setOriginalAspectRatio(ratio);
+      } else {
+        setOriginalAspectRatio(null);
+      }
+    };
+    
+    fetchAspectRatio();
+  }, [selectedImageId, getCropAspectRatio]);
+  
   return (
-    <Button
-      onClick={handleDownload}
-      disabled={downloading || !imageUrl || !imageId}
-      className="flex items-center gap-2"
-    >
-      <Download className="w-4 h-4" />
-      {downloading ? "Downloading..." : "Download"}
-    </Button>
+    <>
+      <Button 
+        variant="default" 
+        className="flex items-center gap-2"
+        onClick={() => setIsModalOpen(true)}
+        disabled={!selectedImageId}
+      >
+        <Download className="h-4 w-4" />
+        Download
+      </Button>
+      
+      <DownloadOptionsModal 
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        imageId={selectedImageId}
+        originalAspectRatio={originalAspectRatio}
+      />
+      
+      {selectedSize.physicalWidth && selectedSize.physicalHeight && (
+        <div className="text-xs text-gray-500 text-center">
+          This will download a {selectedSize.physicalWidth}{selectedSize.unit} × {selectedSize.physicalHeight}{selectedSize.unit} photo
+          at {selectedSize.dpi} DPI ({calculatePixels(selectedSize)} pixels)
+        </div>
+      )}
+    </>
   );
 };
+
+// Helper function to show pixel dimensions
+function calculatePixels(preset: any) {
+  if (!preset.physicalWidth || !preset.physicalHeight) return '';
+  
+  let pixelWidth, pixelHeight;
+  
+  if (preset.unit === 'mm') {
+    // Convert mm to inches (1 inch = 25.4 mm)
+    const widthInches = preset.physicalWidth / 25.4;
+    const heightInches = preset.physicalHeight / 25.4;
+    
+    // Calculate pixel dimensions
+    pixelWidth = Math.round(widthInches * preset.dpi);
+    pixelHeight = Math.round(heightInches * preset.dpi);
+  } else {
+    // Direct inch to pixel conversion
+    pixelWidth = preset.physicalWidth * preset.dpi;
+    pixelHeight = preset.physicalHeight * preset.dpi;
+  }
+  
+  return `${pixelWidth}×${pixelHeight}`;
+}
 
 export default DownloadButton;

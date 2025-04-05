@@ -96,10 +96,7 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
                     <History className="h-4 w-4" />
                     History
                   </Button>
-                  <DownloadButton
-                    imageUrl={croppedImageUrl || selectedImageUrl}
-                    imageId={selectedImageId}
-                  />
+                  <DownloadButton />
                 </div>
               </div>
             )}
