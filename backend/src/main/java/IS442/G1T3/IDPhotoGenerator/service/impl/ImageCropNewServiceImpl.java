@@ -14,8 +14,12 @@ import javax.imageio.ImageIO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import IS442.G1T3.IDPhotoGenerator.dto.CropParams;
+import IS442.G1T3.IDPhotoGenerator.factory.CropImageFactory;
+import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.ImageCropNewService;
@@ -30,11 +34,14 @@ public class ImageCropNewServiceImpl implements ImageCropNewService {
 
     private final ImageNewRepository imageNewRepository;
     private final PhotoSessionRepository photoSessionRepository;
+    private final ImageFactorySelector factorySelector;
 
     public ImageCropNewServiceImpl(ImageNewRepository imageNewRepository,
-                                  PhotoSessionRepository photoSessionRepository) {
+                                  PhotoSessionRepository photoSessionRepository,
+                                  ImageFactorySelector factorySelector) {
         this.imageNewRepository = imageNewRepository;
         this.photoSessionRepository = photoSessionRepository;
+        this.factorySelector = factorySelector;
     }
 
     @Override
@@ -190,11 +197,6 @@ public class ImageCropNewServiceImpl implements ImageCropNewService {
             .build();
         }
 
-        // Create a new entity for the cropped version
-        ImageNewEntity newEntity = new ImageNewEntity();
-        newEntity.setImageId(imageId);
-        newEntity.setVersion(latestEntity.getVersion() + 1);
-        
         // Choose the source image URL based on the current entity's label
         String sourceImageUrl;
         
@@ -231,13 +233,24 @@ public class ImageCropNewServiceImpl implements ImageCropNewService {
         log.info("Using sourceImageUrl for cropping: {}", sourceImageUrl);
         log.info("Preserving baseImageUrl for future reference: {}", baseImageUrl);
         
-        newEntity.setBaseImageUrl(baseImageUrl);
-        newEntity.setUserId(currentEntity.getUserId());
-        newEntity.setLabel("Crop");
         
         // Set the crop data
-        String cropData = String.format("%d,%d,%d,%d", x, y, width, height);
-        newEntity.setCropData(cropData);
+        // Use CropParams DTO to set crop data
+        CropParams cropParams = CropParams.builder()
+            .x(x)
+            .y(y)
+            .width(width)
+            .height(height)
+            .build();
+
+        CropImageFactory cropFactory = (CropImageFactory) factorySelector.getFactory(ImageOperationType.CROP);
+        ImageNewEntity newEntity = cropFactory.create(
+            imageId,
+            currentEntity.getUserId(),
+            latestEntity.getVersion() + 1,
+            baseImageUrl, 
+            cropParams);
+        
 
         // Create the actual cropped image file
         try {
