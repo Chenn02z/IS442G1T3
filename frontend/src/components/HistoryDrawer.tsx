@@ -14,7 +14,7 @@ import { StateManagementService } from '@/utils/StateManagementService';
 import { useUpload } from '@/context/UploadContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface HistoryDrawerProps {
   imageId: string | null;
@@ -361,6 +361,7 @@ export function HistoryDrawer({ imageId, open, onOpenChange }: HistoryDrawerProp
                 </>
               )}
             </div>
+            <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </div>
         <div className="px-4 py-2">

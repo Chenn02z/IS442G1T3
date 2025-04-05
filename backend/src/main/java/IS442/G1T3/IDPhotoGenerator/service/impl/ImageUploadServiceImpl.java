@@ -20,7 +20,7 @@ import java.util.UUID;
 @Service
 public class ImageUploadServiceImpl implements ImageUploadService {
 
-    private final FileStorageServiceImpl fileStorageServiceImpl;
+    private final FileStorageService fileStorageService;
     private final ImageNewRepository imageNewRepository;
     private final PhotoSessionRepository photoSessionRepository;
 
@@ -28,10 +28,10 @@ public class ImageUploadServiceImpl implements ImageUploadService {
     private String storagePath;
 
     public ImageUploadServiceImpl(
-            FileStorageServiceImpl fileStorageServiceImpl,
+            FileStorageService fileStorageService,
             ImageNewRepository imageNewRepository,
             PhotoSessionRepository photoSessionRepository) {
-        this.fileStorageServiceImpl = fileStorageServiceImpl;
+        this.fileStorageService = fileStorageService;
         this.imageNewRepository = imageNewRepository;
         this.photoSessionRepository = photoSessionRepository;
     }
@@ -39,7 +39,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
     @Override
     public ImageNewEntity processImage(MultipartFile imageFile, UUID userId) throws IOException {
         UUID imageId = UUID.randomUUID();
-        
+
         // Ensure storage directory exists
         Path uploadPath = Paths.get(storagePath);
         Files.createDirectories(uploadPath);
@@ -47,7 +47,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
         // Save the original image with version 1
         String fileExtension = ".png";  // Always save as PNG
         String fileName = imageId.toString() + "_1" + fileExtension;
-        String savedFilePath = fileStorageServiceImpl.saveOriginalImage(imageFile, imageId);
+        String savedFilePath = fileStorageService.saveOriginalImage(imageFile, imageId);
         log.info("Saving Image to: " + savedFilePath);
 
         // Create and save the image entity

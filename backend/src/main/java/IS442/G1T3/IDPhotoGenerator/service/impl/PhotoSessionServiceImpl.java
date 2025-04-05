@@ -25,7 +25,7 @@ public class PhotoSessionServiceImpl implements PhotoSessionService {
     private final ImageNewRepository imageNewRepository;
 
     public PhotoSessionServiceImpl(PhotoSessionRepository photoSessionRepository,
-                                 ImageNewRepository imageNewRepository) {
+                                   ImageNewRepository imageNewRepository) {
         this.photoSessionRepository = photoSessionRepository;
         this.imageNewRepository = imageNewRepository;
     }
@@ -131,11 +131,11 @@ public class PhotoSessionServiceImpl implements PhotoSessionService {
         // Get and return the current version's image
         String currentImageUrl = imageId.toString() + "_" + currentVersion + ".png";
         ImageNewEntity currentImage = imageNewRepository.findByCurrentImageUrl(currentImageUrl);
-        
+
         if (currentImage == null) {
             throw new RuntimeException("Image url not found: " + currentImageUrl);
         }
-        
+
         return currentImage;
     }
 
@@ -147,7 +147,7 @@ public class PhotoSessionServiceImpl implements PhotoSessionService {
         }
 
         Map<String, List<String>> history = new HashMap<>();
-        
+
         // Parse undo stack
         List<String> undoList = new ArrayList<>();
         if (photoSession.getUndoStack() != null && !photoSession.getUndoStack().isBlank()) {
@@ -185,11 +185,11 @@ public class PhotoSessionServiceImpl implements PhotoSessionService {
         // Get and return the current version's image
         String currentImageUrl = imageId.toString() + "_" + currentVersion + ".png";
         ImageNewEntity currentImage = imageNewRepository.findByCurrentImageUrl(currentImageUrl);
-        
+
         if (currentImage == null) {
             throw new RuntimeException("Image version not found: " + currentImageUrl);
         }
-        
+
         return currentImage;
     }
 

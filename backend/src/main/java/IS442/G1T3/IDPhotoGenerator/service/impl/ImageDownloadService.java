@@ -1,14 +1,5 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
-import IS442.G1T3.IDPhotoGenerator.service.ImageDownloadService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -18,23 +9,36 @@ import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
+
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
+import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Service
-public class ImageDownloadServiceImpl implements ImageDownloadService {
+public class ImageDownloadService implements IS442.G1T3.IDPhotoGenerator.service.ImageDownloadService {
 
     private final ImageNewRepository imageNewRepository;
+    private final ImageVersionControlService imageVersionControlService;
 
     @Value("${image.storage.path}")
     private String storagePath;
 
-    public ImageDownloadServiceImpl(ImageNewRepository imageNewRepository) {
+    public ImageDownloadService(
+            ImageNewRepository imageNewRepository,
+            ImageVersionControlService imageVersionControlService) {
         this.imageNewRepository = imageNewRepository;
+        this.imageVersionControlService = imageVersionControlService;
     }
 
     @Override
     public Resource processDownloadRequest(UUID imageId) {
-        // Get the latest version of the image
-        ImageNewEntity imageEntity = imageNewRepository.findLatestRowByImageId(imageId);
+        ImageNewEntity imageEntity = imageVersionControlService.getLatestImageVersion(imageId);
         if (imageEntity == null) {
             throw new RuntimeException("Image not found with id: " + imageId);
         }
@@ -43,7 +47,7 @@ public class ImageDownloadServiceImpl implements ImageDownloadService {
         String saveDir = System.getProperty("user.dir") + File.separator + storagePath;
         String currentFileName = imageEntity.getCurrentImageUrl();
         String filePath = saveDir + File.separator + currentFileName;
-        
+
         log.info("Processing image download from {}", filePath);
         File file = new File(filePath);
         if (!file.exists()) {
@@ -60,8 +64,8 @@ public class ImageDownloadServiceImpl implements ImageDownloadService {
 
             for (UUID imageId : imageIds) {
                 try {
-                    // Get the latest version of the image
-                    ImageNewEntity imageEntity = imageNewRepository.findLatestRowByImageId(imageId);
+                    // Get the latest version of the image using version control service
+                    ImageNewEntity imageEntity = imageVersionControlService.getLatestImageVersion(imageId);
                     if (imageEntity == null) {
                         log.warn("Image not found for imageId: {}", imageId);
                         continue;

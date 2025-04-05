@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-import IS442.G1T3.IDPhotoGenerator.model.ImageUploadResponse;
+import IS442.G1T3.IDPhotoGenerator.dto.ImageUploadResponse;
 import IS442.G1T3.IDPhotoGenerator.model.enums.ImageStatus;
 import IS442.G1T3.IDPhotoGenerator.service.impl.ImageUploadServiceImpl;
 import lombok.extern.slf4j.Slf4j;

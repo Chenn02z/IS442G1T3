@@ -42,7 +42,7 @@ public class BackgroundRemovalServiceImpl implements BackgroundRemovalService {
     private String storagePath;
 
     public BackgroundRemovalServiceImpl(ImageNewRepository imageNewRepository,
-                                      PhotoSessionRepository photoSessionRepository) {
+                                        PhotoSessionRepository photoSessionRepository) {
         this.imageNewRepository = imageNewRepository;
         this.photoSessionRepository = photoSessionRepository;
     }
@@ -51,54 +51,54 @@ public class BackgroundRemovalServiceImpl implements BackgroundRemovalService {
     public ImageNewEntity removeBackground(MultipartFile file, UUID userId, String backgroundOption) throws Exception {
         try {
             log.info("Starting background removal process for backgroundOption: {}", backgroundOption);
-            
+
             UUID imageId = UUID.randomUUID();
-            
+
             // Convert relative path to absolute path if needed
             Path uploadPath = Paths.get(storagePath);
             if (!uploadPath.isAbsolute()) {
                 uploadPath = Paths.get(System.getProperty("user.dir")).resolve(storagePath);
             }
-            
+
             // Make sure directory exists
             Files.createDirectories(uploadPath);
             log.info("Using storage path: {}", uploadPath.toAbsolutePath());
-            
+
             String fileExtension = ".png";  // Always save as PNG
-            
+
             // Save original image first
             String baseFileName = imageId.toString() + "_1" + fileExtension;
             Path originalPath = uploadPath.resolve(baseFileName);
-            
+
             log.info("Reading original image from multipart file");
             BufferedImage originalImage = ImageIO.read(new ByteArrayInputStream(file.getBytes()));
-            
+
             if (originalImage == null) {
                 throw new IOException("Failed to read image from uploaded file");
             }
-            
+
             log.info("Writing original image to: {}", originalPath);
             File originalFile = originalPath.toFile();
             boolean originalImageSaved = ImageIO.write(originalImage, "PNG", originalFile);
-            
+
             if (!originalImageSaved) {
                 throw new IOException("Failed to save original image to file system");
             }
-            
+
             log.info("Processing image with background removal algorithm");
             BufferedImage processedImage = processImage(originalImage, backgroundOption);
-            
+
             String processedFileName = imageId.toString() + "_2" + fileExtension;
             Path processedPath = uploadPath.resolve(processedFileName);
-            
+
             log.info("Writing processed image to: {}", processedPath);
             File processedFile = processedPath.toFile();
             boolean processedImageSaved = ImageIO.write(processedImage, "PNG", processedFile);
-            
+
             if (!processedImageSaved) {
                 throw new IOException("Failed to save processed image to file system");
             }
-            
+
             // Create and save the original image entity
             ImageNewEntity originalImageEntity = ImageNewEntity.builder()
                     .imageId(imageId)
@@ -108,10 +108,10 @@ public class BackgroundRemovalServiceImpl implements BackgroundRemovalService {
                     .baseImageUrl(baseFileName)
                     .currentImageUrl(baseFileName)
                     .build();
-                    
+
             log.info("Saving original image entity to database");
             imageNewRepository.save(originalImageEntity);
-            
+
             // Create and save the processed image entity
             ImageNewEntity processedImageEntity = ImageNewEntity.builder()
                     .imageId(imageId)
@@ -121,19 +121,19 @@ public class BackgroundRemovalServiceImpl implements BackgroundRemovalService {
                     .baseImageUrl(baseFileName)
                     .currentImageUrl(processedFileName)
                     .build();
-                    
+
             log.info("Saving processed image entity to database");
             ImageNewEntity savedEntity = imageNewRepository.save(processedImageEntity);
-            
+
             // Create and save photo session with version tracking
             PhotoSession photoSession = new PhotoSession();
             photoSession.setImageId(imageId);
             photoSession.setUndoStack("1,2");  // Original is version 1, processed is version 2
             photoSession.setRedoStack("");
-            
+
             log.info("Saving photo session to database");
             photoSessionRepository.save(photoSession);
-            
+
             log.info("Background removal process completed successfully");
             return savedEntity;
         } catch (IOException e) {
@@ -348,7 +348,11 @@ public class BackgroundRemovalServiceImpl implements BackgroundRemovalService {
 
     static class Point {
         int x, y;
-        Point(int x, int y) { this.x = x; this.y = y; }
+
+        Point(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
 
         @Override
         public boolean equals(Object o) {
