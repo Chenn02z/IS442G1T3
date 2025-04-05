@@ -27,7 +27,7 @@ public class BackgroundRemovalController {
             ImageNewEntity processedImage = cartoonisationService.cartooniseImage(imageId);
             return ResponseEntity.ok(processedImage);
         } catch (Exception e) {
-            log.error("Error processing image: {}", e.getMessage(), e);
+            log.error("Error processing image", e);
             return ResponseEntity.internalServerError().build();
         }
     }

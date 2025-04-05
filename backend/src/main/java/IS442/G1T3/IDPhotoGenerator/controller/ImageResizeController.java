@@ -1,6 +1,7 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +18,7 @@ import java.util.UUID;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/images")
 @Tag(name = "Image Resize", description = "APIs for resizing images to meet standards")
@@ -49,28 +51,31 @@ public class ImageResizeController {
 
             @Parameter(description = "Whether to crop the image if needed to fit the target dimensions")
             @RequestParam(value = "allowCropping", defaultValue = "true") boolean allowCropping) {
+        try {
+            // Find the image to resize
+            ImageNewEntity image = imageRepository.findLatestRowByImageId(imageId);
+            if (image == null) {
+                return ResponseEntity.notFound().build();
+            }
 
-        // Find the image to resize
-        ImageNewEntity image = imageRepository.findLatestRowByImageId(imageId);
-        if (image == null) {
-            return ResponseEntity.notFound().build();
+            // Get the target dimension standard
+            PhotoDimensionStandard standard = photoDimensionStandards.get(countryCode.toUpperCase());
+            if (standard == null) {
+                return ResponseEntity.badRequest().body(null);
+            }
+
+            // Resize
+            ImageNewEntity resizedImage = imageResizeService.resizeImage(
+                    image,
+                    standard.getWidth(),
+                    standard.getHeight(),
+                    maintainAspectRatio,
+                    allowCropping
+            );
+            return ResponseEntity.ok(resizedImage);
+        } catch (Exception e) {
+            log.error("Error while resizing image", e);
+            return ResponseEntity.internalServerError().build();
         }
-
-        // Get the target dimension standard
-        PhotoDimensionStandard standard = photoDimensionStandards.get(countryCode.toUpperCase());
-        if (standard == null) {
-            return ResponseEntity.badRequest().body(null);
-        }
-
-        // Resize
-        ImageNewEntity resizedImage = imageResizeService.resizeImage(
-                image,
-                standard.getWidth(),
-                standard.getHeight(),
-                maintainAspectRatio,
-                allowCropping
-        );
-
-        return ResponseEntity.ok(resizedImage);
     }
 } 

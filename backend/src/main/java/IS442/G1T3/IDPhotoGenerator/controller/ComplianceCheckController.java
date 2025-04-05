@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import IS442.G1T3.IDPhotoGenerator.dto.ComplianceCheckResponse;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-import IS442.G1T3.IDPhotoGenerator.model.enums.ComplianceCheckStatus;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.service.complianceChecker.ComplianceService;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -49,27 +48,24 @@ public class ComplianceCheckController {
 
             @Parameter(description = "Country code to check against (e.g., 'US', 'EU', 'SG'). Defaults to 'SG' if not provided.")
             @RequestParam(value = "countryCode", required = false) String countryCode) {
+        try {
+            // Find the image by ID
+            ImageNewEntity image = imageVersionControlService.getLatestImageVersion(imageId);
+            if (image == null) {
+                return ResponseEntity.notFound().build();
+            }
+            log.info("Checking photo compliance for image with ID {} of Version: {}", imageId, image.getVersion());
 
-        // Find the image by ID
-        ImageNewEntity image = imageVersionControlService.getLatestImageVersion(imageId);
-        if (image == null) {
-            return ResponseEntity.notFound().build();
-        }
-        log.info("Checking photo compliance for image with ID {} of Version: {}", imageId, image.getVersion());
+            // Use the defaultCountryCode if countryCode is not provided
+            if (countryCode == null || countryCode.isEmpty()) {
+                countryCode = defaultCountryCode;
+            }
 
-        // Use the defaultCountryCode if countryCode is not provided
-        if (countryCode == null || countryCode.isEmpty()) {
-            countryCode = defaultCountryCode;
-        }
-
-        // Run compliance checks with the specified country code
-        ComplianceCheckResponse result = complianceService.checkCompliance(image, countryCode);
-
-        if (result.getComplianceCheckStatus() == ComplianceCheckStatus.PASS) {
+            ComplianceCheckResponse result = complianceService.checkCompliance(image, countryCode);
             return ResponseEntity.ok(result);
-        } else {
-            // Still return 200 OK but with failure details in the body
-            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Error checking photo compliance", e);
+            return ResponseEntity.internalServerError().build();
         }
     }
 } 
