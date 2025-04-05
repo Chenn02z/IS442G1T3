@@ -171,7 +171,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
         Imgproc.Canny(grayImage, edges, 100, 150);
 
         // Dilate edges to make them more prominent
-        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(7, 7));
         Imgproc.dilate(edges, edges, kernel);
 
         try {
@@ -198,8 +198,8 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
                 // Create elliptical mask for face instead of rectangle - moved slightly higher to capture hair
                 Point center = new Point(face.x + face.width / 2,
-                        face.y + (double) face.height / 2 - (face.height * 0.18)); // Moved up slightly to include hair
-                Size axes = new Size(face.width * 0.475, face.height * 0.715); // Slightly taller to capture more hair
+                        face.y + (double) face.height / 2 - (face.height * 0.1)); // Moved up slightly to include hair
+                Size axes = new Size(face.width * 0.4, face.height * 0.625); // Slightly taller to capture more hair
 
                 // Create face mask for capturing edges
                 Mat faceMask = new Mat(mask.size(), CvType.CV_8UC1, Scalar.all(0));
@@ -211,15 +211,23 @@ public class CartooniseServiceImpl implements CartoonisationService {
                 // Create trapezoid for shoulders/neck below the face - wider base, shorter height, narrower top
                 int neckTop = face.y + face.height;
                 int shoulderWidth = (int)(face.width * 2.5); // Wider base
-                int shoulderHeight = (int)(face.height * 0.65); // Shorter height
+                int shoulderHeight = (int)(face.height * 0.75); // Shorter height
                 int topWidth = (int)(face.width * 0.8); // Narrower top width
+
+                // Get image dimensions
+                int imageWidth = image.cols();
+                int imageHeight = image.rows();
+                // Bottom left point (x=0, y=height)
+                Point bottomLeft = new Point(0, imageHeight);
+                // Bottom right point (x=width, y=height)
+                Point bottomRight = new Point(imageWidth, imageHeight);
 
                 // Trapezoid points
                 Point[] shoulderPoints = new Point[4];
-                shoulderPoints[0] = new Point(center.x - topWidth * 0.32, neckTop * 1.15); // Top left - narrower
-                shoulderPoints[1] = new Point(center.x + topWidth * 0.32, neckTop * 1.15); // Top right - narrower
-                shoulderPoints[2] = new Point(center.x + shoulderWidth * 0.5, neckTop + shoulderHeight); // Bottom right - wider
-                shoulderPoints[3] = new Point(center.x - shoulderWidth * 0.5, neckTop + shoulderHeight); // Bottom left - wider
+                shoulderPoints[0] = new Point(center.x - topWidth * 0.2, neckTop); // Top left - narrower
+                shoulderPoints[1] = new Point(center.x + topWidth * 0.2, neckTop); // Top right - narrower
+                shoulderPoints[2] = bottomRight;
+                shoulderPoints[3] = bottomLeft;
 
                 // Create shoulder mask for capturing edges
                 Mat shoulderMask = new Mat(mask.size(), CvType.CV_8UC1, Scalar.all(0));
