@@ -64,9 +64,11 @@ public class FloodFillServiceImpl implements FloodFillService {
             // Get photo session for undo redo stack tracking
             PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
             if (photoSession == null) {
-                photoSession = new PhotoSession();
-                photoSession.setImageId(imageId);
-                photoSession.setUndoStack("1");
+                // Make use of Builder pattern for cleaner code
+                photoSession = PhotoSession.builder()
+                    .imageId(imageId)
+                    .undoStack("1")
+                    .build();
             }
             // -------
             // Step 3

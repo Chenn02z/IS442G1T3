@@ -68,9 +68,11 @@ public class CartooniseServiceImpl implements CartoonisationService {
         PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
         if (photoSession == null) {
             // Create new photo session if it doesn't exist
-            photoSession = new PhotoSession();
-            photoSession.setImageId(imageId);
-            photoSession.setUndoStack("1");
+            // Make use of Builder pattern for cleaner code
+            photoSession = PhotoSession.builder()
+                .imageId(imageId)
+                .undoStack("1")
+                .build();
         }
 
         // -------

@@ -1,20 +1,21 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.ImageUploadService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -61,11 +62,15 @@ public class ImageUploadServiceImpl implements ImageUploadService {
                 .build();
 
         // Create and save photo session with initial version tracking
-        PhotoSession photoSession = new PhotoSession();
-        photoSession.setImageId(imageId);
-        photoSession.setUndoStack("1");  // Start with version 1
-        photoSession.setRedoStack("");
+
+        // Make use of Builder pattern for cleaner code
+        PhotoSession photoSession = PhotoSession.builder()
+                .imageId(imageId)
+                .undoStack("1")
+                .redoStack("")
+                .build();
         photoSessionRepository.save(photoSession);
+        
 
         // Save and return the image entity
         return imageNewRepository.save(imageEntity);

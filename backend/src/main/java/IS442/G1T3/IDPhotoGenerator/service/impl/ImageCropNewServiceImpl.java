@@ -182,10 +182,12 @@ public class ImageCropNewServiceImpl implements ImageCropNewService {
         PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
         if (photoSession == null) {
             log.info("Creating new PhotoSession for imageId: {}", imageId);
-            photoSession = new PhotoSession();
-            photoSession.setImageId(imageId);
-            photoSession.setUndoStack("1"); // Start with version 1
-            photoSession.setRedoStack("");
+            // Make use of Builder pattern for cleaner code
+            photoSession = PhotoSession.builder()
+            .imageId(imageId)
+            .undoStack("1")
+            .redoStack("")
+            .build();
         }
 
         // Create a new entity for the cropped version
