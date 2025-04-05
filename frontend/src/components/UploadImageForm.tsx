@@ -7,8 +7,10 @@ import DisplayImage from "./DisplayImage";
 import CropImage from "./CropImage";
 import DownloadButton from "./DownloadButton";
 import { HistoryDrawer } from "./HistoryDrawer";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ComplianceCheckDialog } from "./ComplianceCheckDialog";
+import ComplianceResultDisplay, { ComplianceResultType } from "./ComplianceResultDisplay";
 
 // Update the props interface to remove isCropping
 interface UploadImageFormProps {
@@ -27,15 +29,23 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
   } = useUpload();
   const { handleUpload } = useImageUploadHandler();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [photoUrlToComplianceResultMap, setPhotoUrlToComplianceResultMap] = useState<Record<string, ComplianceResultType | null>>({});
+  const [isComplianceDialogOpen, setIsComplianceDialogOpen] = useState(false);
 
-  // For debugging
-  // useEffect(() => {
-  //   console.log("UploadImageForm state:", {
-  //     contextIsCropping: isCropping,
-  //     selectedImageId,
-  //     selectedImageUrl,
-  //   });
-  // }, [isCropping, selectedImageId, selectedImageUrl]);
+  const handleComplianceResult = (result: ComplianceResultType) => {
+    if (!selectedImageUrl) {
+      return;
+    }
+    setPhotoUrlToComplianceResultMap({
+      ...photoUrlToComplianceResultMap,
+      [selectedImageUrl]: result,
+    })
+  };
+
+  // Handler for opening the compliance dialog with resize tab
+  const handleOpenResizeTab = () => {
+    setIsComplianceDialogOpen(true);
+  };
 
   return (
     <Card className="w-full max-w-3xl mx-auto">
@@ -75,7 +85,6 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
               <>
                 <div className="relative max-w-full overflow-hidden">
                   <CropImage
-                    // key={`crop-${selectedAspectRatio}`}
                     imageUrl={selectedImageUrl}
                     aspectRatio={selectedAspectRatio}
                     imageId={selectedImageId}
@@ -87,6 +96,16 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
             ) : (
               <div className="flex flex-col items-center gap-6">
                 <DisplayImage imageUrl={croppedImageUrl || selectedImageUrl} />
+                
+                {/* Compliance Result Display */}
+                {photoUrlToComplianceResultMap[selectedImageUrl] && (
+                  <ComplianceResultDisplay 
+                    result={photoUrlToComplianceResultMap[selectedImageUrl]} 
+                    showDetails={true}
+                    onRequestResize={handleOpenResizeTab}
+                  />
+                )}
+                
                 <div className="flex items-center space-x-2">
                   <Button 
                     variant="outline" 
@@ -97,6 +116,19 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
                     <History className="h-4 w-4" />
                     History
                   </Button>
+                  
+                  {/* Compliance Check Button */}
+                  <ComplianceCheckDialog
+                    imageId={selectedImageId}
+                    buttonText="Check Compliance"
+                    buttonVariant="outline"
+                    buttonSize="sm"
+                    onCheckComplete={handleComplianceResult}
+                    open={isComplianceDialogOpen}
+                    onOpenChange={setIsComplianceDialogOpen}
+                    initialTab={isComplianceDialogOpen ? "resize" : "check"}
+                  />
+                  
                   <DownloadButton
                     imageUrl={croppedImageUrl || selectedImageUrl}
                     imageId={selectedImageId}

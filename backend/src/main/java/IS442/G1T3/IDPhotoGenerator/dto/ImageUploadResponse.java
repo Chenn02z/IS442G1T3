@@ -1,4 +1,4 @@
-package IS442.G1T3.IDPhotoGenerator.model;
+package IS442.G1T3.IDPhotoGenerator.dto;
 
 import java.util.UUID;
 
