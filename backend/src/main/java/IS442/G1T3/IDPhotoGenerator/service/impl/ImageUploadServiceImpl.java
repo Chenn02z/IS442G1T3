@@ -4,6 +4,7 @@ import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
+import IS442.G1T3.IDPhotoGenerator.service.FileStorageService;
 import IS442.G1T3.IDPhotoGenerator.service.ImageUploadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

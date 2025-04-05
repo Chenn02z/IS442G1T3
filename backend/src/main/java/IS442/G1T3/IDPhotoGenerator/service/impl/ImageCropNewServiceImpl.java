@@ -8,12 +8,12 @@ import java.util.UUID;
 
 import javax.imageio.ImageIO;
 
+import IS442.G1T3.IDPhotoGenerator.service.FileStorageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
-import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.ImageCropNewService;
 import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,6 @@ public class ImageCropNewServiceImpl implements ImageCropNewService {
 
     public ImageCropNewServiceImpl(
             ImageNewRepository imageNewRepository,
-            PhotoSessionRepository photoSessionRepository,
             FileStorageService fileStorageService,
             ImageVersionControlService imageVersionControlService) {
         this.imageNewRepository = imageNewRepository;

@@ -9,30 +9,27 @@ import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import IS442.G1T3.IDPhotoGenerator.service.ImageDownloadService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class ImageDownloadService implements IS442.G1T3.IDPhotoGenerator.service.ImageDownloadService {
+public class ImageDownloadServiceImpl implements ImageDownloadService {
 
-    private final ImageNewRepository imageNewRepository;
     private final ImageVersionControlService imageVersionControlService;
 
     @Value("${image.storage.path}")
     private String storagePath;
 
-    public ImageDownloadService(
-            ImageNewRepository imageNewRepository,
+    public ImageDownloadServiceImpl(
             ImageVersionControlService imageVersionControlService) {
-        this.imageNewRepository = imageNewRepository;
         this.imageVersionControlService = imageVersionControlService;
     }
 

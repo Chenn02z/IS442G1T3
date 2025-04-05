@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-public class FileStorageService implements IS442.G1T3.IDPhotoGenerator.service.FileStorageService {
+public class FileStorageServiceImpl implements IS442.G1T3.IDPhotoGenerator.service.FileStorageService {
     @Value("${image.storage.path}")
     private String storagePath;
 

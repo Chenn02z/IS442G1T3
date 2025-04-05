@@ -1,6 +1,6 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
-import IS442.G1T3.IDPhotoGenerator.service.impl.ImageDownloadService;
+import IS442.G1T3.IDPhotoGenerator.service.ImageDownloadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;

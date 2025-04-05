@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
-import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.CartoonisationService;
 import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
 import lombok.extern.slf4j.Slf4j;
@@ -47,14 +46,13 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
     public CartooniseServiceImpl(
             ImageNewRepository imageNewRepository,
-            PhotoSessionRepository photoSessionRepository,
             ImageVersionControlService imageVersionControlService) {
         this.imageNewRepository = imageNewRepository;
         this.imageVersionControlService = imageVersionControlService;
     }
 
     @Override
-    public ImageNewEntity cartooniseImage(UUID imageId) throws Exception {
+    public ImageNewEntity cartooniseImage(UUID imageId) {
         // ------
         // STEP 1
         // ------

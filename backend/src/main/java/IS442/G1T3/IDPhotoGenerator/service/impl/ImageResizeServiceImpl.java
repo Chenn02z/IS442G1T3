@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import IS442.G1T3.IDPhotoGenerator.service.FileStorageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
