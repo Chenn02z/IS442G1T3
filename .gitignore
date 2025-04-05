@@ -4,8 +4,7 @@
 *.war
 *.ear
 
-# libraries
-haarcascade_frontalface_default.xml
+
 
 
 # Log files
