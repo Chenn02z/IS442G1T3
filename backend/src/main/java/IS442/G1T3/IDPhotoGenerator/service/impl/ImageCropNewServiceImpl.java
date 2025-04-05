@@ -36,10 +36,10 @@ public class ImageCropNewServiceImpl implements ImageCropNewService {
     private final ImageFactorySelector factorySelector;
 
     public ImageCropNewServiceImpl(
-        ImageNewRepository imageNewRepository,
-        FileStorageService fileStorageService,
-        ImageVersionControlService imageVersionControlService,
-        ImageFactorySelector factorySelector
+            ImageNewRepository imageNewRepository,
+            FileStorageService fileStorageService,
+            ImageVersionControlService imageVersionControlService,
+            ImageFactorySelector factorySelector
     ) {
         this.imageNewRepository = imageNewRepository;
         this.fileStorageService = fileStorageService;

@@ -125,7 +125,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
         // Create and save the new image entity
         CartooniseFactory cartooniseFactory = (CartooniseFactory) imageFactorySelector.getFactory(ImageOperationType.CARTOONISE);
-        ImageNewEntity processedImage = cartooniseFactory.create(imageId, latestImage.getUserId(), 1, processedFileName, null);
+        ImageNewEntity processedImage = cartooniseFactory.create(imageId, currentEntity.getUserId(), 1, processedFileName, null);
 
 
         return imageNewRepository.save(processedImage);

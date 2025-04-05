@@ -49,8 +49,8 @@ public class BackgroundRemovalServiceImpl implements BackgroundRemovalService {
     private String storagePath;
 
     public BackgroundRemovalServiceImpl(ImageNewRepository imageNewRepository,
-                                      PhotoSessionRepository photoSessionRepository,
-                                      ImageFactorySelector factorySelector) {
+                                        PhotoSessionRepository photoSessionRepository,
+                                        ImageFactorySelector factorySelector) {
         this.imageNewRepository = imageNewRepository;
         this.photoSessionRepository = photoSessionRepository;
         this.factorySelector = factorySelector;
@@ -113,7 +113,7 @@ public class BackgroundRemovalServiceImpl implements BackgroundRemovalService {
             OriginalImageFactory originalFactory = (OriginalImageFactory) factorySelector.getFactory(ImageOperationType.ORIGINAL);
             ImageNewEntity originalImageEntity = originalFactory.create(imageId, userId, 1, baseFileName, null);
 
-                    
+
             log.info("Saving original image entity to database");
             imageNewRepository.save(originalImageEntity);
 

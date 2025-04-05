@@ -46,9 +46,9 @@ public class FloodFillServiceImpl implements FloodFillService {
     private String storagePath;
 
     public FloodFillServiceImpl(
-        ImageNewRepository imageNewRepository,
-        ImageVersionControlService imageVersionControlService,
-        ImageFactorySelector imageFactorySelector
+            ImageNewRepository imageNewRepository,
+            ImageVersionControlService imageVersionControlService,
+            ImageFactorySelector imageFactorySelector
     ) {
         this.imageNewRepository = imageNewRepository;
         this.imageFactorySelector = imageFactorySelector;

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
 import IS442.G1T3.IDPhotoGenerator.factory.OriginalImageFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,7 +64,6 @@ public class ImageUploadServiceImpl implements ImageUploadService {
 
 
         // Create and save photo session with initial version tracking
-
         // Make use of Builder pattern for cleaner code
         PhotoSession photoSession = PhotoSession.builder()
                 .imageId(imageId)
