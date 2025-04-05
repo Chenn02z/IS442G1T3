@@ -20,8 +20,11 @@ import org.opencv.objdetect.CascadeClassifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import IS442.G1T3.IDPhotoGenerator.factory.CartooniseFactory;
+import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.CartoonisationService;
@@ -33,6 +36,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
     private final ImageNewRepository imageNewRepository;
     private final PhotoSessionRepository photoSessionRepository;
+    private final ImageFactorySelector imageFactorySelector; // Inject the selector
 
     @Value("${image.storage.path}")
     private String storagePath;
@@ -46,9 +50,12 @@ public class CartooniseServiceImpl implements CartoonisationService {
     }
 
     public CartooniseServiceImpl(ImageNewRepository imageNewRepository,
-                               PhotoSessionRepository photoSessionRepository) {
+                               PhotoSessionRepository photoSessionRepository,
+                               ImageFactorySelector imageFactorySelector) {
         this.imageNewRepository = imageNewRepository;
         this.photoSessionRepository = photoSessionRepository;
+        this.imageFactorySelector = imageFactorySelector;
+
     }
 
     @Override
@@ -68,9 +75,11 @@ public class CartooniseServiceImpl implements CartoonisationService {
         PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
         if (photoSession == null) {
             // Create new photo session if it doesn't exist
-            photoSession = new PhotoSession();
-            photoSession.setImageId(imageId);
-            photoSession.setUndoStack("1");
+            // Make use of Builder pattern for cleaner code
+            photoSession = PhotoSession.builder()
+                .imageId(imageId)
+                .undoStack("1")
+                .build();
         }
 
         // -------
@@ -137,14 +146,9 @@ public class CartooniseServiceImpl implements CartoonisationService {
         // Step 7
         // ------
         // Create and save the new image entity
-        ImageNewEntity processedImage = ImageNewEntity.builder()
-                .imageId(imageId)
-                .userId(latestImage.getUserId())
-                .version(nextVersion)
-                .label("Cartoonise")
-                .baseImageUrl(processedFileName) // changed this from currUrl to processedFileName
-                .currentImageUrl(processedFileName)
-                .build();
+        CartooniseFactory cartooniseFactory = (CartooniseFactory) imageFactorySelector.getFactory(ImageOperationType.CARTOONISE);
+        ImageNewEntity processedImage = cartooniseFactory.create(imageId, latestImage.getUserId(), 1, processedFileName, null);
+
 
         return imageNewRepository.save(processedImage);
     }

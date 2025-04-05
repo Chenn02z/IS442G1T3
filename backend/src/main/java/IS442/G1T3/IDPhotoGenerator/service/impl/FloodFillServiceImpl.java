@@ -20,8 +20,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import IS442.G1T3.IDPhotoGenerator.factory.CartooniseFactory;
+import IS442.G1T3.IDPhotoGenerator.factory.FloodFillFactory;
+import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
+import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.FloodFillService;
@@ -35,14 +39,17 @@ public class FloodFillServiceImpl implements FloodFillService {
     private final ImageNewRepository imageNewRepository;
     private final PhotoSessionRepository photoSessionRepository;
     private final boolean isOpenCVAvailable;
+    private final ImageFactorySelector imageFactorySelector;
 
     @Value("${image.storage.path}")
     private String storagePath;
 
     public FloodFillServiceImpl(ImageNewRepository imageNewRepository,
-                              PhotoSessionRepository photoSessionRepository) {
+                              PhotoSessionRepository photoSessionRepository,
+                              ImageFactorySelector imageFactorySelector) {
         this.imageNewRepository = imageNewRepository;
         this.photoSessionRepository = photoSessionRepository;
+        this.imageFactorySelector = imageFactorySelector;
         this.isOpenCVAvailable = !"true".equals(System.getProperty("opencv.unavailable"));
         log.info("FloodFillServiceImpl initialized with OpenCV available: {}", isOpenCVAvailable);
     }
@@ -64,9 +71,11 @@ public class FloodFillServiceImpl implements FloodFillService {
             // Get photo session for undo redo stack tracking
             PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
             if (photoSession == null) {
-                photoSession = new PhotoSession();
-                photoSession.setImageId(imageId);
-                photoSession.setUndoStack("1");
+                // Make use of Builder pattern for cleaner code
+                photoSession = PhotoSession.builder()
+                    .imageId(imageId)
+                    .undoStack("1")
+                    .build();
             }
             // -------
             // Step 3
@@ -138,15 +147,18 @@ public class FloodFillServiceImpl implements FloodFillService {
             // Step 7
             // ------
             // Create and save the new image entity
-            ImageNewEntity processedEntity = ImageNewEntity.builder()
-                    .imageId(imageId)
-                    .userId(originalEntity.getUserId())
-                    .version(nextVersion)
-                    .label("Flood Fill")
-                    // .baseImageUrl(originalEntity.getCurrentImageUrl()) // Changed from baseImageUrl to currentImageUrl
-                    .baseImageUrl(processedFileName)
-                    .currentImageUrl(processedFileName)
-                    .build();
+            // ImageNewEntity processedEntity = ImageNewEntity.builder()
+            //         .imageId(imageId)
+            //         .userId(originalEntity.getUserId())
+            //         .version(nextVersion)
+            //         .label("Flood Fill")
+            //         // .baseImageUrl(originalEntity.getCurrentImageUrl()) // Changed from baseImageUrl to currentImageUrl
+            //         .baseImageUrl(processedFileName)
+            //         .currentImageUrl(processedFileName)
+            //         .build();
+            FloodFillFactory floodFillFactory = (FloodFillFactory) imageFactorySelector.getFactory(ImageOperationType.FLOODFILL);
+            ImageNewEntity processedEntity = floodFillFactory.create(imageId, originalEntity.getUserId(), nextVersion, processedFileName, null);
+
 
             return imageNewRepository.save(processedEntity);
         } catch (JsonProcessingException e) {

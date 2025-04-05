@@ -1,7 +1,10 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
+import IS442.G1T3.IDPhotoGenerator.service.ImageDownloadService;
 import IS442.G1T3.IDPhotoGenerator.service.impl.ImageDownloadServiceImpl;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -18,15 +21,15 @@ import org.springframework.core.io.InputStreamResource;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/images")
 @Validated
 public class ImageDownloadController {
 
-    private final ImageDownloadServiceImpl imageDownloadServiceImpl;
+    // Use interface to adhere to Dependency Inversion Principle
+    // Use final to prevent bugs
+    private final ImageDownloadService imageDownloadService;
 
-    public ImageDownloadController(ImageDownloadServiceImpl imageDownloadServiceImpl) {
-        this.imageDownloadServiceImpl = imageDownloadServiceImpl;
-    }
 
     @GetMapping("/download/{imageId}")
     public ResponseEntity<Resource> download(
@@ -34,7 +37,7 @@ public class ImageDownloadController {
     ) {
         try {
             log.info("Processing download request for imageId: {}", imageId);
-            Resource fileResource = imageDownloadServiceImpl.processDownloadRequest(imageId);
+            Resource fileResource = imageDownloadService.processDownloadRequest(imageId);
             return ResponseEntity.ok()
                     .contentType(MediaType.IMAGE_JPEG) // Or detect dynamically
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileResource.getFilename() + "\"")
@@ -51,7 +54,7 @@ public class ImageDownloadController {
             log.info("Processing request to download selected images: {}", imageIds);
 
             // Call the service to zip selected images
-            File zipFile = imageDownloadServiceImpl.zipSelectedImages(imageIds);
+            File zipFile = imageDownloadService.zipSelectedImages(imageIds);
             InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
 
             return ResponseEntity.ok()
