@@ -7,6 +7,12 @@ import { useUpload } from "@/context/UploadContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // for sidebar menu and CSS values for box in button
 const aspectRatios = [
@@ -136,92 +142,63 @@ const CropSidebar: React.FC<CropSidebarProps> = ({
   };
 
   return (
-    <>
-      <Sheet open={isOpen} onOpenChange={handleSheetChange}>
-        <SheetTrigger asChild>
-          <Crop className="w-5 h-5" />
-        </SheetTrigger>
-        <SheetContent
-          side="left"
-          className="w-80 p-4 flex flex-col justify-between"
-        >
-          <div>
-            <h2 className="text-lg font-semibold mb-4">Crop</h2>
-            <ScrollArea className="h-[400px]">
-              <div className="grid grid-cols-3 gap-4">
-                {aspectRatios.map((ratio) => (
-                  <Button
-                    key={ratio.value}
-                    variant={
-                      selectedRatio === ratio.value ? "default" : "outline"
-                    }
-                    className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
-                    onClick={() => handleRatioSelect(ratio)}
-                  >
-                    {ratio.value === "freeform" ? (
-                      <Scan className="text-gray-500 w-8 h-8" />
-                    ) : ratio.value === "custom" ? (
-                      <Settings className="text-gray-500 w-8 h-8" />
-                    ) : (
-                      <div
-                        className={`border border-gray-500 ${ratio.boxClass}`}
-                      />
-                    )}
-                    <span className="text-xs">{ratio.label}</span>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="border border-1 p-1 rounded-md cursor-pointer">
+            <Sheet open={isOpen} onOpenChange={handleSheetChange}>
+              <SheetTrigger asChild>
+                <Crop className="w-5 h-5" />
+              </SheetTrigger>
+              <SheetContent
+                side="left"
+                className="w-80 p-4 flex flex-col justify-between"
+              >
+                <div>
+                  <h2 className="text-lg font-semibold mb-4">Crop</h2>
+                  <ScrollArea className="h-[400px]">
+                    <div className="grid grid-cols-3 gap-4">
+                      {aspectRatios.map((ratio) => (
+                        <Button
+                          key={ratio.value}
+                          variant={
+                            selectedRatio === ratio.value ? "default" : "outline"
+                          }
+                          className="w-20 h-20 flex flex-col items-center justify-center space-y-2 border rounded-md"
+                          onClick={() => handleRatioSelect(ratio)}
+                        >
+                          {ratio.value === "freeform" ? (
+                            <Scan className="text-gray-500 w-8 h-8" />
+                          ) : ratio.value === "custom" ? (
+                            <Settings className="text-gray-500 w-8 h-8" />
+                          ) : (
+                            <div
+                              className={`border border-gray-500 ${ratio.boxClass}`}
+                            />
+                          )}
+                          <span className="text-xs">{ratio.label}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+                <div className="flex justify-between mt-4">
+                  <Button variant="outline" onClick={handleCancel}>
+                    Cancel
                   </Button>
-                ))}
-              </div>
-            </ScrollArea>
+                  <Button variant="default" onClick={handleDone}>
+                    Done
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
-          <div className="flex justify-between mt-4">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button variant="default" onClick={handleDone}>
-              Done
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      <Dialog open={customDialogOpen} onOpenChange={setCustomDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Custom Dimensions</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="width">Width</Label>
-                <Input
-                  id="width"
-                  value={customWidth}
-                  onChange={(e) => setCustomWidth(e.target.value)}
-                  type="number"
-                  min="1"
-                />
-              </div>
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="height">Height</Label>
-                <Input
-                  id="height"
-                  value={customHeight}
-                  onChange={(e) => setCustomHeight(e.target.value)}
-                  type="number"
-                  min="1"
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCustomDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCustomRatioSubmit}>Apply</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <p>Crop Image</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
