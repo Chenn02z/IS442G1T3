@@ -87,16 +87,16 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!imageId) return null;
 
       try {
-        console.log(
-          "DEBUG - Fetching current image URL from /statemanagement/latest/",
-          imageId
-        );
+        // console.log(
+        //   "DEBUG - Fetching current image URL from /statemanagement/latest/",
+        //   imageId
+        // );
         const response = await fetch(
           `${CONFIG.API_BASE_URL}/api/statemanagement/latest/${imageId}`
         );
         if (response.ok) {
           const data = await response.json();
-          console.log("RESTORE TO IMAGE VER:", data.data?.version);
+          // console.log("RESTORE TO IMAGE VER:", data.data?.version);
           // console.log("DEBUG - Entity label:", data.data?.label);
 
           if (
@@ -105,7 +105,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
             data.data.currentImageUrl
           ) {
             const fullUrl = `${CONFIG.API_BASE_URL}/api/images/${data.data.currentImageUrl}`;
-            console.log("DEBUG - Using current image URL:", fullUrl);
+            // console.log("DEBUG - Using current image URL:", fullUrl);
 
             if (updateState) {
               setSelectedImageUrl(fullUrl);
@@ -137,7 +137,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
           const data = await response.json();
           if (data.status === "success" && data.data) {
             // Log the complete response for debugging
-            console.log("Edit response data:", data.data);
+            // console.log("Edit response data:", data.data);
 
             let sourceImageUrl;
 
@@ -145,16 +145,16 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
             // Otherwise, use currentImageUrl (for other edits like background removal)
             if (data.data.label === "Crop" && data.data.baseImageUrl) {
               sourceImageUrl = data.data.baseImageUrl;
-              console.log(
-                "Using baseImageUrl for cropping (entity has Crop label):",
-                sourceImageUrl
-              );
+              // console.log(
+              //   "Using baseImageUrl for cropping (entity has Crop label):",
+              //   sourceImageUrl
+              // );
             } else {
               sourceImageUrl = data.data.currentImageUrl;
-              console.log(
-                "Using currentImageUrl for cropping (entity has non-Crop label):",
-                sourceImageUrl
-              );
+              // console.log(
+              //   "Using currentImageUrl for cropping (entity has non-Crop label):",
+              //   sourceImageUrl
+              // );
             }
 
             // Create full URL with API base
@@ -185,7 +185,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
       // Only proceed if there's a change in state
       if (value === isCropping) return;
 
-      console.log(`Changing crop mode from ${isCropping} to ${value}`);
+      // console.log(`Changing crop mode from ${isCropping} to ${value}`);
 
       if (value && selectedImageId) {
         // Entering crop mode - use getBaseImageUrlForCropping
@@ -195,15 +195,13 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
         // Exiting crop mode - restore current image URL
         setIsCroppingState(false);
 
-        // Clear any saved aspect ratio in localStorage
-        localStorage.removeItem("selectedRatio");
 
         // Ensure we restore to the latest image version
         restoreCurrentImageUrl(selectedImageId)
           .then(() => {
-            console.log(
-              "Restored to current image URL after exiting crop mode"
-            );
+            // console.log(
+            //   "Restored to current image URL after exiting crop mode"
+            // );
             // Force a refresh of the image list after small delay
             setTimeout(() => refreshImages(), 100);
           })

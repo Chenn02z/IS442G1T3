@@ -1,25 +1,31 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
+import java.awt.Point;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.UUID;
+
+import javax.imageio.ImageIO;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.FloodFillService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.List;
-import java.util.Queue;
 
 @Service
 @Slf4j
@@ -44,21 +50,29 @@ public class FloodFillServiceImpl implements FloodFillService {
     @Override
     public ImageNewEntity removeBackground(UUID imageId, String seedPointsJson, int tolerance) throws IOException {
         try {
-            // Get original image from repository
+            // ------
+            // STEP 1
+            // ------
+            // Get latest image from repository, non-destructive nature of the algorithm
             ImageNewEntity originalEntity = imageNewRepository.findLatestRowByImageId(imageId);
             if (originalEntity == null) {
                 throw new RuntimeException("Image not found with id: " + imageId);
             }
-
-            // Get photo session for version tracking
+            // ------
+            // STEP 2
+            // ------
+            // Get photo session for undo redo stack tracking
             PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
             if (photoSession == null) {
                 photoSession = new PhotoSession();
                 photoSession.setImageId(imageId);
                 photoSession.setUndoStack("1");
             }
-
-            // Get the next version number
+            // -------
+            // Step 3
+            // -------
+            // Get latest Image version and + 1 to give next version (int nextVersion)
+            // Get the undo stack from the photo session, to give current version (int currVersion)
             String undoStack = photoSession.getUndoStack();
             int nextVersion = originalEntity.getVersion() + 1;
             int currVersion = 1;
@@ -76,7 +90,10 @@ public class FloodFillServiceImpl implements FloodFillService {
             if (!storageDirFile.exists()) {
                 storageDirFile.mkdirs();
             }
-            // Resolve the input image path using currentImageUrl
+            // ------
+            // STEP 4
+            // ------
+            // Resolve the input image path using currentImageUrl from currImage
             String currentFileName = currImage.getCurrentImageUrl();
             String inputPath = saveDir + File.separator + currentFileName;
             File originalFile = new File(inputPath);
@@ -86,7 +103,10 @@ public class FloodFillServiceImpl implements FloodFillService {
                 throw new IOException("Original image file not found on server at: " + inputPath);
             }
 
-            // Process the image
+            // ------
+            //STEP 5
+            // ------
+            // Load & Process the image
             BufferedImage originalImage = ImageIO.read(originalFile);
             List<Point> seedPoints = parsePoints(seedPointsJson);
             
@@ -104,6 +124,9 @@ public class FloodFillServiceImpl implements FloodFillService {
                 throw new RuntimeException("Failed to save processed image");
             }
 
+            // -----
+            // Step 6
+            // -----
             // Update undo stack
             String newUndoStack = undoStack == null || undoStack.isBlank() ? 
                 String.valueOf(nextVersion) : undoStack + "," + nextVersion;
@@ -111,6 +134,9 @@ public class FloodFillServiceImpl implements FloodFillService {
             photoSession.setRedoStack("");
             photoSessionRepository.save(photoSession);
 
+            // ------
+            // Step 7
+            // ------
             // Create and save the new image entity
             ImageNewEntity processedEntity = ImageNewEntity.builder()
                     .imageId(imageId)
