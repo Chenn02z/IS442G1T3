@@ -29,6 +29,7 @@ import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
 import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.FloodFillService;
+import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -37,19 +38,21 @@ public class FloodFillServiceImpl implements FloodFillService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ImageNewRepository imageNewRepository;
-    private final PhotoSessionRepository photoSessionRepository;
+    private final ImageVersionControlService imageVersionControlService;
     private final boolean isOpenCVAvailable;
     private final ImageFactorySelector imageFactorySelector;
 
     @Value("${image.storage.path}")
     private String storagePath;
 
-    public FloodFillServiceImpl(ImageNewRepository imageNewRepository,
-                              PhotoSessionRepository photoSessionRepository,
-                              ImageFactorySelector imageFactorySelector) {
+    public FloodFillServiceImpl(
+            ImageNewRepository imageNewRepository,
+            ImageVersionControlService imageVersionControlService,
+            ImageFactorySelector imageFactorySelector
+    ) {
         this.imageNewRepository = imageNewRepository;
-        this.photoSessionRepository = photoSessionRepository;
         this.imageFactorySelector = imageFactorySelector;
+        this.imageVersionControlService = imageVersionControlService;
         this.isOpenCVAvailable = !"true".equals(System.getProperty("opencv.unavailable"));
         log.info("FloodFillServiceImpl initialized with OpenCV available: {}", isOpenCVAvailable);
     }
@@ -60,38 +63,14 @@ public class FloodFillServiceImpl implements FloodFillService {
             // ------
             // STEP 1
             // ------
-            // Get latest image from repository, non-destructive nature of the algorithm
-            ImageNewEntity originalEntity = imageNewRepository.findLatestRowByImageId(imageId);
-            if (originalEntity == null) {
+            // Get current image for editing using version control service
+            ImageNewEntity currentEntity = imageVersionControlService.getLatestImageVersion(imageId);
+            if (currentEntity == null) {
                 throw new RuntimeException("Image not found with id: " + imageId);
             }
-            // ------
-            // STEP 2
-            // ------
-            // Get photo session for undo redo stack tracking
-            PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
-            if (photoSession == null) {
-                // Make use of Builder pattern for cleaner code
-                photoSession = PhotoSession.builder()
-                    .imageId(imageId)
-                    .undoStack("1")
-                    .build();
-            }
-            // -------
-            // Step 3
-            // -------
-            // Get latest Image version and + 1 to give next version (int nextVersion)
-            // Get the undo stack from the photo session, to give current version (int currVersion)
-            String undoStack = photoSession.getUndoStack();
-            int nextVersion = originalEntity.getVersion() + 1;
-            int currVersion = 1;
-            if (undoStack != null && !undoStack.isBlank()) {
-                String[] versions = undoStack.split(",");
-                currVersion = Integer.parseInt(versions[versions.length - 1]);
-            }
-            log.info("Current version: {}", currVersion);
+
+            log.info("Current version: {}", currentEntity.getVersion());
             log.info("imageId: {}", imageId);
-            ImageNewEntity currImage = imageNewRepository.findByImageIdAndVersion(imageId, currVersion);
 
             // Convert relative path to absolute path
             String saveDir = System.getProperty("user.dir") + File.separator + storagePath;
@@ -99,11 +78,12 @@ public class FloodFillServiceImpl implements FloodFillService {
             if (!storageDirFile.exists()) {
                 storageDirFile.mkdirs();
             }
+
             // ------
-            // STEP 4
+            // STEP 2
             // ------
             // Resolve the input image path using currentImageUrl from currImage
-            String currentFileName = currImage.getCurrentImageUrl();
+            String currentFileName = currentEntity.getCurrentImageUrl();
             String inputPath = saveDir + File.separator + currentFileName;
             File originalFile = new File(inputPath);
 
@@ -113,12 +93,15 @@ public class FloodFillServiceImpl implements FloodFillService {
             }
 
             // ------
-            //STEP 5
+            //STEP 3
             // ------
+            // Get next version from version control service
+            int nextVersion = imageVersionControlService.getNextVersion(imageId);
+
             // Load & Process the image
             BufferedImage originalImage = ImageIO.read(originalFile);
             List<Point> seedPoints = parsePoints(seedPointsJson);
-            
+
             // Apply flood fill
             BufferedImage processedImage = floodFill(originalImage, seedPoints, tolerance);
 
@@ -134,30 +117,20 @@ public class FloodFillServiceImpl implements FloodFillService {
             }
 
             // -----
-            // Step 6
+            // Step 4
             // -----
-            // Update undo stack
-            String newUndoStack = undoStack == null || undoStack.isBlank() ? 
-                String.valueOf(nextVersion) : undoStack + "," + nextVersion;
-            photoSession.setUndoStack(newUndoStack);
-            photoSession.setRedoStack("");
-            photoSessionRepository.save(photoSession);
+            // Update photo session using version control service
+            imageVersionControlService.updatePhotoSession(imageId, nextVersion);
 
             // ------
-            // Step 7
+            // Step 5
             // ------
+            // Get base image URL from version control service
+            String baseImageUrl = imageVersionControlService.getBaseImageUrl(imageId, currentEntity);
+
             // Create and save the new image entity
-            // ImageNewEntity processedEntity = ImageNewEntity.builder()
-            //         .imageId(imageId)
-            //         .userId(originalEntity.getUserId())
-            //         .version(nextVersion)
-            //         .label("Flood Fill")
-            //         // .baseImageUrl(originalEntity.getCurrentImageUrl()) // Changed from baseImageUrl to currentImageUrl
-            //         .baseImageUrl(processedFileName)
-            //         .currentImageUrl(processedFileName)
-            //         .build();
             FloodFillFactory floodFillFactory = (FloodFillFactory) imageFactorySelector.getFactory(ImageOperationType.FLOODFILL);
-            ImageNewEntity processedEntity = floodFillFactory.create(imageId, originalEntity.getUserId(), nextVersion, processedFileName, null);
+            ImageNewEntity processedEntity = floodFillFactory.create(imageId, currentEntity.getUserId(), nextVersion, baseImageUrl, null);
 
 
             return imageNewRepository.save(processedEntity);
@@ -175,10 +148,11 @@ public class FloodFillServiceImpl implements FloodFillService {
 
     private List<Point> parsePoints(String seedPointsJson) throws JsonProcessingException {
         List<Map<String, Integer>> points = objectMapper.readValue(
-            seedPointsJson, 
-            new TypeReference<List<Map<String, Integer>>>() {}
+                seedPointsJson,
+                new TypeReference<List<Map<String, Integer>>>() {
+                }
         );
-        
+
         List<Point> seedPoints = new ArrayList<>();
         for (Map<String, Integer> point : points) {
             seedPoints.add(new Point(point.get("x"), point.get("y")));

@@ -12,8 +12,6 @@ public class ImageFactorySelector {
                 return new OriginalImageFactory();
             case CROP:
                 return new CropImageFactory();
-            case BACKGROUND_REMOVAL:
-                return new BackgroundRemovalFactory();
             case CARTOONISE:
                 return new CartooniseFactory();
             case FLOODFILL:

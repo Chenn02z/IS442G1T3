@@ -1,10 +1,7 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
 import IS442.G1T3.IDPhotoGenerator.service.ImageDownloadService;
-import IS442.G1T3.IDPhotoGenerator.service.impl.ImageDownloadServiceImpl;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -12,24 +9,27 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.UUID;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.List;
+
 import org.springframework.core.io.InputStreamResource;
 
 @Slf4j
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/images")
 @Validated
 public class ImageDownloadController {
 
-    // Use interface to adhere to Dependency Inversion Principle
-    // Use final to prevent bugs
     private final ImageDownloadService imageDownloadService;
 
+    public ImageDownloadController(ImageDownloadService imageDownloadService) {
+        this.imageDownloadService = imageDownloadService;
+    }
 
     @GetMapping("/download/{imageId}")
     public ResponseEntity<Resource> download(

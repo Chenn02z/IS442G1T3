@@ -17,5 +17,5 @@ public interface ImageDownloadService {
      */
     Resource processDownloadRequest(UUID imageId);
 
-    File zipSelectedImages(List<UUID> imagesIds) throws IOException;
+    File zipSelectedImages(List<UUID> imageIds) throws IOException;
 }

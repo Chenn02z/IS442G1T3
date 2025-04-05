@@ -23,11 +23,10 @@ import org.springframework.stereotype.Service;
 import IS442.G1T3.IDPhotoGenerator.factory.CartooniseFactory;
 import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-import IS442.G1T3.IDPhotoGenerator.model.PhotoSession;
 import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
-import IS442.G1T3.IDPhotoGenerator.repository.PhotoSessionRepository;
 import IS442.G1T3.IDPhotoGenerator.service.CartoonisationService;
+import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -35,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CartooniseServiceImpl implements CartoonisationService {
 
     private final ImageNewRepository imageNewRepository;
-    private final PhotoSessionRepository photoSessionRepository;
+    private final ImageVersionControlService imageVersionControlService;
     private final ImageFactorySelector imageFactorySelector; // Inject the selector
 
     @Value("${image.storage.path}")
@@ -49,52 +48,28 @@ public class CartooniseServiceImpl implements CartoonisationService {
         }
     }
 
-    public CartooniseServiceImpl(ImageNewRepository imageNewRepository,
-                               PhotoSessionRepository photoSessionRepository,
-                               ImageFactorySelector imageFactorySelector) {
+    public CartooniseServiceImpl(
+            ImageNewRepository imageNewRepository,
+            ImageVersionControlService imageVersionControlService,
+            ImageFactorySelector imageFactorySelector
+    ) {
         this.imageNewRepository = imageNewRepository;
-        this.photoSessionRepository = photoSessionRepository;
+        this.imageVersionControlService = imageVersionControlService;
         this.imageFactorySelector = imageFactorySelector;
 
     }
 
     @Override
-    public ImageNewEntity cartooniseImage(UUID imageId) throws Exception {
+    public ImageNewEntity cartooniseImage(UUID imageId) {
         // ------
         // STEP 1
         // ------
-        // Get latest image from repository, non-destructive nature of the algorithm
-        ImageNewEntity latestImage = imageNewRepository.findLatestRowByImageId(imageId);
-        if (latestImage == null) {
+        // Get current image for editing using version control service
+        ImageNewEntity currentEntity = imageVersionControlService.getLatestImageVersion(imageId);
+        if (currentEntity == null) {
             throw new RuntimeException("Image not found with id: " + imageId);
         }
-        // ------
-        // STEP 2
-        // ------
-        // Get photo session for undo redo stack tracking
-        PhotoSession photoSession = photoSessionRepository.findByImageId(imageId);
-        if (photoSession == null) {
-            // Create new photo session if it doesn't exist
-            // Make use of Builder pattern for cleaner code
-            photoSession = PhotoSession.builder()
-                .imageId(imageId)
-                .undoStack("1")
-                .build();
-        }
 
-        // -------
-        // Step 3
-        // -------
-        // Get latest Image version and + 1 to give next version (int nextVersion)
-        // Get the undo stack from the photo session, to give current version (int currVersion)
-        int nextVersion = latestImage.getVersion() + 1;
-        String undoStack = photoSession.getUndoStack();
-        int currVersion = 1;
-        if (undoStack != null && !undoStack.isBlank()) {
-            String[] versions = undoStack.split(",");
-            currVersion = Integer.parseInt(versions[versions.length - 1]);
-        }
-        ImageNewEntity currImage = imageNewRepository.findByImageIdAndVersion(imageId, currVersion);
         // Convert relative path to absolute path
         String saveDir = System.getProperty("user.dir") + File.separator + storagePath;
         File storageDirFile = new File(saveDir);
@@ -103,16 +78,19 @@ public class CartooniseServiceImpl implements CartoonisationService {
         }
 
         // ------
-        // STEP 4
+        // STEP 2
         // ------
-        // Resolve the input image path using currentImageUrl from currImage
-        String currentImageFileName = currImage.getCurrentImageUrl();
+        // Resolve the input image path using currentImageUrl from currentEntity
+        String currentImageFileName = currentEntity.getCurrentImageUrl();
         String inputPath = saveDir + File.separator + currentImageFileName;
         log.info("Loading image from: {}", inputPath);
 
         // ------
-        //STEP 5
+        // STEP 3
         // ------
+        // Get next version from version control service
+        int nextVersion = imageVersionControlService.getNextVersion(imageId);
+
         // Load & Process the image
         Mat image = Imgcodecs.imread(inputPath);
         if (image.empty()) {
@@ -133,21 +111,20 @@ public class CartooniseServiceImpl implements CartoonisationService {
         }
 
         // ------
-        // Step 6
+        // Step 4
         // ------
-        // Update undo stack
-        String newUndoStack = undoStack == null || undoStack.isBlank() ? 
-            String.valueOf(nextVersion) : undoStack + "," + nextVersion;
-        photoSession.setUndoStack(newUndoStack);
-        photoSession.setRedoStack("");
-        photoSessionRepository.save(photoSession);
+        // Update photo session using version control service
+        imageVersionControlService.updatePhotoSession(imageId, nextVersion);
 
         // ------
-        // Step 7
+        // Step 5
         // ------
+        // Get base image URL from version control service
+        String baseImageUrl = imageVersionControlService.getBaseImageUrl(imageId, currentEntity);
+
         // Create and save the new image entity
         CartooniseFactory cartooniseFactory = (CartooniseFactory) imageFactorySelector.getFactory(ImageOperationType.CARTOONISE);
-        ImageNewEntity processedImage = cartooniseFactory.create(imageId, latestImage.getUserId(), 1, processedFileName, null);
+        ImageNewEntity processedImage = cartooniseFactory.create(imageId, currentEntity.getUserId(), nextVersion, baseImageUrl, null);
 
 
         return imageNewRepository.save(processedImage);
@@ -214,9 +191,9 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
                 // Create trapezoid for shoulders/neck below the face - wider base, shorter height, narrower top
                 int neckTop = face.y + face.height;
-                int shoulderWidth = (int)(face.width * 2.5); // Wider base
-                int shoulderHeight = (int)(face.height * 0.75); // Shorter height
-                int topWidth = (int)(face.width * 0.8); // Narrower top width
+                int shoulderWidth = (int) (face.width * 2.5); // Wider base
+                int shoulderHeight = (int) (face.height * 0.75); // Shorter height
+                int topWidth = (int) (face.width * 0.8); // Narrower top width
 
                 // Get image dimensions
                 int imageWidth = image.cols();
@@ -382,144 +359,5 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
         return largest;
     }
-//    private Mat removeBackgroundUsingGrabCut(Mat image) {
-//        // Create initial mask for GrabCut
-//        Mat mask = new Mat(image.size(), CvType.CV_8UC1, Scalar.all(Imgproc.GC_BGD)); // Set all to background initially
-//        Mat bgModel = new Mat();
-//        Mat fgModel = new Mat();
-//
-//        // Create a copy of the image for visualization
-//        Mat visualizationImg = image.clone();
-//
-//        try {
-//            // Load the face detector
-//            CascadeClassifier faceDetector = new CascadeClassifier();
-//            boolean isLoaded = faceDetector.load("src/main/resources/opencv/haarcascade_frontalface_default.xml");
-//
-//            if (!isLoaded) {
-//                throw new Exception("Failed to load face cascade classifier");
-//            }
-//
-//            // Detect faces
-//            MatOfRect faceDetections = new MatOfRect();
-//            faceDetector.detectMultiScale(image, faceDetections);
-//            Rect[] faces = faceDetections.toArray();
-//
-//            if (faces.length > 0) {
-//                // Get the face (we expect only one, but take the largest if multiple are detected)
-//                Rect face = faces[0];
-//                if (faces.length > 1) {
-//                    // Find the largest face in case multiple are detected
-//                    face = getLargestRect(faces);
-//                }
-//
-//                // Create elliptical mask for face instead of rectangle
-//                Point center = new Point(face.x + face.width / 2,
-//                        face.y + (double) face.height / 2);
-//                Size axes = new Size(face.width * 0.6, face.height * 0.7);
-//
-//                // Draw ellipse on mask - set to definitely foreground
-//                Mat faceMask = new Mat(mask.size(), CvType.CV_8UC1, Scalar.all(0));
-//                Imgproc.ellipse(faceMask, center, axes, 0, 0, 360, new Scalar(Imgproc.GC_FGD), -1);
-//
-//                // Draw red ellipse outline on visualization image
-//                Imgproc.ellipse(visualizationImg, center, axes, 0, 0, 360, new Scalar(0, 0, 255), 2);
-//
-//                // Create trapezoid for shoulders/neck below the face
-//                int neckTop = face.y + face.height;
-//                int shoulderWidth = (int)(face.width * 2.0); // Wider at the bottom
-//                int shoulderHeight = (int)(face.height * 1.2); // Extend below face
-//
-//                // Trapezoid points
-//                Point[] shoulderPoints = new Point[4];
-//                shoulderPoints[0] = new Point(center.x - face.width * 0.5, neckTop); // Top left
-//                shoulderPoints[1] = new Point(center.x + face.width * 0.5, neckTop); // Top right
-//                shoulderPoints[2] = new Point(center.x + shoulderWidth * 0.5, neckTop + shoulderHeight); // Bottom right
-//                shoulderPoints[3] = new Point(center.x - shoulderWidth * 0.5, neckTop + shoulderHeight); // Bottom left
-//
-//                // Create shoulder mask
-//                MatOfPoint shoulder = new MatOfPoint(shoulderPoints);
-//                Mat shoulderMask = new Mat(mask.size(), CvType.CV_8UC1, Scalar.all(0));
-//                List<MatOfPoint> contours = new ArrayList<>();
-//                contours.add(shoulder);
-//                Imgproc.fillPoly(shoulderMask, contours, new Scalar(Imgproc.GC_PR_FGD)); // Probably foreground
-//
-//                // Draw red trapezoid outline on visualization image
-//                for (int i = 0; i < shoulderPoints.length; i++) {
-//                    Imgproc.line(visualizationImg,
-//                            shoulderPoints[i],
-//                            shoulderPoints[(i + 1) % shoulderPoints.length],
-//                            new Scalar(0, 0, 255), 2);
-//                }
-//
-//                // Combine face and shoulder masks
-//                Core.bitwise_or(faceMask, shoulderMask, mask);
-//
-//                // Define the region of interest around the face for GrabCut
-//                // Make sure it includes the shoulders
-//                int expandedTop = Math.max(0, face.y - face.height / 2);
-//                int expandedBottom = Math.min(image.height(), neckTop + shoulderHeight + face.height / 2);
-//                int expandedLeft = (int) Math.max(0, center.x - (double) shoulderWidth / 2 - face.width / 4);
-//                int expandedRight = (int) Math.min(image.width(), center.x + (double) shoulderWidth / 2 + face.width / 4);
-//
-//                Rect rect = new Rect(expandedLeft, expandedTop,
-//                        expandedRight - expandedLeft,
-//                        expandedBottom - expandedTop);
-//
-//                // Run GrabCut with the mask we've created
-//                Imgproc.grabCut(image, mask, rect, bgModel, fgModel, 5, Imgproc.GC_INIT_WITH_MASK);
-//            } else {
-//                throw new Exception("No face detected");
-//            }
-//        } catch (Exception e) {
-//            System.err.println("Face detection failed: " + e.getMessage());
-//
-//            // Fallback to basic rect if no face detected or error occurred
-//            Rect rect = new Rect(1, 1, image.width() - 2, image.height() - 2);
-//            Imgproc.grabCut(image, mask, rect, bgModel, fgModel, 5, Imgproc.GC_INIT_WITH_RECT);
-//        } finally {
-//            // Clean up resources if needed
-//            if (!bgModel.empty()) bgModel.release();
-//            if (!fgModel.empty()) fgModel.release();
-//        }
-//
-//        // Create a mask for foreground pixels (both definitely and probably foreground)
-//        Mat foregroundMask = new Mat();
-//        Core.compare(mask, new Scalar(Imgproc.GC_PR_FGD), foregroundMask, Core.CMP_EQ);
-//        Mat foregroundMask2 = new Mat();
-//        Core.compare(mask, new Scalar(Imgproc.GC_FGD), foregroundMask2, Core.CMP_EQ);
-//        Core.bitwise_or(foregroundMask, foregroundMask2, foregroundMask);
-//
-//        // Create the foreground image
-//        Mat foreground = new Mat(image.size(), CvType.CV_8UC3, new Scalar(255, 255, 255));
-//        image.copyTo(foreground, foregroundMask);
-//
-//        // Option 1: You can save the visualization image to see the outlines
-//         Imgcodecs.imwrite("visualization.jpg", visualizationImg);
-//
-//        // Clean up
-//        mask.release();
-//        foregroundMask.release();
-//        foregroundMask2.release();
-//        visualizationImg.release();
-//
-//        return foreground;
-//    }
-//
-//    // Helper method to find the largest rectangle (in case multiple faces are detected)
-//    private Rect getLargestRect(Rect[] rects) {
-//        if (rects.length == 0) {
-//            return null;
-//        }
-//
-//        Rect largest = rects[0];
-//        for (Rect rect : rects) {
-//            if (rect.area() > largest.area()) {
-//                largest = rect;
-//            }
-//        }
-//
-//        return largest;
-//    }
 }
 
