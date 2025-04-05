@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { UUID_LOOKUP_KEY } from "@/app/page";
 import { cn } from "@/lib/utils";
-import { Target, Users, AtSign } from "lucide-react";
+import { Target, Crop, SquareX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface LoadingScreenProps {
@@ -17,9 +17,9 @@ const guidelines = [
 ];
 
 const tools = [
-  { icon: <Target className="w-5 h-5" />, label: "Face Detection", stage: 1 },
-  { icon: <AtSign className="w-5 h-5" />, label: "Feature Analysis", stage: 2 },
-  { icon: <Users className="w-5 h-5" />, label: "Matching", stage: 3 },
+  { icon: <Target className="w-5 h-5" />, label: "Clothes Replacement", stage: 1 },
+  { icon: <SquareX className="w-5 h-5" />, label: "Background Removal", stage: 2 },
+  { icon: <Crop className="w-5 h-5" />, label: "Cropping", stage: 3 },
 ];
 
 export function LoadingScreen({ onFinish }: LoadingScreenProps) {
