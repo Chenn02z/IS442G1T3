@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { CONFIG } from "../../config";
 
 // for sidebar menu and CSS values for box in button
 const aspectRatios = [
@@ -49,6 +50,7 @@ const CropSidebar: React.FC<CropSidebarProps> = ({
     selectedImageId,
     isCropping,
     restoreCurrentImageUrl,
+    setSelectedImageUrl,
   } = useUpload();
 
   // Reduced debug logs to prevent excessive console output
@@ -59,14 +61,37 @@ const CropSidebar: React.FC<CropSidebarProps> = ({
   }, [isOpen, selectedRatio, isCropping]);
 
   // Handle sheet open/close
-  const handleSheetChange = (open: boolean) => {
+  const handleSheetChange = async (open: boolean) => {
     setIsOpen(open);
 
     if (open && selectedImageId) {
-      // When opening, set crop mode and use base image
+      // When opening, set crop mode
       setIsCropping(true);
       setSelectedRatio("freeform");
       setSelectedAspectRatio(null);
+      
+      // Fetch latest image version but don't create new URL unless needed
+      try {
+        console.log("Checking latest image version for cropping...");
+        
+        // Get the latest version from the API
+        const response = await fetch(
+          `${CONFIG.API_BASE_URL}/api/images/${selectedImageId}/edit`
+        );
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch latest image version");
+        }
+        
+        // We're just validating we have the latest version
+        // No need to create a new URL or update the image URL
+        const imageData = await response.json();
+        console.log("Latest image version checked:", imageData.version);
+        
+        // No URL changes needed - we'll just use the existing URL
+      } catch (error) {
+        console.error("Error checking image version:", error);
+      }
     }
     // When closing, we don't change isCropping here - it's handled by handleDone/handleCancel
   };

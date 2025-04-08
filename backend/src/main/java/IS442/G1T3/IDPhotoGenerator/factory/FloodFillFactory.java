@@ -2,8 +2,9 @@ package IS442.G1T3.IDPhotoGenerator.factory;
 
 import java.util.UUID;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import org.springframework.stereotype.Component;
+
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 
 @Component
 public class FloodFillFactory implements ImageEntityFactory<Void> {
@@ -16,7 +17,7 @@ public class FloodFillFactory implements ImageEntityFactory<Void> {
                 .userId(userId)
                 .version(version)
                 .label("Flood Fill")
-                .baseImageUrl(baseImageUrl)
+                .baseImageUrl(fileName)
                 .currentImageUrl(fileName)
                 .build();
     }
