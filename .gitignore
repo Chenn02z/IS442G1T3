@@ -65,4 +65,5 @@ dist/
 
 
 # tokens
-StoredCredentials
+**/StoredCredential
+backend/tokens/StoredCredential
