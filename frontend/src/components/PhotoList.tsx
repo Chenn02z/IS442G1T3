@@ -149,6 +149,7 @@ const PhotoList = ({ setUploadSource }) => {
           const data = await response.json();
           setIsDriveConnected(data.provider === 'googleDriveStorageProvider');
         } else if (response.status === 404) {
+          console.log('setIsDriveConnected', isDriveConnected)
           setIsDriveConnected(false);
         }
       } catch (error) {

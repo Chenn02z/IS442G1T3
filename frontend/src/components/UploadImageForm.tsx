@@ -198,7 +198,9 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
                   <UploadCloud className="h-4 w-4 mr-2" />
                   Local Upload
                 </TabsTrigger>
-                <TabsTrigger value="drive" onClick={() => setUploadSource('drive')} disabled={!isDriveConnected}>
+                <TabsTrigger value="drive" onClick={() => setUploadSource('drive')} 
+                // disabled={!isDriveConnected}
+                >
                   <Cloud className="h-4 w-4 mr-2" />
                   Google Drive
                 </TabsTrigger>
