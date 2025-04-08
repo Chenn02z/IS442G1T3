@@ -1,6 +1,6 @@
 package IS442.G1T3.IDPhotoGenerator.controller;
 
-import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
+import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,16 +25,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class ImageResizeController {
 
     private final ImageResizeService imageResizeService;
-    private final ImageNewRepository imageRepository;
+    private final ImageVersionControlService imageVersionControlService;
     private final Map<String, PhotoDimensionStandard> photoDimensionStandards;
 
     public ImageResizeController(
             ImageResizeService imageResizeService,
-            ImageNewRepository imageRepository,
+            ImageVersionControlService imageVersionControlService,
             Map<String, PhotoDimensionStandard> photoDimensionStandards
     ) {
         this.imageResizeService = imageResizeService;
-        this.imageRepository = imageRepository;
+        this.imageVersionControlService = imageVersionControlService;
         this.photoDimensionStandards = photoDimensionStandards;
     }
 
@@ -53,7 +53,8 @@ public class ImageResizeController {
             @RequestParam(value = "allowCropping", defaultValue = "true") boolean allowCropping) {
         try {
             // Find the image to resize
-            ImageNewEntity image = imageRepository.findLatestRowByImageId(imageId);
+
+            ImageNewEntity image = imageVersionControlService.getLatestImageVersion(imageId);
             if (image == null) {
                 return ResponseEntity.notFound().build();
             }
