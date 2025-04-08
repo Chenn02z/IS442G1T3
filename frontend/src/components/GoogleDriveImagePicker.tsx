@@ -67,13 +67,11 @@ export function GoogleDriveImagePicker({ onSelect }) {
       const timestamp = Date.now();
       const response = await fetch(`${BACKEND_URL}/api/google-drive/list-images?userId=${userId}&page=${targetPage}&size=${targetSize}&_t=${timestamp}`);
 
-      if (response.status === 401) {
-        const errorData = await response.json();
-        if (errorData.authRequired) {
-          setError('Google Drive authentication required. Please connect your Google Drive account.');
-          setImages([]);
-          return;
-        }
+      if (response.status === 401 || response.status === 404) {
+        // Either unauthorized or storage preference not found means we need authentication
+        setError('Google Drive authentication required. Please connect your Google Drive account.');
+        setImages([]);
+        return;
       }
 
       if (!response.ok) {
