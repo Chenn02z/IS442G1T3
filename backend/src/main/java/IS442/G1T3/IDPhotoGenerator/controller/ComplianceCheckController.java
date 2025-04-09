@@ -2,8 +2,6 @@ package IS442.G1T3.IDPhotoGenerator.controller;
 
 import java.util.UUID;
 
-import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,9 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 import IS442.G1T3.IDPhotoGenerator.dto.ComplianceCheckResponse;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
+import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
 import IS442.G1T3.IDPhotoGenerator.service.complianceChecker.ComplianceService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -54,7 +54,7 @@ public class ComplianceCheckController {
             if (image == null) {
                 return ResponseEntity.notFound().build();
             }
-            log.info("Checking photo compliance for image with ID {} of Version: {}", imageId, image.getVersion());
+            log.info("Checking photo compliance for image with ID {} of Version: {}, countryCode: {}", imageId, image.getVersion(), countryCode == null ? "null" : countryCode);
 
             // Use the defaultCountryCode if countryCode is not provided
             if (countryCode == null || countryCode.isEmpty()) {

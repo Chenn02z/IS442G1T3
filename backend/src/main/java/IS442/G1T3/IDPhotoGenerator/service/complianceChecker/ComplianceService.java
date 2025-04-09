@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 import IS442.G1T3.IDPhotoGenerator.dto.ComplianceCheckResponse;
 import IS442.G1T3.IDPhotoGenerator.dto.ComplianceCheckResponse.ComplianceDetail;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-import IS442.G1T3.IDPhotoGenerator.service.complianceChecker.checkers.PhotoDimensionStandard;
 import IS442.G1T3.IDPhotoGenerator.model.enums.ComplianceCheckStatus;
 import IS442.G1T3.IDPhotoGenerator.service.complianceChecker.checkers.ComplianceChecker;
+import IS442.G1T3.IDPhotoGenerator.service.complianceChecker.checkers.PhotoDimensionStandard;
 
 /**
  * Service that handles compliance checking for ID photos.
@@ -48,8 +48,8 @@ public class ComplianceService {
             String checkerName = currentChecker.getClass().getSimpleName();
             String category = getCheckerCategory(checkerName);
 
-            // Run the current check
-            ComplianceCheckResponse checkResult = currentChecker.checkFailed(image);
+            // Pass the country code to each checker
+            ComplianceCheckResponse checkResult = currentChecker.checkFailed(image, countryCode);
 
             // Create a detail for this check
             ComplianceDetail detail = ComplianceDetail.builder()

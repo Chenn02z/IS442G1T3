@@ -33,7 +33,7 @@ public class DimensionsComplianceChecker implements ComplianceChecker {
     private Map<String, PhotoDimensionStandard> photoDimensionStandards;
 
     @Override
-    public ComplianceCheckResponse checkFailed(ImageNewEntity photo) {
+    public ComplianceCheckResponse checkFailed(ImageNewEntity photo, String countryCode) {
         String imagePath = String.format("%s/%s", storagePath, photo.getCurrentImageUrl());
 
         try {
@@ -50,39 +50,58 @@ public class DimensionsComplianceChecker implements ComplianceChecker {
             int actualWidth = bufferedImage.getWidth();
             int actualHeight = bufferedImage.getHeight();
 
-            // Use the default country code since we're not changing the entity
-            String countryCode = defaultCountryCode;
+            // If countryCode is null, empty, or "ANY", check against any standard
+            if (countryCode == null || countryCode.isEmpty() || "ANY".equalsIgnoreCase(countryCode)) {
+                // Check if the photo complies with any of the standards
+                boolean compliesWithAnyStandard = false;
+                PhotoDimensionStandard matchedStandard = null;
 
-            // Check if the photo complies with any of the standards
-            boolean compliesWithAnyStandard = false;
-            PhotoDimensionStandard matchedStandard = null;
-
-            for (PhotoDimensionStandard standard : photoDimensionStandards.values()) {
-                if (standard.compliesWith(actualWidth, actualHeight)) {
-                    compliesWithAnyStandard = true;
-                    matchedStandard = standard;
-                    break;
-                }
-            }
-
-            // If not compliant with any standard, use the default standard for the error message
-            if (!compliesWithAnyStandard) {
-                PhotoDimensionStandard defaultStandard = photoDimensionStandards.get(countryCode);
-                if (defaultStandard == null) {
-                    throw new RuntimeException("No dimension standard found for default country code: " + countryCode);
+                for (PhotoDimensionStandard standard : photoDimensionStandards.values()) {
+                    if (standard.compliesWith(actualWidth, actualHeight)) {
+                        compliesWithAnyStandard = true;
+                        matchedStandard = standard;
+                        break;
+                    }
                 }
 
-                throw new RuntimeException(String.format(
-                        "Photo dimensions do not comply with any standard. Default requirement is %s for %s. Found: %dx%d",
-                        defaultStandard.getDimensionRequirements(), defaultStandard.getCountryName(),
-                        actualWidth, actualHeight
-                ));
-            }
+                if (!compliesWithAnyStandard) {
+                    // Use default country code for error message if no standards match
+                    PhotoDimensionStandard defaultStandard = photoDimensionStandards.get(defaultCountryCode);
+                    if (defaultStandard == null) {
+                        throw new RuntimeException("No dimension standard found for default country code: " + defaultCountryCode);
+                    }
 
-            return ComplianceCheckResponse.builder()
-                    .complianceCheckStatus(ComplianceCheckStatus.PASS)
-                    .message("Dimensions Compliance check passed")
-                    .build();
+                    throw new RuntimeException(String.format(
+                            "Photo dimensions do not comply with any standard. Default requirement is %s for %s. Found: %dx%d",
+                            defaultStandard.getDimensionRequirements(), defaultStandard.getCountryName(),
+                            actualWidth, actualHeight
+                    ));
+                }
+
+                return ComplianceCheckResponse.builder()
+                        .complianceCheckStatus(ComplianceCheckStatus.PASS)
+                        .message("Dimensions comply with " + matchedStandard.getCountryName() + " standard")
+                        .build();
+            } else {
+                // Check against the specific country standard
+                PhotoDimensionStandard standard = photoDimensionStandards.get(countryCode.toUpperCase());
+                if (standard == null) {
+                    throw new RuntimeException("No dimension standard found for country code: " + countryCode);
+                }
+
+                if (!standard.compliesWith(actualWidth, actualHeight)) {
+                    throw new RuntimeException(String.format(
+                            "Photo dimensions do not comply with %s standard. Required: %s. Found: %dx%d",
+                            standard.getCountryName(), standard.getDimensionRequirements(),
+                            actualWidth, actualHeight
+                    ));
+                }
+
+                return ComplianceCheckResponse.builder()
+                        .complianceCheckStatus(ComplianceCheckStatus.PASS)
+                        .message("Dimensions comply with " + standard.getCountryName() + " standard")
+                        .build();
+            }
 
         } catch (IOException e) {
             return ComplianceCheckResponse.builder()

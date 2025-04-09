@@ -45,7 +45,7 @@ public class FaceCenteringComplianceChecker implements ComplianceChecker {
      * face is within an acceptable distance from the center of the image.
      */
     @Override
-    public ComplianceCheckResponse checkFailed(ImageNewEntity photo) {
+    public ComplianceCheckResponse checkFailed(ImageNewEntity photo, String countryCode) {
         String imagePath = String.format("%s/%s", storagePath, photo.getCurrentImageUrl());
 
         try {

@@ -32,7 +32,7 @@ public class BackgroundComplianceChecker implements ComplianceChecker {
      * or a few columns along the edges. You can refine as needed.
      */
     @Override
-    public ComplianceCheckResponse checkFailed(ImageNewEntity photo) {
+    public ComplianceCheckResponse checkFailed(ImageNewEntity photo, String countryCode) {
         String imagePath = String.format("%s/%s", storagePath, photo.getCurrentImageUrl());
         try {
             File file = new File(imagePath);
