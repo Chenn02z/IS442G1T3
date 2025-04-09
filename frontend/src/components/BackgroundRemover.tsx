@@ -21,6 +21,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export const BackgroundRemover = () => {
   const {
@@ -44,6 +52,8 @@ export const BackgroundRemover = () => {
   const [step, setStep] = useState<"select" | "manual">("select");
   const imageRef = useRef<HTMLImageElement>(null);
   const [displayImageUrl, setDisplayImageUrl] = useState<string | null>(null);
+  const [algorithm, setAlgorithm] = useState<"bfs" | "dfs">("bfs");
+  const [tolerance, setTolerance] = useState<number>(30);
 
   // Initialize workingFile when dialog opens
   useEffect(() => {
@@ -161,7 +171,7 @@ export const BackgroundRemover = () => {
       // Show loading toast
       toast({
         title: "Processing image",
-        description: "Removing background manually...",
+        description: `Removing background using ${algorithm.toUpperCase()} algorithm...`,
       });
 
       const response = await fetch(
@@ -171,7 +181,9 @@ export const BackgroundRemover = () => {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          body: `seedPoints=${JSON.stringify(selectedPoints)}&tolerance=30`,
+          body: `seedPoints=${JSON.stringify(
+            selectedPoints
+          )}&tolerance=${tolerance}&algorithm=${algorithm}`,
         }
       );
 
@@ -267,7 +279,7 @@ export const BackgroundRemover = () => {
       </Tooltip>
 
       <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           {step === "select" ? (
             <>
               <DialogHeader>
@@ -308,6 +320,42 @@ export const BackgroundRemover = () => {
                 </DialogDescription>
               </DialogHeader>
               <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="algorithm">Remove Type</Label>
+                    <Select
+                      value={algorithm}
+                      onValueChange={(value: "bfs" | "dfs") =>
+                        setAlgorithm(value)
+                      }
+                    >
+                      <SelectTrigger id="algorithm">
+                        <SelectValue placeholder="Select algorithm" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bfs">Standard</SelectItem>
+                        <SelectItem value="dfs">Intricate Details</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tolerance">Color Tolerance</Label>
+                    <Select
+                      value={tolerance.toString()}
+                      onValueChange={(value) => setTolerance(parseInt(value))}
+                    >
+                      <SelectTrigger id="tolerance">
+                        <SelectValue placeholder="Select tolerance" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">Low (10)</SelectItem>
+                        <SelectItem value="30">Medium (30)</SelectItem>
+                        <SelectItem value="50">High (50)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="relative w-full">
                   {displayImageUrl && (
                     <img

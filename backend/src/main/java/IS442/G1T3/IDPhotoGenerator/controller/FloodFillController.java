@@ -24,9 +24,11 @@ public class FloodFillController {
     public ResponseEntity<ImageNewEntity> removeBackground(
             @PathVariable UUID imageId,
             @RequestParam("seedPoints") String seedPointsJson,
-            @RequestParam(value = "tolerance", defaultValue = "10") int tolerance) {
+            @RequestParam(value = "tolerance", defaultValue = "10") int tolerance,
+            @RequestParam(value = "algorithm", defaultValue = "bfs") String algorithm) {
         try {
-            ImageNewEntity processedImage = floodFillService.removeBackground(imageId, seedPointsJson, tolerance);
+            log.info("Removing background with algorithm: {}, tolerance: {}", algorithm, tolerance);
+            ImageNewEntity processedImage = floodFillService.removeBackground(imageId, seedPointsJson, tolerance, algorithm);
             return ResponseEntity.ok(processedImage);
         } catch (IOException e) {
             log.error("Error processing image", e);

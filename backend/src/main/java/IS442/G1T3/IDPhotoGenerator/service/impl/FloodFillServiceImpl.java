@@ -59,7 +59,7 @@ public class FloodFillServiceImpl implements FloodFillService {
     }
 
     @Override
-    public ImageNewEntity removeBackground(UUID imageId, String seedPointsJson, int tolerance) throws IOException {
+    public ImageNewEntity removeBackground(UUID imageId, String seedPointsJson, int tolerance, String algorithm) throws IOException {
         try {
             // ------
             // STEP 1
@@ -103,8 +103,15 @@ public class FloodFillServiceImpl implements FloodFillService {
             BufferedImage originalImage = ImageIO.read(originalFile);
             List<Point> seedPoints = parsePoints(seedPointsJson);
 
-            // Apply flood fill
-            BufferedImage processedImage = floodFillBFS(originalImage, seedPoints, tolerance);
+            // Apply flood fill using the specified algorithm
+            BufferedImage processedImage;
+            if ("dfs".equalsIgnoreCase(algorithm)) {
+                log.info("Using DFS algorithm for intricate details");
+                processedImage = floodFillDFS(originalImage, seedPoints, tolerance);
+            } else {
+                log.info("Using BFS algorithm (default)");
+                processedImage = floodFillBFS(originalImage, seedPoints, tolerance);
+            }
 
             // Save the processed image
             String processedFileName = imageId.toString() + "_" + nextVersion + ".png";
