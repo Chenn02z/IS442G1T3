@@ -26,9 +26,9 @@ const aspectRatios = [
   { label: "4:3", value: "4-3", aspectRatio: 4 / 3, boxClass: "w-12 h-9" },
   { label: "3:4", value: "3-4", aspectRatio: 3 / 4, boxClass: "w-9 h-12" },
   { label: "3:2", value: "3-2", aspectRatio: 3 / 2, boxClass: "w-12 h-8" },
-  // Singapore passport size - 35mm x 45mm (width x height)
-  { label: "SG Passport", value: "sg-passport", aspectRatio: 35/45, boxClass: "w-9 h-11" },
-  { label: "Custom", value: "custom", aspectRatio: null, boxClass: "" },
+  // // Singapore passport size - 35mm x 45mm (width x height)
+  // { label: "SG Passport", value: "sg-passport", aspectRatio: 35/45, boxClass: "w-9 h-11" },
+  // { label: "Custom", value: "custom", aspectRatio: null, boxClass: "" },
 ];
 
 interface CropSidebarProps {
