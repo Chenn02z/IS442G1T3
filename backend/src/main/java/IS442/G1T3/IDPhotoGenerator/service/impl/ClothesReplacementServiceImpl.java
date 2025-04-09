@@ -172,18 +172,25 @@ public class ClothesReplacementServiceImpl implements ClothesReplacementService 
         // Calculate neck position more accurately based on shoulder points
         // Assuming the first two points are the top shoulders
         int neckTop = (int)Math.min(shoulderPoints[0].y, shoulderPoints[1].y);
-        neckTop -= (int)(foreground.rows() * 0.52);
+        
+        // Adjust neck position more conservatively for cropped images
+        double neckOffsetFactor = 0.3; // Reduced from 0.52 to better handle cropped images
+        neckTop -= (int)(foreground.rows() * neckOffsetFactor);
 
         // Calculate the width between shoulders for better scaling
         double shoulderWidth = Math.abs(shoulderPoints[0].x - shoulderPoints[1].x);
-
-        int roiX = 0;
-        int roiY = neckTop; // Start at neck position
+        
+        // Calculate center point for positioning (important for cropped images)
+        int centerX = (int)(shoulderPoints[0].x + shoulderPoints[1].x) / 2;
+        
+        // Adjust ROI to be centered horizontally instead of starting from left edge
         int roiWidth = foreground.cols();
         int roiHeight = foreground.rows() - neckTop;
+        int roiX = Math.max(0, centerX - (roiWidth / 2));
+        int roiY = neckTop;
 
-        // Ensure ROI is within bounds
-//        roiX = Math.max(0, roiX);
+        // Ensure ROI is within bounds - uncommented to properly handle bounds
+        roiX = Math.max(0, roiX);
         roiY = Math.max(0, roiY);
         if (roiX + roiWidth > foreground.cols()) {
             roiWidth = foreground.cols() - roiX;
@@ -193,32 +200,30 @@ public class ClothesReplacementServiceImpl implements ClothesReplacementService 
         }
 
         // Calculate better scale factor based on shoulder width
-        double widthScaleFactor = shoulderWidth / (clothes.cols() * 0.8); // Adjust 0.8 as needed
+        double widthScaleFactor = shoulderWidth / (clothes.cols() * 0.6); // Adjusted from 0.8 to 0.6
         double heightScaleFactor = roiHeight / (double) clothes.rows();
 
         // Use the larger scale factor to ensure proper fit
         double scaleFactor = Math.max(widthScaleFactor, heightScaleFactor);
 
         // Apply a multiplier to make the clothes fit better
-        scaleFactor *= 1.05; // Adjust this value based on results
+        scaleFactor *= 1.5; // Increased from 1.3
 
         int newOverlayWidth = (int) Math.round(clothes.cols() * scaleFactor);
         int newOverlayHeight = (int) Math.round(clothes.rows() * scaleFactor);
 
-        Mat resizedOverlay = new Mat(); // rounded corners updates from here
+        Mat resizedOverlay = new Mat();
         Imgproc.resize(clothes, resizedOverlay, new Size(newOverlayWidth, newOverlayHeight));
-
-
 
         Mat overlayCanvas = Mat.zeros(roiHeight, roiWidth, clothes.type());
 
-        // Center horizontally and position vertically with a small offset
+        // Improve centering by considering the actual center of the image rather than just the ROI
         int offsetX = (roiWidth - newOverlayWidth) / 2;
         int offsetY = 0; // You might want to adjust this based on testing
 
         // Ensure offsets don't go out of bounds
         offsetX = Math.max(0, offsetX);
-//        offsetY = Math.max(0, offsetY);
+        offsetY = Math.max(0, offsetY);
 
         // Adjust ROI if needed to ensure it stays within bounds
         int endY = Math.min(offsetY + newOverlayHeight, overlayCanvas.rows());
