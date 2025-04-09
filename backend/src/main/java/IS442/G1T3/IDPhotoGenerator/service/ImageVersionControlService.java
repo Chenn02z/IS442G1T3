@@ -1,12 +1,12 @@
 package IS442.G1T3.IDPhotoGenerator.service;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
-
 import java.util.UUID;
+
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 
 public interface ImageVersionControlService {
     /**
-     * Create phot0 session for an image with version == 0
+     * Create photo session for an image with version == 0
      */
     void initialisePhotoSession(UUID imageId);
 
