@@ -3,6 +3,7 @@ import { ThemeModeToggle } from "@/components/ThemeModeToggle";
 import CropSidebar from "@/components/CropSideBar";
 import { BackgroundRemover } from "./BackgroundRemover";
 import { useUpload } from "@/context/UploadContext";
+import { ClothesReplacer } from "./ClothesReplacer";
 
 const SideBar = ({
   setSelectedAspectRatio,
@@ -20,6 +21,7 @@ const SideBar = ({
         setSelectedAspectRatio={setSelectedAspectRatio}
       />
       <BackgroundRemover />
+      <ClothesReplacer />
     </div>
   );
 };
