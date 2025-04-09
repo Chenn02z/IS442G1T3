@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +27,7 @@ import IS442.G1T3.IDPhotoGenerator.repository.UserStoragePreferenceRepository;
 import IS442.G1T3.IDPhotoGenerator.service.FileStorageService;
 import IS442.G1T3.IDPhotoGenerator.service.GoogleDriveService;
 import IS442.G1T3.IDPhotoGenerator.service.ImageUploadService;
+import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
 
 @RestController
 @RequestMapping("/api/google-drive")
@@ -38,6 +38,7 @@ public class GoogleDriveController {
     private final FileStorageService fileStorageService;
     private final ImageUploadService imageUploadService;
     private final ImageNewRepository imageNewRepository;
+    private final ImageVersionControlService imageVersionControlService;
 
     @Value("${image.storage.path}")
     private String storagePath;
@@ -46,12 +47,15 @@ public class GoogleDriveController {
             UserStoragePreferenceRepository preferenceRepository,
             FileStorageService fileStorageService,
             ImageUploadService imageUploadService,
-            ImageNewRepository imageNewRepository) {
+            ImageNewRepository imageNewRepository,
+            ImageVersionControlService imageVersionControlService
+            ) {
         this.driveService = driveService;
         this.preferenceRepository = preferenceRepository;
         this.fileStorageService = fileStorageService;
         this.imageUploadService = imageUploadService;
         this.imageNewRepository = imageNewRepository;
+        this.imageVersionControlService = imageVersionControlService;
     }
 
     @PostMapping("/upload")
@@ -105,15 +109,14 @@ public class GoogleDriveController {
             // Convert the String imageId to UUID
             UUID imageUuid = UUID.fromString(imageId);
             
-            // Find the latest version of the image using Optional
-            Optional<ImageNewEntity> imageOptional = imageNewRepository.findTopByImageIdOrderByVersionDesc(imageUuid);
+            // Find the latest version of the image
+            ImageNewEntity LatestImage = imageVersionControlService.getLatestImageVersion(imageUuid);
             
-            if (imageOptional.isEmpty()) {
+            if (LatestImage == null) {
                 return ResponseEntity.badRequest().body("Image not found with ID: " + imageId);
             }
             
-            ImageNewEntity image = imageOptional.get();
-            String filename = image.getCurrentImageUrl();
+            String filename = LatestImage.getCurrentImageUrl();
             
             // Build the path to the file
             Path filePath = Paths.get(storagePath).resolve(filename);
@@ -134,7 +137,7 @@ public class GoogleDriveController {
             // Upload to Google Drive
             String fileId = driveService.uploadFileFromPath(
                 userId.toString(),
-                "Photo_" + (image.getLabel() != null ? image.getLabel() : imageId),
+                "Cropify_" + (LatestImage.getImageId().toString() + "_" + LatestImage.getVersion()),
                 mimeType,
                 localFile.getAbsolutePath()
             );
@@ -143,6 +146,7 @@ public class GoogleDriveController {
             String publicUrl = driveService.makeFilePublic(userId.toString(), fileId);
             
             Map<String, String> response = new HashMap<>();
+            response.put("imageId", imageId);
             response.put("fileId", fileId);
             response.put("url", publicUrl);
             response.put("message", "Image uploaded successfully to Google Drive.");
