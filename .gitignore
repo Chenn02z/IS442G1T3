@@ -63,3 +63,7 @@ yarn-debug.log*
 yarn-error.log*
 dist/
 
+
+# tokens
+**/StoredCredential
+backend/tokens/StoredCredential

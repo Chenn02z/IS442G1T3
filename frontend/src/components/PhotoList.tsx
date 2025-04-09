@@ -9,6 +9,11 @@ import { useUpload } from "@/context/UploadContext";
 import { useImageUploadHandler } from "@/utils/ImageUploadHandler";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GoogleDriveImagePicker } from "./GoogleDriveImagePicker";
+import { GoogleDriveAuth } from "./GoogleDriveAuth";
+import { Button } from "@/components/ui/button";
+import { Cloud, Upload } from "lucide-react";
 
 interface ImageEntity {
   imageId: string;
@@ -18,7 +23,7 @@ interface ImageEntity {
   label: string;
 }
 
-const PhotoList = () => {
+const PhotoList = ({ setUploadSource }) => {
   const { handleUpload } = useImageUploadHandler();
   const {
     setSelectedImageUrl,
@@ -33,6 +38,15 @@ const PhotoList = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  // const [uploadSource, setUploadSource] = useState<'local' | 'drive'>('local');
+  const [localUploadSource, setLocalUploadSource] = useState<'local' | 'drive'>('local');
+  const [isDriveConnected, setIsDriveConnected] = useState(false);
+
+    // Modify your tab change handlers to propagate to parent:
+    const handleTabChange = (value) => {
+      setLocalUploadSource(value);
+      setUploadSource(value);
+    };
 
   // // Debug image URLs
   // useEffect(() => {
@@ -124,6 +138,67 @@ const PhotoList = () => {
     fetchImages();
   }, [uploadedImageCount, setUploadedImageCount]);
 
+  useEffect(() => {
+    async function checkDriveConnection() {
+      try {
+        const userId = localStorage.getItem(UUID_LOOKUP_KEY);
+        if (!userId) return;
+
+        const response = await fetch(`${CONFIG.API_BASE_URL}/api/google-drive/storage/preference/${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setIsDriveConnected(data.provider === 'googleDriveStorageProvider');
+        } else if (response.status === 404) {
+          console.log('setIsDriveConnected', isDriveConnected)
+          setIsDriveConnected(false);
+        }
+      } catch (error) {
+        console.error('Failed to check drive connection:', error);
+        setIsDriveConnected(false);
+      }
+    }
+
+    checkDriveConnection();
+  }, []);
+
+  const handleDriveSelect = async (fileId) => {
+    try {
+      const userId = localStorage.getItem(UUID_LOOKUP_KEY);
+      const response = await fetch(`${CONFIG.API_BASE_URL}/api/google-drive/import-image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          userId: userId || '',
+          fileId,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.imageUrl) {
+          setSelectedImageUrl(data.imageUrl);
+          setSelectedImageId(data.id || fileId);
+        }
+
+        setUploadedImageCount((count) => count + 1);
+        setTimeout(() => fetchImages(), 1000);
+      } else {
+        console.error('Failed to import image');
+      }
+    } catch (error) {
+      console.error('Error importing from Drive:', error);
+    }
+  };
+
+  const handleDriveUpload = () => {
+    setUploadSource('drive');
+  };
+
+  const handleLocalUpload = () => {
+    setUploadSource('local');
+  };
+
   return (
     <div className="h-screen border-r-2 p-2 flex flex-col">
       {/* Header */}
@@ -206,8 +281,26 @@ const PhotoList = () => {
       {uploadedImages.length > 0 && (
         <>
           <Separator className="my-3" />
-          <p className="text-center text-indigo-600 text-sm cursor-pointer hover:underline">
-            <>
+          <Tabs defaultValue="local" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-2">
+              <TabsTrigger 
+                value="local" 
+                onClick={() => handleTabChange('local')}
+              >
+                <UploadCloud className="h-4 w-4 mr-2" />
+                Local
+              </TabsTrigger>
+              <TabsTrigger 
+                value="drive" 
+                onClick={() => handleTabChange('drive')} 
+                disabled={!isDriveConnected}
+              >
+                <Cloud className="h-4 w-4 mr-2" />
+                Drive
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="local" className="w-full">
               <input
                 type="file"
                 accept="image/jpeg, image/png"
@@ -226,8 +319,12 @@ const PhotoList = () => {
                   Supported formats: .jpeg, .png
                 </p>
               </label>
-            </>
-          </p>
+            </TabsContent>
+
+            <TabsContent value="drive" className="w-full">
+              <GoogleDriveImagePicker onSelect={handleDriveSelect} />
+            </TabsContent>
+          </Tabs>
         </>
       )}
     </div>
