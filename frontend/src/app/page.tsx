@@ -16,6 +16,7 @@ export default function Home() {
     null
   );
   const [isCropping, setIsCropping] = useState<boolean>(false);
+  const [uploadSource, setUploadSource] = useState<'local' | 'drive'>('local');
 
   useEffect(() => {
     let storedUUID = localStorage.getItem(UUID_LOOKUP_KEY);
@@ -54,7 +55,11 @@ export default function Home() {
               <div className="text-sm text-muted-foreground mb-4">
                 Session ID: {userUUID}
               </div>
-              <UploadImageForm selectedAspectRatio={selectedAspectRatio} />
+              <UploadImageForm 
+                selectedAspectRatio={selectedAspectRatio} 
+                uploadSource={uploadSource}
+                setUploadSource={setUploadSource}
+              />
             </div>
           </div>
         </UploadProvider>

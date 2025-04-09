@@ -161,7 +161,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
             boolean isLoaded = faceDetector.load("src/main/resources/opencv/haarcascade_frontalface_default.xml");
 
             if (!isLoaded) {
-                throw new Exception("Failed to load face cascade classifier");
+                throw new Exception("Failed to load face cascade classifier TWO");
             }
 
             // Detect faces
