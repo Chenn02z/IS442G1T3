@@ -1,6 +1,8 @@
 package IS442.G1T3.IDPhotoGenerator.service.complianceChecker.checkers;
 
 import java.io.File;
+import java.net.URL;
+import java.nio.file.Paths;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
@@ -59,11 +61,12 @@ public class FaceCenteringComplianceChecker implements ComplianceChecker {
             }
 
             // Load the face cascade classifier
-            String cascadePath = getClass().getResource("/opencv/haarcascade_frontalface_default.xml").getPath();
-            CascadeClassifier faceDetector = new CascadeClassifier(cascadePath);
+            URL cascadeUrl = getClass().getResource("/opencv/haarcascade_frontalface_default.xml");
+            File cascadeFile = Paths.get(cascadeUrl.toURI()).toFile();
+            CascadeClassifier faceDetector = new CascadeClassifier(cascadeFile.getAbsolutePath());
 
             if (faceDetector.empty()) {
-                throw new RuntimeException("Failed to load face cascade classifier.");
+                throw new RuntimeException("Failed to load face cascade classifier ONE.");
             }
 
             // Convert to grayscale for face detection
