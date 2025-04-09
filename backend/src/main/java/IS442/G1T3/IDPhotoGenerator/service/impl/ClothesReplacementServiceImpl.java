@@ -200,24 +200,24 @@ public class ClothesReplacementServiceImpl implements ClothesReplacementService 
         }
 
         // Calculate better scale factor based on shoulder width
-        double widthScaleFactor = shoulderWidth / (clothes.cols() * 0.6); // Adjusted from 0.8 to 0.6
+        double widthScaleFactor = shoulderWidth / (clothes.cols() * 0.8); // Adjust 0.8 as needed
         double heightScaleFactor = roiHeight / (double) clothes.rows();
 
         // Use the larger scale factor to ensure proper fit
         double scaleFactor = Math.max(widthScaleFactor, heightScaleFactor);
 
         // Apply a multiplier to make the clothes fit better
-        scaleFactor *= 1.5; // Increased from 1.3
+        scaleFactor *= 1.05; // Adjust this value based on results
 
         int newOverlayWidth = (int) Math.round(clothes.cols() * scaleFactor);
         int newOverlayHeight = (int) Math.round(clothes.rows() * scaleFactor);
 
-        Mat resizedOverlay = new Mat();
+        Mat resizedOverlay = new Mat(); // rounded corners updates from here
         Imgproc.resize(clothes, resizedOverlay, new Size(newOverlayWidth, newOverlayHeight));
 
         Mat overlayCanvas = Mat.zeros(roiHeight, roiWidth, clothes.type());
 
-        // Improve centering by considering the actual center of the image rather than just the ROI
+        // Center horizontally and position vertically with a small offset
         int offsetX = (roiWidth - newOverlayWidth) / 2;
         int offsetY = 0; // You might want to adjust this based on testing
 
