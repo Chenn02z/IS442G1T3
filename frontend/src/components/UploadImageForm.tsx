@@ -56,6 +56,9 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
   const [isDriveConnected, setIsDriveConnected] = useState(false);
   const [uploadingToDrive, setUploadingToDrive] = useState(false);
 
+  // Get the proper upload handler function that calls the API
+  const { handleUpload } = useImageUploadHandler();
+
   useEffect(() => {
     async function checkDriveConnection() {
       try {
@@ -90,19 +93,6 @@ const UploadImageForm: React.FC<UploadImageFormProps> = ({
 
   const handleOpenResizeTab = () => {
     setIsComplianceDialogOpen(true);
-  };
-
-  // ✅ NEW: handleUpload inline to also store File
-  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const imageUrl = URL.createObjectURL(file);
-    setSelectedImageUrl(imageUrl);
-    setSelectedImageId(crypto.randomUUID());
-    setUploadedImageCount((count) => count + 1);
-    setUploadedFile(file); // ✅ Track the file
-    refreshImages();
   };
 
   const handleDriveSelect = async (fileId: string) => {
