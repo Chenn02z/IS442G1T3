@@ -7,7 +7,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ClothesReplacer } from "./ClothesReplacer";
 import { BackgroundRemover } from "./BackgroundRemover";
 import { useUpload } from "@/context/UploadContext";
 
@@ -37,7 +36,6 @@ const SideBar = ({
         </Tooltip>
       </TooltipProvider>
       <BackgroundRemover />
-      <ClothesReplacer />
     </div>
   );
 };

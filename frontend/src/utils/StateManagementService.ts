@@ -34,7 +34,7 @@ export const StateManagementService = {
    * Undo the last edit for an image
    */
   async undo(imageId: string): Promise<ApiResponse<UndoRedoResponse>> {
-    console.log('🔄 StateManagementService: Undo request for image:', imageId);
+    // console.log('🔄 StateManagementService: Undo request for image:', imageId);
     
     const response = await fetch(`${CONFIG.API_BASE_URL}/api/statemanagement/undo`, {
       method: 'POST',
@@ -46,12 +46,12 @@ export const StateManagementService = {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ StateManagementService: Undo failed:', errorText);
+      // console.error('❌ StateManagementService: Undo failed:', errorText);
       throw new Error(`Undo failed: ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log('✅ StateManagementService: Undo response:', data);
+    // console.log('✅ StateManagementService: Undo response:', data);
     return data;
   },
 
@@ -59,7 +59,7 @@ export const StateManagementService = {
    * Redo a previously undone edit
    */
   async redo(imageId: string): Promise<ApiResponse<UndoRedoResponse>> {
-    console.log('🔄 StateManagementService: Redo request for image:', imageId);
+    // console.log('🔄 StateManagementService: Redo request for image:', imageId);
     
     const response = await fetch(`${CONFIG.API_BASE_URL}/api/statemanagement/redo`, {
       method: 'POST',
@@ -76,7 +76,7 @@ export const StateManagementService = {
     }
 
     const data = await response.json();
-    console.log('✅ StateManagementService: Redo response:', data);
+    // console.log('✅ StateManagementService: Redo response:', data);
     return data;
   },
 
@@ -84,7 +84,7 @@ export const StateManagementService = {
    * Confirm the current version and clear redo history
    */
   async confirm(imageId: string): Promise<ApiResponse<ImageVersion>> {
-    console.log('🔄 StateManagementService: Confirm request for image:', imageId);
+    // console.log('🔄 StateManagementService: Confirm request for image:', imageId);
     
     const response = await fetch(`${CONFIG.API_BASE_URL}/api/statemanagement/confirm`, {
       method: 'POST',
@@ -101,7 +101,7 @@ export const StateManagementService = {
     }
 
     const data = await response.json();
-    console.log('✅ StateManagementService: Confirm response:', data);
+    // console.log('✅ StateManagementService: Confirm response:', data);
     return data;
   },
 
@@ -109,7 +109,7 @@ export const StateManagementService = {
    * Get the version history for an image
    */
   async getHistory(imageId: string): Promise<ApiResponse<HistoryResponse>> {
-    console.log('🔄 StateManagementService: Getting history for image:', imageId);
+    // console.log('🔄 StateManagementService: Getting history for image:', imageId);
     
     const response = await fetch(
       `${CONFIG.API_BASE_URL}/api/statemanagement/history/${imageId}`
@@ -122,7 +122,7 @@ export const StateManagementService = {
     }
 
     const data = await response.json();
-    console.log('✅ StateManagementService: History response:', data);
+    // console.log('✅ StateManagementService: History response:', data);
     return data;
   },
 

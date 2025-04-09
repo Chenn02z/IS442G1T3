@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import IS442.G1T3.IDPhotoGenerator.dto.ApiResponse;
+import IS442.G1T3.IDPhotoGenerator.dto.PhotoSessionResponse;
 import IS442.G1T3.IDPhotoGenerator.dto.StateManagementResponse;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.service.PhotoSessionService;
@@ -22,23 +23,21 @@ import IS442.G1T3.IDPhotoGenerator.service.PhotoSessionService;
 
 @RestController
 @RequestMapping("/api/statemanagement")
+@RequiredArgsConstructor
 public class PhotoSessionController {
 
     private final PhotoSessionService photoSessionService;
 
-    public PhotoSessionController(PhotoSessionService photoSessionService) {
-        this.photoSessionService = photoSessionService;
-    }
 
     @PostMapping("/undo")
     public ResponseEntity<?> undo(@RequestBody Map<String, String> request) {
         try {
             UUID imageId = UUID.fromString(request.get("imageId"));
             StateManagementResponse result = photoSessionService.undo(imageId);
-            return ResponseEntity.ok(new ApiResponse<>("success", result));
+            return ResponseEntity.ok(new PhotoSessionResponse<>("success", result));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("error", e.getMessage()));
+                    .body(new PhotoSessionResponse<>("error", e.getMessage()));
         }
     }
 
@@ -47,10 +46,10 @@ public class PhotoSessionController {
         try {
             UUID imageId = UUID.fromString(request.get("imageId"));
             StateManagementResponse result = photoSessionService.redo(imageId);
-            return ResponseEntity.ok(new ApiResponse<>("success", result));
+            return ResponseEntity.ok(new PhotoSessionResponse<>("success", result));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("error", e.getMessage()));
+                    .body(new PhotoSessionResponse<>("error", e.getMessage()));
         }
     }
 
@@ -59,10 +58,10 @@ public class PhotoSessionController {
         try {
             UUID imageId = UUID.fromString(request.get("imageId"));
             ImageNewEntity result = photoSessionService.confirm(imageId);
-            return ResponseEntity.ok(new ApiResponse<>("success", result));
+            return ResponseEntity.ok(new PhotoSessionResponse<>("success", result));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("error", e.getMessage()));
+                    .body(new PhotoSessionResponse<>("error", e.getMessage()));
         }
     }
 
@@ -70,10 +69,10 @@ public class PhotoSessionController {
     public ResponseEntity<?> getHistory(@PathVariable UUID imageId) {
         try {
             Map<String, List<String>> history = photoSessionService.getHistory(imageId);
-            return ResponseEntity.ok(new ApiResponse<>("success", history));
+            return ResponseEntity.ok(new PhotoSessionResponse<>("success", history));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("error", e.getMessage()));
+                    .body(new PhotoSessionResponse<>("error", e.getMessage()));
         }
     }
 
@@ -81,10 +80,10 @@ public class PhotoSessionController {
     public ResponseEntity<?> getLatestVersion(@PathVariable UUID imageId) {
         try {
             ImageNewEntity result = photoSessionService.getLatestVersion(imageId);
-            return ResponseEntity.ok(new ApiResponse<>("success", result));
+            return ResponseEntity.ok(new PhotoSessionResponse<>("success", result));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("error", e.getMessage()));
+                    .body(new PhotoSessionResponse<>("error", e.getMessage()));
         }
     }
 
@@ -92,10 +91,10 @@ public class PhotoSessionController {
     public ResponseEntity<?> getLatestImageInfo(@PathVariable UUID imageId) {
         try {
             ImageNewEntity result = photoSessionService.getLatestVersion(imageId);
-            return ResponseEntity.ok(new ApiResponse<>("success", result));
+            return ResponseEntity.ok(new PhotoSessionResponse<>("success", result));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("error", e.getMessage()));
+                    .body(new PhotoSessionResponse<>("error", e.getMessage()));
         }
     }
 
@@ -103,10 +102,10 @@ public class PhotoSessionController {
     public ResponseEntity<?> getUserImages(@PathVariable UUID userId) {
         try {
             List<UUID> images = photoSessionService.getUserImages(userId);
-            return ResponseEntity.ok(new ApiResponse<>("success", images));
+            return ResponseEntity.ok(new PhotoSessionResponse<>("success", images));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("error", e.getMessage()));
+                    .body(new PhotoSessionResponse<>("error", e.getMessage()));
         }
     }
 
@@ -114,10 +113,10 @@ public class PhotoSessionController {
     public ResponseEntity<?> getUserLatestList(@PathVariable UUID userId) {
         try {
             List<ImageNewEntity> images = photoSessionService.getUserLatestList(userId);
-            return ResponseEntity.ok(new ApiResponse<>("success", images));
+            return ResponseEntity.ok(new PhotoSessionResponse<>("success", images));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("error", e.getMessage()));
+                    .body(new PhotoSessionResponse<>("error", e.getMessage()));
         }
     }
 
@@ -125,10 +124,10 @@ public class PhotoSessionController {
     public ResponseEntity<?> deleteImage(@PathVariable UUID imageId) {
         try {
             photoSessionService.deleteImage(imageId);
-            return ResponseEntity.ok(new ApiResponse<>("success", "Image deleted successfully"));
+            return ResponseEntity.ok(new PhotoSessionResponse<>("success", "Image deleted successfully"));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("error", e.getMessage()));
+                    .body(new PhotoSessionResponse<>("error", e.getMessage()));
         }
     }
 }

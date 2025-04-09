@@ -1,21 +1,24 @@
 package IS442.G1T3.IDPhotoGenerator.repository;
 
-import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.awt.*;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 
 @Repository
 public interface ImageNewRepository extends JpaRepository<ImageNewEntity, String> {
 
     // Find a single image by currentImageUrl (if needed)
     ImageNewEntity findByCurrentImageUrl(String currentImageUrl);
+
+    @Query("SELECT i FROM ImageNewEntity i WHERE i.currentImageUrl LIKE CONCAT(:currentImageUrl, '%')")
+    ImageNewEntity findByCurrentImageUrlWithoutFormat(@Param("currentImageUrl") String currentImageUrl);
 
     ImageNewEntity findByBaseImageUrl(String baseImageUrl);
 
@@ -31,5 +34,9 @@ public interface ImageNewRepository extends JpaRepository<ImageNewEntity, String
 
     // Add the missing method
     ImageNewEntity findByImageIdAndVersion(UUID imageId, int version);
+
+    Optional<ImageNewEntity> findTopByUserIdOrderByVersionDesc(UUID userId);
+    Optional<ImageNewEntity> findTopByImageIdOrderByVersionDesc(UUID imageId);
+
 }
 

@@ -7,9 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ApiResponse<T> {
+public class PhotoSessionResponse<T> {
     private String status;
     private T data;
-
-    // Getters and setters
 } 

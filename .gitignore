@@ -4,6 +4,9 @@
 *.war
 *.ear
 
+
+
+
 # Log files
 *.log
 
@@ -59,4 +62,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 dist/
-public/
+
+
+# tokens
+**/StoredCredential
+backend/tokens/StoredCredential
