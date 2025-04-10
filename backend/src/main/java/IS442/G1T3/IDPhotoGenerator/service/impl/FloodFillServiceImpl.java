@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.Stack;
 
 import javax.imageio.ImageIO;
 
@@ -58,7 +59,7 @@ public class FloodFillServiceImpl implements FloodFillService {
     }
 
     @Override
-    public ImageNewEntity removeBackground(UUID imageId, String seedPointsJson, int tolerance) throws IOException {
+    public ImageNewEntity removeBackground(UUID imageId, String seedPointsJson, int tolerance, String algorithm) throws IOException {
         try {
             // ------
             // STEP 1
@@ -93,7 +94,7 @@ public class FloodFillServiceImpl implements FloodFillService {
             }
 
             // ------
-            //STEP 3
+            // STEP 3
             // ------
             // Get next version from version control service
             int nextVersion = imageVersionControlService.getNextVersion(imageId);
@@ -102,8 +103,15 @@ public class FloodFillServiceImpl implements FloodFillService {
             BufferedImage originalImage = ImageIO.read(originalFile);
             List<Point> seedPoints = parsePoints(seedPointsJson);
 
-            // Apply flood fill
-            BufferedImage processedImage = floodFill(originalImage, seedPoints, tolerance);
+            // Apply flood fill using the specified algorithm
+            BufferedImage processedImage;
+            if ("dfs".equalsIgnoreCase(algorithm)) {
+                log.info("Using DFS algorithm for intricate details");
+                processedImage = floodFillDFS(originalImage, seedPoints, tolerance);
+            } else {
+                log.info("Using BFS algorithm (default)");
+                processedImage = floodFillBFS(originalImage, seedPoints, tolerance);
+            }
 
             // Save the processed image
             String processedFileName = imageId.toString() + "_" + nextVersion + ".png";
@@ -160,7 +168,7 @@ public class FloodFillServiceImpl implements FloodFillService {
         return seedPoints;
     }
 
-    private BufferedImage floodFill(BufferedImage image, List<Point> seedPoints, int tolerance) {
+    private BufferedImage floodFillBFS(BufferedImage image, List<Point> seedPoints, int tolerance) {
         int width = image.getWidth();
         int height = image.getHeight();
         boolean[][] visited = new boolean[width][height];
@@ -186,6 +194,41 @@ public class FloodFillServiceImpl implements FloodFillService {
                         queue.add(new Point(p.x - 1, p.y));
                         queue.add(new Point(p.x, p.y + 1));
                         queue.add(new Point(p.x, p.y - 1));
+                    }
+                }
+            }
+        }
+        return image;
+    }
+
+    private BufferedImage floodFillDFS(BufferedImage image, List<Point> seedPoints, int tolerance) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        boolean[][] visited = new boolean[width][height];
+    
+        for (Point seedPoint : seedPoints) {
+            if (!isValidPoint(seedPoint.x, seedPoint.y, width, height)) {
+                continue;
+            }
+    
+            int targetColor = image.getRGB(seedPoint.x, seedPoint.y);
+            // Replace Queue with Stack for DFS
+            Stack<Point> stack = new Stack<>();
+            stack.push(seedPoint);
+    
+            while (!stack.isEmpty()) {
+                // Use pop() instead of remove() for stack operations
+                Point p = stack.pop();
+                if (isValidPoint(p.x, p.y, width, height) && !visited[p.x][p.y]) {
+                    if (isColorSimilar(image.getRGB(p.x, p.y), targetColor, tolerance)) {
+                        image.setRGB(p.x, p.y, 0x00FFFFFF); // Set to transparent
+                        visited[p.x][p.y] = true;
+    
+                        // Add adjacent points (order affects DFS traversal direction)
+                        stack.push(new Point(p.x, p.y - 1));
+                        stack.push(new Point(p.x, p.y + 1));
+                        stack.push(new Point(p.x - 1, p.y));
+                        stack.push(new Point(p.x + 1, p.y));
                     }
                 }
             }
