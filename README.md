@@ -24,11 +24,14 @@ npm run dev # run local dev server
 - Use Intellij IDE to easily build and run the Spring Boot application.
 - Ensure that you open `backend` directory as the project root in IntelliJ.
 - Go to Run > Edit Configurations.
-    - Under Modify Options > Environment Variables, add: (This is for your supabase connection)
+    - Under Modify Options > Environment Variables, add: (This is for your supabase connection & google drive integration)
       ```
       DATABASE_URL=your-database-url
       DATABASE_USERNAME=postgres
       DATABASE_PASSWORD=your-password
+      GOOGLE_CLIENT_ID=your-google-client-id
+      GOOGLE_CLIENT_SECRET=your-google-client-secret
+      REDIRECT_URI=redirect-uri
       ```
 - Click the Run icon at the top right corner.
 
