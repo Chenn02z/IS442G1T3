@@ -103,7 +103,7 @@ export const BackgroundRemover = () => {
     } else {
       try {
         // Show loading toast
-        toast({
+        const autoToast = toast({
           title: "Processing image",
           description: "Removing background automatically...",
         });
@@ -115,9 +115,11 @@ export const BackgroundRemover = () => {
           }
         );
         if (!response.ok) {
+          autoToast.dismiss();
           throw new Error("Failed to send image for background removal");
         }
 
+        autoToast.dismiss();
         const processedImage = await response.json();
         console.log("Auto background removal response:", processedImage);
 
