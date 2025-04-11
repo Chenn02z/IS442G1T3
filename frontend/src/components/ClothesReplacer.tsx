@@ -32,10 +32,10 @@ export const ClothesReplacer = () => {
 
   // Sample clothing styles
   const clothingStyles = [
-    { id: "formal", name: "Casual", description: "Everyday comfortable clothing"},
+    // { id: "formal", name: "Casual", description: "Everyday comfortable clothing"},
     { id: "casual", name: "Formal", description: "Business and formal attire" },
-    { id: "sporty", name: "Sporty", description: "Athletic and activewear" },
-    { id: "vintage", name: "Vintage", description: "Classic retro styles" },
+    // { id: "sporty", name: "Sporty", description: "Athletic and activewear" },
+    // { id: "vintage", name: "Vintage", description: "Classic retro styles" },
   ]
 
   // Initialize workingFile when dialog opens
@@ -176,7 +176,7 @@ export const ClothesReplacer = () => {
             )}
 
             {/* Style selection */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-col gap-4">
               {clothingStyles.map((style) => (
                 <Button
                   key={style.id}

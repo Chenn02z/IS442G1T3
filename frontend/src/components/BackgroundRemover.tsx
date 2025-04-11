@@ -106,6 +106,7 @@ export const BackgroundRemover = () => {
         const autoToast = toast({
           title: "Processing image",
           description: "Removing background automatically...",
+          duration: Infinity,
         });
 
         const response = await fetch(
@@ -119,8 +120,9 @@ export const BackgroundRemover = () => {
           throw new Error("Failed to send image for background removal");
         }
 
-        autoToast.dismiss();
+        // Only dismiss the toast after we know the response is successful
         const processedImage = await response.json();
+        autoToast.dismiss();
         console.log("Auto background removal response:", processedImage);
 
         if (processedImage && processedImage.currentImageUrl) {
