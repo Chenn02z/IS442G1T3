@@ -32,8 +32,8 @@ export const ClothesReplacer = () => {
 
   // Sample clothing styles
   const clothingStyles = [
-    { id: "casual", name: "Casual", description: "Everyday comfortable clothing" },
-    { id: "formal", name: "Formal", description: "Business and formal attire" },
+    { id: "formal", name: "Casual", description: "Everyday comfortable clothing"},
+    { id: "casual", name: "Formal", description: "Business and formal attire" },
     { id: "sporty", name: "Sporty", description: "Athletic and activewear" },
     { id: "vintage", name: "Vintage", description: "Classic retro styles" },
   ]
