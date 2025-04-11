@@ -1,13 +1,20 @@
+Here’s an updated version of your README with an added section for **running the backend using VS Code and Maven**:
+
+---
+
+```md
 # IS442 Project
 
 ## **Frontend Setup**
-```
+```bash
 cd frontend
 
 npm i # install packages
 
 npm run dev # run local dev server
 ```
+
+---
 
 ## **Backend Setup Quickstart**
 
@@ -18,29 +25,49 @@ npm run dev # run local dev server
   java -version
   ```
 
-- **IntelliJ**
+- **IDE**: You can use either IntelliJ or VS Code
+
+- Create a `.env` file in the same directory (same level as `pom.xml`) and paste the following:
+    ```properties
+    DATABASE_URL=your-database-url
+    DATABASE_USERNAME=postgres
+    DATABASE_PASSWORD=your-password
+    GOOGLE_CLIENT_ID=your-google-client-id
+    GOOGLE_CLIENT_SECRET=your-google-client-secret
+    REDIRECT_URI=redirect_URI
+    ```
+---
 
 ### **Using IntelliJ IDE:**
-- Use Intellij IDE to easily build and run the Spring Boot application.
-- Ensure that you open `backend` directory as the project root in IntelliJ.
-- Go to Run > Edit Configurations.
-    - Under Modify Options > Environment Variables, add: (This is for your supabase connection & google drive integration)
-      ```
-      DATABASE_URL=your-database-url
-      DATABASE_USERNAME=postgres
-      DATABASE_PASSWORD=your-password
-      GOOGLE_CLIENT_ID=your-google-client-id
-      GOOGLE_CLIENT_SECRET=your-google-client-secret
-      REDIRECT_URI=redirect-uri
-      ```
-- Click the Run icon at the top right corner.
 
-### **Accessing the Service locally**
+1. Open the `backend` directory as the project root in IntelliJ.
+
+2. Click the Run icon at the top right corner.
+
+---
+
+### **Using VS Code + Maven (CLI):**
+
+- **Maven**: Ensure Maven is installed and `mvn` is available in your terminal.
+  ```bash
+  mvn -v
+  ```
+
+1. Ensure you are inside the `backend` directory.
+
+2. Start the backend:
+    ```bash
+    mvn clean spring-boot:run
+    ```
+
+---
+
+### **Accessing the Service Locally**
 
 - **API Endpoint**: [http://localhost:8080](http://localhost:8080)
 
 ---
 
-
 ## **Contributing**
-- Refer to CONTRIBUTING.md
+- Refer to [CONTRIBUTING.md](CONTRIBUTING.md)
+```
