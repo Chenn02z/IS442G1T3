@@ -1,20 +1,13 @@
-Here’s an updated version of your README with an added section for **running the backend using VS Code and Maven**:
-
----
-
-```md
 # IS442 Project
 
 ## **Frontend Setup**
-```bash
+```
 cd frontend
 
 npm i # install packages
 
 npm run dev # run local dev server
 ```
-
----
 
 ## **Backend Setup Quickstart**
 
