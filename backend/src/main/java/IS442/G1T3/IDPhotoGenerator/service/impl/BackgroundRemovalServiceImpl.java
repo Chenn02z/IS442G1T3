@@ -1,10 +1,12 @@
 package IS442.G1T3.IDPhotoGenerator.service.impl;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import IS442.G1T3.IDPhotoGenerator.service.BackgroundRemovalService;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -25,13 +27,13 @@ import IS442.G1T3.IDPhotoGenerator.factory.ImageFactorySelector;
 import IS442.G1T3.IDPhotoGenerator.model.ImageNewEntity;
 import IS442.G1T3.IDPhotoGenerator.model.enums.ImageOperationType;
 import IS442.G1T3.IDPhotoGenerator.repository.ImageNewRepository;
-import IS442.G1T3.IDPhotoGenerator.service.CartoonisationService;
+import IS442.G1T3.IDPhotoGenerator.service.BackgroundRemovalService;
 import IS442.G1T3.IDPhotoGenerator.service.ImageVersionControlService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class CartooniseServiceImpl implements CartoonisationService {
+public class BackgroundRemovalServiceImpl implements BackgroundRemovalService {
 
     private final ImageNewRepository imageNewRepository;
     private final ImageVersionControlService imageVersionControlService;
@@ -48,7 +50,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
         }
     }
 
-    public CartooniseServiceImpl(
+    public BackgroundRemovalServiceImpl(
             ImageNewRepository imageNewRepository,
             ImageVersionControlService imageVersionControlService,
             ImageFactorySelector imageFactorySelector
@@ -60,7 +62,7 @@ public class CartooniseServiceImpl implements CartoonisationService {
     }
 
     @Override
-    public ImageNewEntity cartooniseImage(UUID imageId) {
+    public ImageNewEntity removeBackground(UUID imageId) {
         // ------
         // STEP 1
         // ------
@@ -359,5 +361,6 @@ public class CartooniseServiceImpl implements CartoonisationService {
 
         return largest;
     }
+
 }
 
