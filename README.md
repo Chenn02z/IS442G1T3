@@ -1,6 +1,8 @@
 # IS442 Project
 
 ## **Frontend Setup**
+### **Prerequisites**
+- Ensure that `npm` is installed on your machine
 ```
 cd frontend
 
@@ -8,8 +10,9 @@ npm i # install packages
 
 npm run dev # run local dev server
 ```
-
-## **Backend Setup Quickstart**
+- The Next.js server will start on port 3000
+- **The frontend UI can be accessed at:** [http://localhost:3000](http://localhost:3000)
+## **Backend Setup**
 
 ### **Prerequisites**
 
@@ -29,17 +32,8 @@ npm run dev # run local dev server
     GOOGLE_CLIENT_SECRET=your-google-client-secret
     REDIRECT_URI=redirect_URI
     ```
----
 
-### **Using IntelliJ IDE:**
-
-1. Open the `backend` directory as the project root in IntelliJ.
-
-2. Click the Run icon at the top right corner.
-
----
-
-### **Using VS Code + Maven (CLI):**
+### **Using CLI with Maven**
 
 - **Maven**: Ensure Maven is installed and `mvn` is available in your terminal.
   ```bash
@@ -52,15 +46,16 @@ npm run dev # run local dev server
     ```bash
     mvn clean spring-boot:run
     ```
+### **Using IntelliJ IDE:**
 
----
+1. Open the `/backend` directory as the project root in IntelliJ.
+2. Set up environment variables in run configurations (in `Edit Run Configuration`)
+3. Click the Run icon at the top right corner.
 
-### **Accessing the Service Locally**
+### **Accessing the Backend Service Locally**
 
 - **API Endpoint**: [http://localhost:8080](http://localhost:8080)
-
----
+- Swagger API Docs: [http://localhost:8080/swagger](http://localhost:8080/swagger)
 
 ## **Contributing**
 - Refer to [CONTRIBUTING.md](CONTRIBUTING.md)
-```
