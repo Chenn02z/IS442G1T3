@@ -23,7 +23,7 @@ public class BackgroundRemovalController {
     @PostMapping("/{imageId}/auto")
     public ResponseEntity<ImageNewEntity> cartooniseImage(@PathVariable UUID imageId) {
         try {
-            log.info("Received cartoonise request for imageId: {}", imageId);
+            log.info("Received background removal request for imageId: {}", imageId);
             ImageNewEntity processedImage = BackgroundRemovalService.removeBackground(imageId);
             return ResponseEntity.ok(processedImage);
         } catch (Exception e) {
